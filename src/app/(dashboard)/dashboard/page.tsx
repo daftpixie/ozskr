@@ -27,6 +27,7 @@ import { useCharacters } from '@/hooks/use-characters';
 import { useAnalyticsOverview } from '@/hooks/use-analytics';
 import { useContentSchedules } from '@/hooks/use-schedules';
 import { timeAgo } from '@/lib/utils/time';
+import { StatsBar } from '@/features/gamification/components/stats-bar';
 
 export default function DashboardPage() {
   const { user } = useWalletAuth();
@@ -100,6 +101,9 @@ export default function DashboardPage() {
           Your AI agent command center
         </p>
       </div>
+
+      {/* Gamification Stats Bar */}
+      <StatsBar />
 
       {/* Stats Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

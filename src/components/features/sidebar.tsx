@@ -17,6 +17,8 @@ import {
   Wallet,
   Calendar,
   Share2,
+  Trophy,
+  Crown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -35,6 +37,8 @@ const navigationItems: NavItem[] = [
   { label: 'Trade', href: '/dashboard/trade', icon: ArrowLeftRight },
   { label: 'Portfolio', href: '/dashboard/portfolio', icon: Wallet },
   { label: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { label: 'Achievements', href: '/dashboard/achievements', icon: Trophy },
+  { label: 'Leaderboard', href: '/dashboard/leaderboard', icon: Crown },
 ];
 
 const settingsItems: NavItem[] = [
@@ -109,7 +113,7 @@ export function Sidebar() {
       {/* Footer */}
       <div className="border-t border-border p-4">
         <p className="text-xs text-muted-foreground">
-          Phase 1: Foundation
+          Phase 5: Polish
         </p>
       </div>
     </aside>
