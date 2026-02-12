@@ -8,7 +8,9 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+
+/** Lamports per SOL — avoids importing deprecated @solana/web3.js */
+const LAMPORTS_PER_SOL = 1_000_000_000;
 
 interface SolBalanceState {
   balance: number | null;
