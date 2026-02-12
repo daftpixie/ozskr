@@ -256,17 +256,18 @@ auth.get('/session', authMiddleware, async (c: Context) => {
       );
     }
 
-    const response = SessionResponseSchema.parse({
-      token: jwtToken,
-      expiresAt: session.expires_at,
-      user: {
-        walletAddress: user.wallet_address,
-        displayName: user.display_name,
-        avatarUrl: user.avatar_url,
+    return c.json(
+      {
+        token: jwtToken,
+        expiresAt: new Date(session.expires_at).toISOString(),
+        user: {
+          walletAddress: user.wallet_address,
+          displayName: user.display_name ?? null,
+          avatarUrl: user.avatar_url ?? null,
+        },
       },
-    });
-
-    return c.json(response, 200);
+      200
+    );
   } catch (error) {
     return c.json(
       {
