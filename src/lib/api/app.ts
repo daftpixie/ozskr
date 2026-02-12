@@ -14,8 +14,8 @@ import { content } from './routes/content';
 import { trading } from './routes/trading';
 import { analytics } from './routes/analytics';
 
-// Create main Hono app
-const app = new Hono();
+// Create main Hono app with /api base path (Next.js catch-all is at /api/[[...route]])
+const app = new Hono().basePath('/api');
 
 // Global middleware
 app.use('*', logger());
