@@ -6,27 +6,31 @@
  */
 
 import { use, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, TrendingUp, Calendar, Image, Video, FileText } from 'lucide-react';
 import { useAnalyticsSummary, useAnalyticsHistory } from '@/hooks/use-analytics';
 import { useCharacter } from '@/hooks/use-characters';
-import {
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from 'recharts';
+
+// Lazy load heavy recharts components
+const GenerationsChart = dynamic(
+  () => import('./analytics-charts').then(mod => ({ default: mod.GenerationsChart })),
+  { ssr: false }
+);
+const EngagementChart = dynamic(
+  () => import('./analytics-charts').then(mod => ({ default: mod.EngagementChart })),
+  { ssr: false }
+);
+const QualityScoreChart = dynamic(
+  () => import('./analytics-charts').then(mod => ({ default: mod.QualityScoreChart })),
+  { ssr: false }
+);
+const ContentTypeChart = dynamic(
+  () => import('./analytics-charts').then(mod => ({ default: mod.ContentTypeChart })),
+  { ssr: false }
+);
 
 interface AgentAnalyticsPageProps {
   params: Promise<{ id: string }>;
@@ -219,39 +223,7 @@ export default function AgentAnalyticsPage({ params }: AgentAnalyticsPageProps) 
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {generationsChartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={generationsChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
-                  <XAxis
-                    dataKey="date"
-                    stroke="#A1A1AA"
-                    fontSize={12}
-                    tickLine={false}
-                  />
-                  <YAxis stroke="#A1A1AA" fontSize={12} tickLine={false} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#18181B',
-                      border: '1px solid #27272A',
-                      borderRadius: '8px',
-                      color: '#FAFAFA',
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="generations"
-                    stroke={COLORS.primary}
-                    strokeWidth={2}
-                    dot={{ fill: COLORS.primary, r: 4 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex h-[250px] items-center justify-center text-sm text-muted-foreground">
-                No generation data available
-              </div>
-            )}
+            <GenerationsChart data={generationsChartData} />
           </CardContent>
         </Card>
 
@@ -264,57 +236,7 @@ export default function AgentAnalyticsPage({ params }: AgentAnalyticsPageProps) 
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {engagementChartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <AreaChart data={engagementChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
-                  <XAxis
-                    dataKey="date"
-                    stroke="#A1A1AA"
-                    fontSize={12}
-                    tickLine={false}
-                  />
-                  <YAxis stroke="#A1A1AA" fontSize={12} tickLine={false} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#18181B',
-                      border: '1px solid #27272A',
-                      borderRadius: '8px',
-                      color: '#FAFAFA',
-                    }}
-                  />
-                  <Legend />
-                  <Area
-                    type="monotone"
-                    dataKey="likes"
-                    stackId="1"
-                    stroke={COLORS.primary}
-                    fill={COLORS.primary}
-                    fillOpacity={0.6}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="comments"
-                    stackId="1"
-                    stroke={COLORS.secondary}
-                    fill={COLORS.secondary}
-                    fillOpacity={0.6}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="shares"
-                    stackId="1"
-                    stroke={COLORS.accent}
-                    fill={COLORS.accent}
-                    fillOpacity={0.6}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex h-[250px] items-center justify-center text-sm text-muted-foreground">
-                No engagement data available
-              </div>
-            )}
+            <EngagementChart data={engagementChartData} />
           </CardContent>
         </Card>
 
@@ -327,39 +249,7 @@ export default function AgentAnalyticsPage({ params }: AgentAnalyticsPageProps) 
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {qualityScoreChartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={qualityScoreChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
-                  <XAxis
-                    dataKey="date"
-                    stroke="#A1A1AA"
-                    fontSize={12}
-                    tickLine={false}
-                  />
-                  <YAxis stroke="#A1A1AA" fontSize={12} tickLine={false} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#18181B',
-                      border: '1px solid #27272A',
-                      borderRadius: '8px',
-                      color: '#FAFAFA',
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="score"
-                    stroke={COLORS.secondary}
-                    strokeWidth={2}
-                    dot={{ fill: COLORS.secondary, r: 4 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex h-[250px] items-center justify-center text-sm text-muted-foreground">
-                No quality score data available
-              </div>
-            )}
+            <QualityScoreChart data={qualityScoreChartData} />
           </CardContent>
         </Card>
 
@@ -372,37 +262,7 @@ export default function AgentAnalyticsPage({ params }: AgentAnalyticsPageProps) 
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={contentTypeData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={(props: unknown) => {
-                    const entry = props as { name?: string; percent?: number };
-                    return entry.percent && entry.name
-                      ? `${entry.name} ${(entry.percent * 100).toFixed(0)}%`
-                      : entry.name || '';
-                  }}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {contentTypeData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#18181B',
-                    border: '1px solid #27272A',
-                    borderRadius: '8px',
-                    color: '#FAFAFA',
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <ContentTypeChart data={contentTypeData} />
             <div className="mt-4 flex justify-center gap-4">
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4" style={{ color: COLORS.primary }} />

@@ -5,6 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/features/wallet/store';
+import { QUERY_STALE_TIMES } from '@/lib/query-config';
 import {
   SocialAccountConnect,
   SocialAccountResponse,
@@ -55,6 +56,7 @@ export function useSocialAccounts() {
       return parsed.accounts as SocialAccountResponse[];
     },
     enabled: !!token,
+    staleTime: QUERY_STALE_TIMES.SOCIAL,
   });
 }
 
@@ -186,5 +188,6 @@ export function useSocialPosts(params?: { page?: number; limit?: number; status?
       };
     },
     enabled: !!token,
+    staleTime: QUERY_STALE_TIMES.SOCIAL,
   });
 }

@@ -6,6 +6,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -17,15 +18,16 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useAnalyticsOverview } from '@/hooks/use-analytics';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+
+// Lazy load heavy recharts components
+const PlatformBarChart = dynamic(
+  () => import('./analytics-charts').then(mod => ({ default: mod.PlatformBarChart })),
+  { ssr: false }
+);
+const EngagementRateChart = dynamic(
+  () => import('./analytics-charts').then(mod => ({ default: mod.EngagementRateChart })),
+  { ssr: false }
+);
 
 const COLORS = {
   primary: '#9945FF',
@@ -233,33 +235,7 @@ export default function AnalyticsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {platformData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={platformData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
-                  <XAxis
-                    dataKey="platform"
-                    stroke="#A1A1AA"
-                    fontSize={12}
-                    tickLine={false}
-                  />
-                  <YAxis stroke="#A1A1AA" fontSize={12} tickLine={false} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#18181B',
-                      border: '1px solid #27272A',
-                      borderRadius: '8px',
-                      color: '#FAFAFA',
-                    }}
-                  />
-                  <Bar dataKey="posts" fill={COLORS.primary} radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
-                No platform data available
-              </div>
-            )}
+            <PlatformBarChart data={platformData} />
           </CardContent>
         </Card>
 
@@ -272,27 +248,7 @@ export default function AnalyticsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={engagementRateData}>
-                <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
-                <XAxis
-                  dataKey="platform"
-                  stroke="#A1A1AA"
-                  fontSize={12}
-                  tickLine={false}
-                />
-                <YAxis stroke="#A1A1AA" fontSize={12} tickLine={false} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#18181B',
-                    border: '1px solid #27272A',
-                    borderRadius: '8px',
-                    color: '#FAFAFA',
-                  }}
-                />
-                <Bar dataKey="rate" fill={COLORS.secondary} radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <EngagementRateChart data={engagementRateData} />
           </CardContent>
         </Card>
       </div>

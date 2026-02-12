@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -311,12 +312,15 @@ export function GenerateModal({
               <Card className="p-6">
                 <div className="space-y-3">
                   <Badge variant="secondary">Image</Badge>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={progress.result.outputUrl}
-                    alt="Generated content"
-                    className="w-full rounded-lg"
-                  />
+                  <div className="relative w-full aspect-square">
+                    <Image
+                      src={progress.result.outputUrl}
+                      alt="Generated content"
+                      fill
+                      className="rounded-lg object-cover"
+                      sizes="(max-width: 768px) 100vw, 600px"
+                    />
+                  </div>
                 </div>
               </Card>
             )}

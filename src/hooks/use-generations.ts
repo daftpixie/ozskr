@@ -6,6 +6,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/features/wallet/store';
+import { QUERY_STALE_TIMES } from '@/lib/query-config';
 import {
   GenerateContentRequest,
   ContentGenerationResponse,
@@ -76,6 +77,7 @@ export function useGeneration(id: string | undefined) {
       return ContentGenerationResponseSchema.parse(data);
     },
     enabled: !!token && !!id,
+    staleTime: QUERY_STALE_TIMES.GENERATIONS,
   });
 }
 

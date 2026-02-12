@@ -5,6 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/features/wallet/store';
+import { QUERY_STALE_TIMES } from '@/lib/query-config';
 import type {
   SwapQuoteRequest,
   SwapExecuteRequest,
@@ -116,6 +117,7 @@ export function useSwapHistory(page = 1, limit = 20) {
       return data as { swaps: SwapHistoryResponse[]; total: number };
     },
     enabled: !!token,
+    staleTime: QUERY_STALE_TIMES.TOKEN_BALANCES,
   });
 }
 
@@ -211,6 +213,6 @@ export function useTokenBalance(
       return data as TokenBalance;
     },
     enabled: !!token && !!walletAddress && !!mint,
-    staleTime: 10_000, // 10 seconds
+    staleTime: QUERY_STALE_TIMES.TOKEN_BALANCES,
   });
 }

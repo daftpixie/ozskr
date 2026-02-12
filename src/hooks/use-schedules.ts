@@ -5,6 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/features/wallet/store';
+import { QUERY_STALE_TIMES } from '@/lib/query-config';
 import {
   ContentScheduleCreate,
   ContentScheduleUpdate,
@@ -65,6 +66,7 @@ export function useContentSchedules(params?: PaginationParams) {
       };
     },
     enabled: !!token,
+    staleTime: QUERY_STALE_TIMES.SCHEDULES,
   });
 }
 
@@ -95,6 +97,7 @@ export function useContentSchedule(id: string | undefined) {
       return ContentScheduleResponseSchema.parse(data);
     },
     enabled: !!token && !!id,
+    staleTime: QUERY_STALE_TIMES.SCHEDULES,
   });
 }
 

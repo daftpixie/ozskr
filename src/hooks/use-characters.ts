@@ -5,6 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/features/wallet/store';
+import { QUERY_STALE_TIMES } from '@/lib/query-config';
 import {
   CharacterCreate,
   CharacterUpdate,
@@ -52,6 +53,7 @@ export function useCharacters(params?: PaginationParams) {
       return PaginatedCharactersSchema.parse(data);
     },
     enabled: !!token,
+    staleTime: QUERY_STALE_TIMES.CHARACTERS,
   });
 }
 
@@ -82,6 +84,7 @@ export function useCharacter(id: string | undefined) {
       return CharacterWithStatsSchema.parse(data);
     },
     enabled: !!token && !!id,
+    staleTime: QUERY_STALE_TIMES.CHARACTERS,
   });
 }
 

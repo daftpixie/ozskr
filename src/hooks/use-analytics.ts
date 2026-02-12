@@ -5,6 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/features/wallet/store';
+import { QUERY_STALE_TIMES } from '@/lib/query-config';
 import {
   AnalyticsSummaryResponse,
   AnalyticsSnapshotResponse,
@@ -54,6 +55,7 @@ export function useAnalyticsSummary(characterId: string | undefined) {
       return data as AnalyticsSummaryResponse;
     },
     enabled: !!token && !!characterId,
+    staleTime: QUERY_STALE_TIMES.ANALYTICS,
   });
 }
 
@@ -97,6 +99,7 @@ export function useAnalyticsHistory(
       };
     },
     enabled: !!token && !!characterId,
+    staleTime: QUERY_STALE_TIMES.ANALYTICS,
   });
 }
 
@@ -125,5 +128,6 @@ export function useAnalyticsOverview() {
       return data as AnalyticsOverviewResponse;
     },
     enabled: !!token,
+    staleTime: QUERY_STALE_TIMES.ANALYTICS,
   });
 }

@@ -6,6 +6,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -141,12 +142,13 @@ export function PublishModal({
               <div className="space-y-3">
                 <Label className="text-sm">Content Preview</Label>
                 {outputUrl && (
-                  <div className="rounded-lg overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                  <div className="relative w-full aspect-square rounded-lg overflow-hidden">
+                    <Image
                       src={outputUrl}
                       alt="Generated content"
-                      className="w-full"
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 600px"
                     />
                   </div>
                 )}
