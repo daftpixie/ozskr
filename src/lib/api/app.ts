@@ -16,6 +16,7 @@ import { trading } from './routes/trading';
 import { analytics } from './routes/analytics';
 import { schedules } from './routes/schedules';
 import { social } from './routes/social';
+import { gamification } from './routes/gamification';
 
 // Create main Hono app with /api base path (Next.js catch-all is at /api/[[...route]])
 const app = new Hono().basePath('/api');
@@ -43,6 +44,7 @@ app.route('/content', content);
 app.route('/trading', trading);
 app.route('/analytics', analytics);
 app.route('/social', social);
+app.route('/gamification', gamification);
 
 // Global error handler — returns generic message to clients
 app.onError((_err, c) => {

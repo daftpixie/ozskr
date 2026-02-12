@@ -82,6 +82,50 @@ export enum SocialPostStatus {
   DELETED = 'deleted',
 }
 
+export enum PointsType {
+  CREATION = 'creation',
+  GENERATION = 'generation',
+  PUBLISHING = 'publishing',
+  ENGAGEMENT = 'engagement',
+  STREAK = 'streak',
+  REFERRAL = 'referral',
+}
+
+export enum PointsSourceType {
+  CHARACTER = 'character',
+  CONTENT = 'content',
+  SOCIAL_POST = 'social_post',
+  ACHIEVEMENT = 'achievement',
+}
+
+export enum UserTier {
+  NEWCOMER = 'newcomer',
+  CREATOR = 'creator',
+  INFLUENCER = 'influencer',
+  MOGUL = 'mogul',
+  LEGEND = 'legend',
+}
+
+export enum AchievementCategory {
+  CREATION = 'creation',
+  PUBLISHING = 'publishing',
+  ENGAGEMENT = 'engagement',
+  STREAK = 'streak',
+}
+
+export enum AchievementRequirementType {
+  COUNT = 'count',
+  STREAK = 'streak',
+  MILESTONE = 'milestone',
+}
+
+export enum LeaderboardPeriod {
+  DAILY = 'daily',
+  WEEKLY = 'weekly',
+  MONTHLY = 'monthly',
+  ALL_TIME = 'all_time',
+}
+
 // =============================================================================
 // TABLE TYPES
 // =============================================================================
@@ -270,6 +314,61 @@ export interface AnalyticsSnapshot {
   created_at: string;
 }
 
+export interface UserPoints {
+  id: string;
+  wallet_address: string;
+  points_type: PointsType;
+  points_amount: number;
+  description: string;
+  source_type: PointsSourceType;
+  source_id: string | null;
+  created_at: string;
+}
+
+export interface UserStats {
+  wallet_address: string;
+  total_points: number;
+  current_streak_days: number;
+  longest_streak_days: number;
+  last_active_date: string | null;
+  total_agents_created: number;
+  total_content_generated: number;
+  total_posts_published: number;
+  tier: UserTier;
+  updated_at: string;
+}
+
+export interface Achievement {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: AchievementCategory;
+  requirement_type: AchievementRequirementType;
+  requirement_value: number;
+  points_reward: number;
+  tier_required: UserTier | null;
+  created_at: string;
+}
+
+export interface UserAchievement {
+  id: string;
+  wallet_address: string;
+  achievement_id: string;
+  unlocked_at: string;
+}
+
+export interface LeaderboardEntry {
+  wallet_address: string;
+  display_name: string | null;
+  total_points: number;
+  rank: number;
+  tier: UserTier;
+  period: LeaderboardPeriod;
+  cached_at: string;
+}
+
 // =============================================================================
 // INSERT TYPES (Optional fields for creation)
 // =============================================================================
@@ -385,6 +484,50 @@ export type AnalyticsSnapshotInsert = Pick<
     >
   >;
 
+export type UserPointsInsert = Pick<
+  UserPoints,
+  'wallet_address' | 'points_type' | 'points_amount' | 'description' | 'source_type'
+> &
+  Partial<Pick<UserPoints, 'source_id'>>;
+
+export type UserStatsInsert = Pick<UserStats, 'wallet_address'> &
+  Partial<
+    Pick<
+      UserStats,
+      | 'total_points'
+      | 'current_streak_days'
+      | 'longest_streak_days'
+      | 'last_active_date'
+      | 'total_agents_created'
+      | 'total_content_generated'
+      | 'total_posts_published'
+      | 'tier'
+    >
+  >;
+
+export type AchievementInsert = Pick<
+  Achievement,
+  | 'slug'
+  | 'name'
+  | 'description'
+  | 'icon'
+  | 'category'
+  | 'requirement_type'
+  | 'requirement_value'
+  | 'points_reward'
+> &
+  Partial<Pick<Achievement, 'tier_required'>>;
+
+export type UserAchievementInsert = Pick<
+  UserAchievement,
+  'wallet_address' | 'achievement_id'
+>;
+
+export type LeaderboardEntryInsert = Pick<
+  LeaderboardEntry,
+  'wallet_address' | 'total_points' | 'rank' | 'tier' | 'period'
+> &
+  Partial<Pick<LeaderboardEntry, 'display_name' | 'cached_at'>>;
 
 // =============================================================================
 // UPDATE TYPES (All fields optional)
@@ -486,6 +629,24 @@ export type AnalyticsSnapshotUpdate = Partial<
   >
 >;
 
+export type UserStatsUpdate = Partial<
+  Pick<
+    UserStats,
+    | 'total_points'
+    | 'current_streak_days'
+    | 'longest_streak_days'
+    | 'last_active_date'
+    | 'total_agents_created'
+    | 'total_content_generated'
+    | 'total_posts_published'
+    | 'tier'
+  >
+>;
+
+export type LeaderboardEntryUpdate = Partial<
+  Pick<LeaderboardEntry, 'display_name' | 'total_points' | 'rank' | 'tier' | 'cached_at'>
+>;
+
 // =============================================================================
 // DATABASE TYPE (Supabase-compatible)
 // =============================================================================
@@ -563,6 +724,31 @@ export interface Database {
         Insert: AnalyticsSnapshotInsert;
         Update: AnalyticsSnapshotUpdate;
       };
+      user_points: {
+        Row: UserPoints;
+        Insert: UserPointsInsert;
+        Update: never; // Append-only ledger
+      };
+      user_stats: {
+        Row: UserStats;
+        Insert: UserStatsInsert;
+        Update: UserStatsUpdate;
+      };
+      achievements: {
+        Row: Achievement;
+        Insert: AchievementInsert;
+        Update: never; // System-managed
+      };
+      user_achievements: {
+        Row: UserAchievement;
+        Insert: UserAchievementInsert;
+        Update: never; // Immutable once unlocked
+      };
+      leaderboard_cache: {
+        Row: LeaderboardEntry;
+        Insert: LeaderboardEntryInsert;
+        Update: LeaderboardEntryUpdate;
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -578,6 +764,12 @@ export interface Database {
       schedule_content_type: ScheduleContentType;
       social_platform: SocialPlatform;
       social_post_status: SocialPostStatus;
+      points_type: PointsType;
+      points_source_type: PointsSourceType;
+      user_tier: UserTier;
+      achievement_category: AchievementCategory;
+      achievement_requirement_type: AchievementRequirementType;
+      leaderboard_period: LeaderboardPeriod;
     };
   };
 }
