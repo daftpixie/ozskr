@@ -8,6 +8,7 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { health } from './routes/health';
 import { auth } from './routes/auth';
+import { ai } from './routes/ai';
 import { characters } from './routes/characters';
 import { agents } from './routes/agents';
 import { content } from './routes/content';
@@ -32,7 +33,8 @@ app.use(
 // Mount route groups
 app.route('/health', health);
 app.route('/auth', auth);
-app.route('/characters', characters);
+app.route('/ai', ai);
+app.route('/characters', characters); // Deprecated - redirects to /ai/characters
 app.route('/agents', agents);
 app.route('/content', content);
 app.route('/trading', trading);

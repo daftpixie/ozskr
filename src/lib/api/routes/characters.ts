@@ -1,91 +1,26 @@
 /**
- * Character Routes
- * CRUD operations for AI agent characters
+ * Character Routes (DEPRECATED - redirects to /api/ai/characters)
+ * Use /api/ai/characters for all character operations
+ *
+ * This file is kept for backward compatibility but will be removed in a future version.
  */
 
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
-import { CharacterCreateSchema, CharacterUpdateSchema } from '@/types/schemas';
-import { authMiddleware } from '../middleware/auth';
-import type { Context } from 'hono';
 
 const characters = new Hono();
 
-// All character routes require authentication
-characters.use('/*', authMiddleware);
-
 /**
- * GET /api/characters
- * List all characters for authenticated user
+ * All character routes redirect to /api/ai/characters
  */
-characters.get('/', async (c: Context) => {
+characters.all('*', async (c) => {
   return c.json(
     {
-      message: 'Not implemented',
-      status: 501,
-      endpoint: 'GET /api/characters',
+      error: 'Endpoint moved',
+      code: 'MOVED_PERMANENTLY',
+      message: 'Character endpoints have moved to /api/ai/characters',
+      newEndpoint: c.req.path.replace('/api/characters', '/api/ai/characters'),
     },
-    501
-  );
-});
-
-/**
- * POST /api/characters
- * Create a new character
- */
-characters.post('/', zValidator('json', CharacterCreateSchema), async (c: Context) => {
-  return c.json(
-    {
-      message: 'Not implemented',
-      status: 501,
-      endpoint: 'POST /api/characters',
-    },
-    501
-  );
-});
-
-/**
- * GET /api/characters/:id
- * Get character by ID
- */
-characters.get('/:id', async (c: Context) => {
-  return c.json(
-    {
-      message: 'Not implemented',
-      status: 501,
-      endpoint: 'GET /api/characters/:id',
-    },
-    501
-  );
-});
-
-/**
- * PUT /api/characters/:id
- * Update character by ID
- */
-characters.put('/:id', zValidator('json', CharacterUpdateSchema), async (c: Context) => {
-  return c.json(
-    {
-      message: 'Not implemented',
-      status: 501,
-      endpoint: 'PUT /api/characters/:id',
-    },
-    501
-  );
-});
-
-/**
- * DELETE /api/characters/:id
- * Delete character by ID
- */
-characters.delete('/:id', async (c: Context) => {
-  return c.json(
-    {
-      message: 'Not implemented',
-      status: 501,
-      endpoint: 'DELETE /api/characters/:id',
-    },
-    501
+    301
   );
 });
 
