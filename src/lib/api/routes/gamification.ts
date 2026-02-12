@@ -6,6 +6,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
+import { logger } from '@/lib/utils/logger';
 import {
   UserPointsResponseSchema,
   UserStatsResponseSchema,
@@ -171,7 +172,11 @@ gamification.get(
       });
 
       return c.json(response, 200);
-    } catch {
+    } catch (error) {
+      logger.error('Failed to fetch points', {
+        walletAddress: auth.walletAddress,
+        error: error instanceof Error ? error.message : 'Unknown',
+      });
       return c.json(
         { error: 'Failed to fetch points', code: 'INTERNAL_ERROR' },
         500
@@ -246,7 +251,11 @@ gamification.get('/me/stats', async (c) => {
     });
 
     return c.json(response, 200);
-  } catch {
+  } catch (error) {
+    logger.error('Failed to fetch user stats', {
+      walletAddress: auth.walletAddress,
+      error: error instanceof Error ? error.message : 'Unknown',
+    });
     return c.json(
       { error: 'Failed to fetch user stats', code: 'INTERNAL_ERROR' },
       500
@@ -337,7 +346,11 @@ gamification.get('/me/achievements', async (c) => {
     const response = AllAchievementsResponseSchema.parse({ unlocked, locked });
 
     return c.json(response, 200);
-  } catch {
+  } catch (error) {
+    logger.error('Failed to fetch achievements', {
+      walletAddress: auth.walletAddress,
+      error: error instanceof Error ? error.message : 'Unknown',
+    });
     return c.json(
       { error: 'Failed to fetch achievements', code: 'INTERNAL_ERROR' },
       500
@@ -489,7 +502,11 @@ gamification.get(
       });
 
       return c.json(response, 200);
-    } catch {
+    } catch (error) {
+      logger.error('Failed to fetch leaderboard', {
+        walletAddress: auth.walletAddress,
+        error: error instanceof Error ? error.message : 'Unknown',
+      });
       return c.json(
         { error: 'Failed to fetch leaderboard', code: 'INTERNAL_ERROR' },
         500
@@ -609,7 +626,11 @@ gamification.get('/leaderboard/me', async (c) => {
     });
 
     return c.json(response, 200);
-  } catch {
+  } catch (error) {
+    logger.error('Failed to fetch leaderboard position', {
+      walletAddress: auth.walletAddress,
+      error: error instanceof Error ? error.message : 'Unknown',
+    });
     return c.json(
       { error: 'Failed to fetch leaderboard position', code: 'INTERNAL_ERROR' },
       500

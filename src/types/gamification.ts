@@ -99,7 +99,7 @@ export const AchievementResponseSchema = z.object({
   slug: z.string(),
   name: z.string(),
   description: z.string(),
-  icon: z.string(),
+  icon: z.string().max(8),
   category: AchievementCategorySchema,
   requirementType: AchievementRequirementTypeSchema,
   requirementValue: z.number().int().min(0),

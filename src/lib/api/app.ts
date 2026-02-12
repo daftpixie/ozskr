@@ -5,7 +5,8 @@
 
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { logger } from 'hono/logger';
+import { logger } from '@/lib/utils/logger';
+import { AppError } from '@/lib/utils/errors';
 import { health } from './routes/health';
 import { auth } from './routes/auth';
 import { ai } from './routes/ai';
@@ -18,11 +19,50 @@ import { schedules } from './routes/schedules';
 import { social } from './routes/social';
 import { gamification } from './routes/gamification';
 
-// Create main Hono app with /api base path (Next.js catch-all is at /api/[[...route]])
-const app = new Hono().basePath('/api');
+// App context variables type
+type AppVariables = {
+  requestId: string;
+  walletAddress?: string;
+  jwtToken?: string;
+};
 
-// Global middleware
-app.use('*', logger());
+// Create main Hono app with /api base path (Next.js catch-all is at /api/[[...route]])
+const app = new Hono<{ Variables: AppVariables }>().basePath('/api');
+
+// Security headers middleware
+app.use('*', async (c, next) => {
+  await next();
+  c.header('X-Content-Type-Options', 'nosniff');
+  c.header('X-Frame-Options', 'DENY');
+  c.header('X-XSS-Protection', '1; mode=block');
+  c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+  c.header('X-API-Version', '1.0.0');
+  // HSTS only in production
+  if (process.env.NODE_ENV === 'production') {
+    c.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+});
+
+// Request logging middleware
+app.use('*', async (c, next) => {
+  const start = Date.now();
+  const requestId = crypto.randomUUID();
+  c.set('requestId', requestId);
+  c.header('X-Request-Id', requestId);
+
+  await next();
+
+  const duration = Date.now() - start;
+  logger.info('Request completed', {
+    method: c.req.method,
+    path: c.req.path,
+    status: c.res.status,
+    durationMs: duration,
+    requestId,
+  });
+});
+
+// CORS middleware
 app.use(
   '*',
   cors({
@@ -46,8 +86,33 @@ app.route('/analytics', analytics);
 app.route('/social', social);
 app.route('/gamification', gamification);
 
-// Global error handler — returns generic message to clients
-app.onError((_err, c) => {
+// Global error handler with AppError support
+app.onError((err, c) => {
+  if (err instanceof AppError) {
+    logger.warn('Application error', {
+      code: err.code,
+      message: err.message,
+      statusCode: err.statusCode,
+      requestId: c.get('requestId'),
+    });
+    return c.json(
+      {
+        error: err.message,
+        code: err.code,
+        ...(err.details && { details: err.details }),
+      },
+      err.statusCode as 400 | 401 | 403 | 404 | 429 | 500 | 502
+    );
+  }
+
+  // Log full error for unexpected errors (never expose to client)
+  logger.error('Unhandled error', {
+    error: err.message,
+    stack: err.stack,
+    requestId: c.get('requestId'),
+  });
+
+  // Return safe generic response — no stack traces!
   return c.json(
     {
       error: 'Internal server error',
