@@ -65,9 +65,11 @@ export const enhancePrompt = async (
         return await generateText({
           model,
           system: context.dna.systemPrompt,
-          prompt: `Enhance this prompt to match your character's voice and style. Keep the core intent but make it authentic to your persona:
+          prompt: `Enhance this prompt to match your character's voice and style. Keep the core intent but make it authentic to your persona.
 
-"${inputPrompt}"
+<user_input>
+${inputPrompt}
+</user_input>
 
 Enhanced prompt:`,
           maxTokens: 1024,
@@ -78,7 +80,7 @@ Enhanced prompt:`,
 
     const enhancedPrompt = result.text.trim();
 
-    // Extract token usage from AI SDK response
+    // AI SDK generateText() returns usage with promptTokens/completionTokens
     const usage = result.usage as { promptTokens?: number; completionTokens?: number };
     const tokenUsage: TokenUsage = {
       input: usage.promptTokens || 0,

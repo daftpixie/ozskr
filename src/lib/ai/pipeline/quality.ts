@@ -4,6 +4,7 @@
  */
 
 import { generateText } from 'ai';
+import { z } from 'zod';
 import type { CharacterContext } from './context';
 import type { ProgressCallback } from './types';
 import { getPrimaryModel } from '@/lib/ai/mastra';
@@ -73,10 +74,13 @@ Score (0.0-1.0):`,
   });
 
   try {
-    const parsed = JSON.parse(result.text) as { score?: unknown };
-    const score = parsed.score;
-    if (typeof score === 'number' && score >= 0 && score <= 1) {
-      return score;
+    const parsed: unknown = JSON.parse(result.text);
+    const QualityResponseSchema = z.object({
+      score: z.number().min(0).max(1),
+    });
+    const validated = QualityResponseSchema.safeParse(parsed);
+    if (validated.success) {
+      return validated.data.score;
     }
   } catch {
     // If parsing fails, default to mid-range score

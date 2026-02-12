@@ -78,20 +78,29 @@ export const createAgentMemory = (mem0Namespace: string): AgentMemory => {
           limit: options?.limit ?? 10,
         });
 
-        // Handle Mem0 API response structure
-        const results = (result as unknown as { results?: unknown[] })?.results ?? [];
-
-        return results.map((item: unknown) => {
-          const record = item as Record<string, unknown>;
-          return {
-            id: String(record.id ?? ''),
-            memory: String(record.memory ?? ''),
-            metadata: (record.metadata as Record<string, unknown>) ?? {},
-            score: typeof record.score === 'number' ? record.score : undefined,
-            created_at: typeof record.created_at === 'string' ? record.created_at : undefined,
-            updated_at: typeof record.updated_at === 'string' ? record.updated_at : undefined,
-          };
+        // Validate Mem0 API response structure with Zod
+        const Mem0ResponseSchema = z.object({
+          results: z.array(z.object({
+            id: z.string(),
+            memory: z.string(),
+            metadata: z.record(z.string(), z.unknown()).optional(),
+            score: z.number().optional(),
+            created_at: z.string().optional(),
+            updated_at: z.string().optional(),
+          })).optional(),
         });
+
+        const parsed = Mem0ResponseSchema.safeParse(result);
+        const results = parsed.success ? (parsed.data.results ?? []) : [];
+
+        return results.map((item) => ({
+          id: item.id,
+          memory: item.memory,
+          metadata: item.metadata ?? {},
+          score: item.score,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+        }));
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
         throw new Error(`Failed to recall memories: ${message}`);

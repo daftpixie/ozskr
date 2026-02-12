@@ -38,6 +38,15 @@ interface GenerateModalProps {
   characterName: string;
 }
 
+const STAGE_ORDER: GenerationStage[] = [
+  'loading_character',
+  'enhancing_prompt',
+  'generating_content',
+  'quality_check',
+  'moderation',
+  'complete',
+];
+
 const STAGE_LABELS: Record<GenerationStage, string> = {
   loading_character: 'Loading character DNA...',
   enhancing_prompt: 'Enhancing prompt...',
@@ -332,12 +341,3 @@ export function GenerateModal({
     </Dialog>
   );
 }
-
-const STAGE_ORDER: GenerationStage[] = [
-  'loading_character',
-  'enhancing_prompt',
-  'generating_content',
-  'quality_check',
-  'moderation',
-  'complete',
-];

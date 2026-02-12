@@ -23,7 +23,7 @@ import { createAuthenticatedClient } from '../supabase';
 import type { Character, ContentGeneration } from '@/types/database';
 import { GenerationType, ModerationStatus } from '@/types/database';
 import { runPipeline } from '@/lib/ai/pipeline';
-import type { PipelineProgress } from '@/lib/ai/pipeline/types';
+import type { PipelineProgress, PipelineStage } from '@/lib/ai/pipeline/types';
 
 /** Hono env with auth middleware variables */
 type AiEnv = {
@@ -119,7 +119,7 @@ function extractOwnerWallet(joinResult: unknown): string | null {
  * Map pipeline stage names to client-facing stage names.
  * Returns null for internal-only stages that should not be sent to the client.
  */
-const PIPELINE_STAGE_MAP: Record<string, string | null> = {
+const PIPELINE_STAGE_MAP: Record<PipelineStage, string | null> = {
   parsing: 'loading_character',
   loading_context: 'loading_character',
   enhancing: 'enhancing_prompt',

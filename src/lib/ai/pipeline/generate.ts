@@ -81,6 +81,7 @@ const generateTextContent = async (
     const latencyMs = Date.now() - startTime;
     const outputText = result.text.trim();
 
+    // AI SDK generateText() returns usage with promptTokens/completionTokens
     const usage = result.usage as { promptTokens?: number; completionTokens?: number };
     const tokenUsage: TokenUsage = {
       input: usage.promptTokens || 0,
@@ -88,7 +89,7 @@ const generateTextContent = async (
       cached: 0,
     };
 
-    // Heuristic for cache hit
+    // Heuristic: if prompt tokens are low despite long system prompt, likely cached
     const cacheHit = (usage.promptTokens || 0) < 500;
 
     // Claude Sonnet 4 pricing (approx): $3/MTok input, $15/MTok output
@@ -166,7 +167,7 @@ const generateImageContent = async (
 
     const latencyMs = Date.now() - startTime;
 
-    // Extract image URL from fal.ai response
+    // fal.ai subscribe() returns untyped result; narrow to expected FLUX response shape
     const response = result as { images?: Array<{ url: string }> };
     const outputUrl = response.images?.[0]?.url;
 
