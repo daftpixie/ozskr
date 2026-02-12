@@ -5,6 +5,7 @@
 
 import { createSupabaseServerClient } from '@/lib/api/supabase';
 import { publishPost } from '@/lib/social/ayrshare';
+import { ModerationStatus } from '@/types/database';
 import type {
   ContentGeneration,
   SocialAccount,
@@ -187,7 +188,7 @@ export const publishToSocial = async (
   }
 
   // CRITICAL: Verify content is approved
-  if (content.moderation_status !== 'approved') {
+  if (content.moderation_status !== ModerationStatus.APPROVED) {
     throw new PublishError(
       `Content is not approved for publishing (status: ${content.moderation_status})`
     );

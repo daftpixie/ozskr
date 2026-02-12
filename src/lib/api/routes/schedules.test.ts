@@ -21,6 +21,10 @@ vi.mock('@/lib/api/supabase', () => ({
   })),
 }));
 
+vi.mock('@/lib/api/middleware/rate-limit', () => ({
+  createRateLimiter: vi.fn(() => async (_c: unknown, next: () => Promise<unknown>) => next()),
+}));
+
 vi.mock('jose', () => ({
   SignJWT: vi.fn(() => ({
     setProtectedHeader: vi.fn().mockReturnThis(),

@@ -11,6 +11,7 @@ import type {
   ContentSchedule,
   Character,
 } from '@/types/database';
+import { logger } from '@/lib/utils/logger';
 
 /**
  * Concurrency limit for simultaneous pipeline executions
@@ -111,7 +112,9 @@ const processSingleSchedule = async (
         .eq('id', generation.id)
         .single();
 
-      if (updatedGen?.moderation_status === ModerationStatus.APPROVED) {
+      if (!updatedGen) {
+        logger.error('Failed to re-fetch generation for auto-publish check', { generationId: generation.id });
+      } else if (updatedGen.moderation_status === ModerationStatus.APPROVED) {
         // Fetch character's connected social accounts
         const { data: socialAccounts } = await supabase
           .from('social_accounts')
@@ -128,7 +131,7 @@ const processSingleSchedule = async (
             );
           } catch (publishError) {
             // Log but don't fail the schedule - content is generated successfully
-            console.error(`Auto-publish failed for generation ${generation.id}:`, publishError);
+            logger.error('Auto-publish failed', { generationId: generation.id, error: String(publishError) });
           }
         }
       }
@@ -168,7 +171,7 @@ const processSingleSchedule = async (
   } catch (error) {
     // Log error but don't disable schedule - let it retry next time
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`Schedule ${schedule.id} failed:`, errorMessage);
+    logger.error('Schedule processing failed', { scheduleId: schedule.id, error: errorMessage });
 
     return {
       scheduleId: schedule.id,
@@ -261,7 +264,7 @@ export const processScheduledContent = async (): Promise<ScheduleProcessResult[]
         results.push(result.value);
       } else {
         // Promise rejected - shouldn't happen since processSingleSchedule catches errors
-        console.error('Unexpected promise rejection:', result.reason);
+        logger.error('Unexpected promise rejection in schedule batch', { reason: String(result.reason) });
       }
     }
   }

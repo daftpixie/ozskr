@@ -33,6 +33,7 @@ CREATE TABLE content_schedules (
   content_type schedule_content_type NOT NULL,
   prompt_template TEXT NOT NULL,
   is_active BOOLEAN NOT NULL DEFAULT true,
+  auto_publish BOOLEAN NOT NULL DEFAULT false,
   last_run_at TIMESTAMPTZ,
   run_count INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -264,6 +265,7 @@ COMMENT ON COLUMN content_schedules.next_run_at IS 'Next scheduled execution tim
 COMMENT ON COLUMN content_schedules.content_type IS 'Type of content to generate (text, image, video)';
 COMMENT ON COLUMN content_schedules.prompt_template IS 'Template for generating the content prompt';
 COMMENT ON COLUMN content_schedules.is_active IS 'Whether the schedule is active';
+COMMENT ON COLUMN content_schedules.auto_publish IS 'Whether to auto-publish approved content to connected social accounts';
 COMMENT ON COLUMN content_schedules.last_run_at IS 'Last execution time (null if never run)';
 COMMENT ON COLUMN content_schedules.run_count IS 'Number of times this schedule has executed';
 

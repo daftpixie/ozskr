@@ -9,6 +9,7 @@ import {
   ContentScheduleCreate,
   ContentScheduleUpdate,
   ContentScheduleResponse,
+  ContentScheduleResponseSchema,
 } from '@/types/scheduling';
 import { z } from 'zod';
 
@@ -91,7 +92,7 @@ export function useContentSchedule(id: string | undefined) {
       }
 
       const data: unknown = await response.json();
-      return data as ContentScheduleResponse;
+      return ContentScheduleResponseSchema.parse(data);
     },
     enabled: !!token && !!id,
   });
@@ -121,7 +122,7 @@ export function useCreateSchedule() {
       }
 
       const result: unknown = await response.json();
-      return result as ContentScheduleResponse;
+      return ContentScheduleResponseSchema.parse(result);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['schedules'] });
@@ -153,7 +154,7 @@ export function useUpdateSchedule(id: string) {
       }
 
       const result: unknown = await response.json();
-      return result as ContentScheduleResponse;
+      return ContentScheduleResponseSchema.parse(result);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['schedule', id] });

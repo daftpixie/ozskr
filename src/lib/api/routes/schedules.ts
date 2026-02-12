@@ -13,8 +13,12 @@ import {
 } from '@/types/scheduling';
 import { UuidSchema, paginatedResponse } from '@/types/schemas';
 import { authMiddleware } from '../middleware/auth';
+import { createRateLimiter } from '../middleware/rate-limit';
 import { createAuthenticatedClient } from '../supabase';
 import type { ContentSchedule } from '@/types/database';
+
+/** Rate limit for manual schedule triggers: 5 per minute per wallet */
+const triggerLimiter = createRateLimiter(5, 60, 'ozskr:schedule-trigger');
 
 /** Hono env with auth middleware variables */
 type SchedulesEnv = {
@@ -412,7 +416,7 @@ schedules.delete('/:id', async (c) => {
  * POST /api/ai/schedules/:id/trigger
  * Manually trigger a scheduled run (sets next_run_at to now)
  */
-schedules.post('/:id/trigger', async (c) => {
+schedules.post('/:id/trigger', triggerLimiter, async (c) => {
   const auth = getAuthContext(c);
   if (!auth) {
     return c.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, 401);
