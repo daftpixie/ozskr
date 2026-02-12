@@ -15,6 +15,8 @@ import {
   Settings,
   ArrowLeftRight,
   Wallet,
+  Calendar,
+  Share2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -29,12 +31,14 @@ const navigationItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'My Agents', href: '/agents', icon: Bot },
   { label: 'Create Agent', href: '/agents/create', icon: Plus },
+  { label: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
   { label: 'Trade', href: '/dashboard/trade', icon: ArrowLeftRight },
   { label: 'Portfolio', href: '/dashboard/portfolio', icon: Wallet },
   { label: 'Analytics', href: '/analytics', icon: BarChart3 },
 ];
 
 const settingsItems: NavItem[] = [
+  { label: 'Social Accounts', href: '/dashboard/settings/social', icon: Share2 },
   { label: 'Settings', href: '/settings', icon: Settings },
 ];
 

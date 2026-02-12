@@ -17,6 +17,8 @@ import {
   LogOut,
   Wallet,
   Sparkles,
+  Calendar,
+  Share2,
 } from 'lucide-react';
 import { useWalletAuth } from '@/features/wallet/hooks/use-wallet-auth';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -117,10 +119,21 @@ export function CommandBar({ open, onOpenChange }: CommandBarProps) {
                 onSelect={() => handleNavigate('/agents/create')}
               />
               <CommandItem
+                icon={Calendar}
+                label="Content Calendar"
+                shortcut="L"
+                onSelect={() => handleNavigate('/dashboard/calendar')}
+              />
+              <CommandItem
                 icon={BarChart3}
                 label="Analytics"
                 shortcut="Y"
                 onSelect={() => handleNavigate('/analytics')}
+              />
+              <CommandItem
+                icon={Share2}
+                label="Social Accounts"
+                onSelect={() => handleNavigate('/dashboard/settings/social')}
               />
               <CommandItem
                 icon={Settings}

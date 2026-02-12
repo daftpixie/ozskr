@@ -56,7 +56,6 @@ function mapAccountToResponse(account: SocialAccount) {
     platform: account.platform,
     platformAccountId: account.platform_account_id,
     platformUsername: account.platform_username,
-    ayrshareProfileKey: account.ayrshare_profile_key,
     isConnected: account.is_connected,
     connectedAt: account.connected_at,
     lastPostedAt: account.last_posted_at,

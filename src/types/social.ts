@@ -39,7 +39,6 @@ export const SocialAccountResponseSchema = z.object({
   platform: SocialPlatformSchema,
   platformAccountId: z.string(),
   platformUsername: z.string(),
-  ayrshareProfileKey: z.string(),
   isConnected: z.boolean(),
   connectedAt: TimestampSchema,
   lastPostedAt: TimestampSchema.nullable(),
