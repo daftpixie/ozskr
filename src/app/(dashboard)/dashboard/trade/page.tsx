@@ -24,8 +24,8 @@ import { QuotePreviewCard } from '@/features/trading/components/quote-preview';
 import { SwapConfirmModal } from '@/features/trading/components/swap-confirm-modal';
 import { SwapHistory } from '@/features/trading/components/swap-history';
 import { cn } from '@/lib/utils';
+import { parseTokenAmount, formatTokenAmount } from '@/lib/solana/tokens';
 import type { SwapQuoteRequest } from '@/types/trading';
-
 
 export default function TradePage() {
   const { user, isAuthenticated } = useWalletAuth();
@@ -65,9 +65,8 @@ export default function TradePage() {
     const inputToken = tokens?.find((t) => t.mint === inputMint);
     if (!inputToken) return;
 
-    const baseAmount = BigInt(
-      Math.floor(parseFloat(amount) * 10 ** inputToken.decimals)
-    ).toString();
+    // Use parseTokenAmount for precise BigInt conversion — no floating point
+    const baseAmount = parseTokenAmount(amount, inputToken.decimals).toString();
 
     setQuoteCleared(false);
     setQuoteParams({
@@ -84,11 +83,8 @@ export default function TradePage() {
     const inputToken = tokens?.find((t) => t.mint === inputMint);
     if (!inputToken) return;
 
-    const balanceBigInt = BigInt(inputBalance.balance);
-    const formatted = (
-      Number(balanceBigInt) /
-      10 ** inputToken.decimals
-    ).toString();
+    // Use formatTokenAmount for precise string conversion — no floating point
+    const formatted = formatTokenAmount(BigInt(inputBalance.balance), inputToken.decimals);
     setAmount(formatted);
   };
 
@@ -115,7 +111,7 @@ export default function TradePage() {
   const handleCustomSlippageChange = (value: string) => {
     setCustomSlippage(value);
     const numValue = parseFloat(value);
-    if (!isNaN(numValue) && numValue > 0 && numValue <= 3) {
+    if (!isNaN(numValue) && numValue >= 0.1 && numValue <= 3) {
       setSlippageBps(Math.floor(numValue * 100));
     }
   };

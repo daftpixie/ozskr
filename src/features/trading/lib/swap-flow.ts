@@ -187,22 +187,27 @@ export async function getSwapQuote(params: GetSwapQuoteParams): Promise<QuotePre
   }
 
   // Format amounts for display
-  const inputAmount = formatTokenAmount(BigInt(quote.inputAmount), inputToken.decimals);
-  const outputAmount = formatTokenAmount(BigInt(quote.outputAmount), outputToken.decimals);
+  const inputAmountRaw = BigInt(quote.inputAmount);
+  const outputAmountRaw = BigInt(quote.outputAmount);
+  const inputAmount = formatTokenAmount(inputAmountRaw, inputToken.decimals);
+  const outputAmount = formatTokenAmount(outputAmountRaw, outputToken.decimals);
 
-  // Calculate exchange rate: "1 INPUT = X OUTPUT"
-  const inputAmountDecimal = Number(inputAmount);
-  const outputAmountDecimal = Number(outputAmount);
-  const exchangeRateValue = inputAmountDecimal > 0 ? outputAmountDecimal / inputAmountDecimal : 0;
-  const exchangeRate = `1 ${inputToken.symbol} = ${exchangeRateValue.toFixed(6)} ${outputToken.symbol}`;
+  // Calculate exchange rate using BigInt — multiply output by 10^6 for 6 decimal precision
+  const RATE_PRECISION = 1_000_000n;
+  const exchangeRateScaled = inputAmountRaw > 0n
+    ? (outputAmountRaw * RATE_PRECISION) / inputAmountRaw
+    : 0n;
+  const exchangeRateStr = formatTokenAmount(exchangeRateScaled, 6);
+  const exchangeRate = `1 ${inputToken.symbol} = ${exchangeRateStr} ${outputToken.symbol}`;
 
-  // Parse price impact
-  const priceImpact = `${Number(quote.priceImpact).toFixed(2)}%`;
+  // Price impact — already a string from Jupiter, just format for display
+  const priceImpact = quote.priceImpact;
 
-  // Calculate minimum received after slippage
-  const slippageMultiplier = 1 - (params.slippageBps / 10_000);
-  const minimumReceivedValue = outputAmountDecimal * slippageMultiplier;
-  const minimumReceived = `${minimumReceivedValue.toFixed(inputToken.decimals)} ${outputToken.symbol}`;
+  // Calculate minimum received after slippage using BigInt
+  // minimumReceived = outputAmount * (10000 - slippageBps) / 10000
+  const slippageBps = BigInt(params.slippageBps);
+  const minimumReceivedRaw = (outputAmountRaw * (10_000n - slippageBps)) / 10_000n;
+  const minimumReceived = `${formatTokenAmount(minimumReceivedRaw, outputToken.decimals)} ${outputToken.symbol}`;
 
   return {
     inputToken,

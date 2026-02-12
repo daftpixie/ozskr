@@ -132,7 +132,8 @@ export async function fetchPortfolio(
 
     let usdValue: number | null = null;
     if (price !== null && price !== undefined) {
-      // Calculate USD value: balance * price
+      // Safe: USD values are display-only approximations, never used in transactions.
+      // Float math is acceptable here — precision loss on USD display is negligible.
       const balanceDecimal = Number(formattedBalance);
       usdValue = balanceDecimal * price;
     }
@@ -227,6 +228,7 @@ async function fetchPrices(mints: string[]): Promise<Map<string, number>> {
     // Build price map
     const priceMap = new Map<string, number>();
     for (const [mint, priceData] of Object.entries(data)) {
+      // Safe: USD prices are display-only, never used in on-chain calculations
       const price = parseFloat(priceData.price);
       if (!isNaN(price)) {
         priceMap.set(mint, price);
