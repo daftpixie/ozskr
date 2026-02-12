@@ -178,7 +178,7 @@ ai.post('/characters', zValidator('json', CharacterCreateSchema), async (c) => {
     }
 
     return c.json(mapCharacterToResponse(character), 201);
-  } catch (error) {
+  } catch {
     return c.json(
       { error: 'Failed to create character', code: 'INTERNAL_ERROR' },
       500
@@ -252,7 +252,7 @@ ai.get(
       });
 
       return c.json(response, 200);
-    } catch (error) {
+    } catch {
       return c.json(
         { error: 'Failed to fetch characters', code: 'INTERNAL_ERROR' },
         500
