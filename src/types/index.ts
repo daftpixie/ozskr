@@ -9,11 +9,19 @@ export type {
   Character,
   AgentRun,
   Content,
+  ContentSchedule,
+  SocialAccount,
+  SocialPost,
+  AnalyticsSnapshot,
   UserInsert,
   SessionInsert,
   CharacterInsert,
   AgentRunInsert,
   ContentInsert,
+  ContentScheduleInsert,
+  SocialAccountInsert,
+  SocialPostInsert,
+  AnalyticsSnapshotInsert,
   Database,
 } from './database';
 
@@ -24,7 +32,13 @@ export {
   RunStatus,
   ContentType,
   ModerationStatus,
+  ScheduleType,
+  ScheduleContentType,
+  SocialPlatform,
+  SocialPostStatus,
 } from './database';
 
 // Re-export all schemas
 export * from './schemas';
+export * from './scheduling';
+export * from './social';

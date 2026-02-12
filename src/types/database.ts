@@ -57,6 +57,31 @@ export enum SwapStatus {
   FAILED = 'failed',
 }
 
+export enum ScheduleType {
+  ONE_TIME = 'one_time',
+  RECURRING = 'recurring',
+}
+
+export enum ScheduleContentType {
+  TEXT = 'text',
+  IMAGE = 'image',
+  VIDEO = 'video',
+}
+
+export enum SocialPlatform {
+  TWITTER = 'twitter',
+  INSTAGRAM = 'instagram',
+  TIKTOK = 'tiktok',
+  YOUTUBE = 'youtube',
+}
+
+export enum SocialPostStatus {
+  QUEUED = 'queued',
+  POSTED = 'posted',
+  FAILED = 'failed',
+  DELETED = 'deleted',
+}
+
 // =============================================================================
 // TABLE TYPES
 // =============================================================================
@@ -189,6 +214,61 @@ export interface TokenBalanceCache {
   last_updated_at: string;
 }
 
+export interface ContentSchedule {
+  id: string;
+  character_id: string;
+  schedule_type: ScheduleType;
+  cron_expression: string | null;
+  next_run_at: string;
+  content_type: ScheduleContentType;
+  prompt_template: string;
+  is_active: boolean;
+  last_run_at: string | null;
+  run_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SocialAccount {
+  id: string;
+  wallet_address: string;
+  platform: SocialPlatform;
+  platform_account_id: string;
+  platform_username: string;
+  ayrshare_profile_key: string;
+  is_connected: boolean;
+  connected_at: string;
+  last_posted_at: string | null;
+  created_at: string;
+}
+
+export interface SocialPost {
+  id: string;
+  content_generation_id: string;
+  social_account_id: string;
+  platform: SocialPlatform;
+  post_id: string | null;
+  post_url: string | null;
+  status: SocialPostStatus;
+  posted_at: string | null;
+  error_message: string | null;
+  engagement_metrics: Record<string, unknown>;
+  last_metrics_update: string | null;
+  created_at: string;
+}
+
+export interface AnalyticsSnapshot {
+  id: string;
+  character_id: string;
+  snapshot_date: string;
+  total_generations: number;
+  total_posts: number;
+  total_engagement: Record<string, unknown>;
+  avg_quality_score: number | null;
+  top_performing_content_id: string | null;
+  created_at: string;
+}
+
 // =============================================================================
 // INSERT TYPES (Optional fields for creation)
 // =============================================================================
@@ -266,6 +346,44 @@ export type TokenBalanceCacheInsert = Pick<
 > &
   Partial<Pick<TokenBalanceCache, 'usd_value' | 'last_updated_at'>>;
 
+export type ContentScheduleInsert = Pick<
+  ContentSchedule,
+  'character_id' | 'schedule_type' | 'next_run_at' | 'content_type' | 'prompt_template'
+> &
+  Partial<Pick<ContentSchedule, 'cron_expression' | 'is_active' | 'last_run_at' | 'run_count'>>;
+
+export type SocialAccountInsert = Pick<
+  SocialAccount,
+  'wallet_address' | 'platform' | 'platform_account_id' | 'platform_username' | 'ayrshare_profile_key'
+> &
+  Partial<Pick<SocialAccount, 'is_connected' | 'connected_at' | 'last_posted_at'>>;
+
+export type SocialPostInsert = Pick<
+  SocialPost,
+  'content_generation_id' | 'social_account_id' | 'platform' | 'status'
+> &
+  Partial<
+    Pick<
+      SocialPost,
+      'post_id' | 'post_url' | 'posted_at' | 'error_message' | 'engagement_metrics' | 'last_metrics_update'
+    >
+  >;
+
+export type AnalyticsSnapshotInsert = Pick<
+  AnalyticsSnapshot,
+  'character_id' | 'snapshot_date'
+> &
+  Partial<
+    Pick<
+      AnalyticsSnapshot,
+      | 'total_generations'
+      | 'total_posts'
+      | 'total_engagement'
+      | 'avg_quality_score'
+      | 'top_performing_content_id'
+    >
+  >;
+
 
 // =============================================================================
 // UPDATE TYPES (All fields optional)
@@ -322,6 +440,48 @@ export type SwapHistoryUpdate = Partial<
 
 export type TokenBalanceCacheUpdate = Partial<
   Pick<TokenBalanceCache, 'balance' | 'decimals' | 'usd_value' | 'last_updated_at'>
+>;
+
+export type ContentScheduleUpdate = Partial<
+  Pick<
+    ContentSchedule,
+    | 'schedule_type'
+    | 'cron_expression'
+    | 'next_run_at'
+    | 'content_type'
+    | 'prompt_template'
+    | 'is_active'
+    | 'last_run_at'
+    | 'run_count'
+  >
+>;
+
+export type SocialAccountUpdate = Partial<
+  Pick<SocialAccount, 'is_connected' | 'last_posted_at'>
+>;
+
+export type SocialPostUpdate = Partial<
+  Pick<
+    SocialPost,
+    | 'post_id'
+    | 'post_url'
+    | 'status'
+    | 'posted_at'
+    | 'error_message'
+    | 'engagement_metrics'
+    | 'last_metrics_update'
+  >
+>;
+
+export type AnalyticsSnapshotUpdate = Partial<
+  Pick<
+    AnalyticsSnapshot,
+    | 'total_generations'
+    | 'total_posts'
+    | 'total_engagement'
+    | 'avg_quality_score'
+    | 'top_performing_content_id'
+  >
 >;
 
 // =============================================================================
@@ -381,6 +541,26 @@ export interface Database {
         Insert: TokenBalanceCacheInsert;
         Update: TokenBalanceCacheUpdate;
       };
+      content_schedules: {
+        Row: ContentSchedule;
+        Insert: ContentScheduleInsert;
+        Update: ContentScheduleUpdate;
+      };
+      social_accounts: {
+        Row: SocialAccount;
+        Insert: SocialAccountInsert;
+        Update: SocialAccountUpdate;
+      };
+      social_posts: {
+        Row: SocialPost;
+        Insert: SocialPostInsert;
+        Update: SocialPostUpdate;
+      };
+      analytics_snapshots: {
+        Row: AnalyticsSnapshot;
+        Insert: AnalyticsSnapshotInsert;
+        Update: AnalyticsSnapshotUpdate;
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -392,6 +572,10 @@ export interface Database {
       moderation_status: ModerationStatus;
       generation_type: GenerationType;
       swap_status: SwapStatus;
+      schedule_type: ScheduleType;
+      schedule_content_type: ScheduleContentType;
+      social_platform: SocialPlatform;
+      social_post_status: SocialPostStatus;
     };
   };
 }

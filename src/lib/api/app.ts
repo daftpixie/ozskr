@@ -14,6 +14,8 @@ import { agents } from './routes/agents';
 import { content } from './routes/content';
 import { trading } from './routes/trading';
 import { analytics } from './routes/analytics';
+import { schedules } from './routes/schedules';
+import { social } from './routes/social';
 
 // Create main Hono app with /api base path (Next.js catch-all is at /api/[[...route]])
 const app = new Hono().basePath('/api');
@@ -34,11 +36,13 @@ app.use(
 app.route('/health', health);
 app.route('/auth', auth);
 app.route('/ai', ai);
+app.route('/ai/schedules', schedules);
 app.route('/characters', characters); // Deprecated - redirects to /ai/characters
 app.route('/agents', agents);
 app.route('/content', content);
 app.route('/trading', trading);
 app.route('/analytics', analytics);
+app.route('/social', social);
 
 // Global error handler — returns generic message to clients
 app.onError((_err, c) => {
