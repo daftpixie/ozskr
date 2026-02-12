@@ -5,7 +5,8 @@
 
 import { createSupabaseServerClient } from '@/lib/api/supabase';
 import { publishPost } from '@/lib/social/ayrshare';
-import { ModerationStatus } from '@/types/database';
+import { logger } from '@/lib/utils/logger';
+import { ModerationStatus, PointsType, PointsSourceType } from '@/types/database';
 import type {
   ContentGeneration,
   SocialAccount,
@@ -113,6 +114,32 @@ const publishToAccount = async (
       .update({ last_posted_at: now })
       .eq('id', account.id);
 
+    // Award points for publishing (async, don't fail the main operation)
+    // Fetch character to get wallet_address
+    void (async () => {
+      try {
+        const { data: character } = await supabase
+          .from('characters')
+          .select('wallet_address')
+          .eq('id', content.character_id)
+          .single();
+
+        if (character) {
+          const { awardPoints, POINTS_VALUES } = await import('@/lib/gamification/points');
+          await awardPoints({
+            walletAddress: character.wallet_address,
+            pointsType: PointsType.PUBLISHING,
+            pointsAmount: POINTS_VALUES.CONTENT_PUBLISHED,
+            description: `Published to ${account.platform}`,
+            sourceType: PointsSourceType.SOCIAL_POST,
+            sourceId: socialPost.id,
+          });
+        }
+      } catch {
+        // Ignore gamification errors
+      }
+    })();
+
     return {
       socialAccountId: account.id,
       platform: account.platform,
@@ -122,7 +149,7 @@ const publishToAccount = async (
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`Failed to publish to ${account.platform}:`, errorMessage);
+    logger.error('Failed to publish to platform', { platform: account.platform, error: errorMessage });
 
     // Try to update social_posts record with error
     try {

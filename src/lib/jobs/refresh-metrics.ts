@@ -6,6 +6,8 @@
 import { createSupabaseServerClient } from '@/lib/api/supabase';
 import { getPostAnalytics } from '@/lib/social/ayrshare';
 import type { SocialPost, SocialPostStatus } from '@/types/database';
+import { PointsType, PointsSourceType } from '@/types/database';
+import { logger } from '@/lib/utils/logger';
 
 /**
  * Error for metrics refresh failures
@@ -41,7 +43,7 @@ const updatePostMetrics = async (
       .single();
 
     if (accountError || !account) {
-      console.error(`Failed to fetch social account for post ${post.id}`);
+      logger.error(`Failed to fetch social account for post ${post.id}`);
       return;
     }
 
@@ -49,16 +51,21 @@ const updatePostMetrics = async (
     const analytics = await getPostAnalytics(post.post_id, account.ayrshare_profile_key);
 
     // Update social_posts record
+    const analyticsMetrics: Record<string, unknown> =
+      typeof analytics === 'object' && analytics !== null && !Array.isArray(analytics)
+        ? (analytics as Record<string, unknown>)
+        : {};
     await supabase
       .from('social_posts')
       .update({
-        engagement_metrics: analytics,
+        engagement_metrics: analyticsMetrics,
         last_metrics_update: new Date().toISOString(),
       })
       .eq('id', post.id);
   } catch (error) {
     // Log error but don't throw - continue processing other posts
-    console.error(`Failed to update metrics for post ${post.id}:`, error);
+    const errorMeta = error instanceof Error ? { message: error.message } : { error: String(error) };
+    logger.error(`Failed to update metrics for post ${post.id}`, errorMeta);
   }
 };
 
@@ -100,7 +107,7 @@ const computeCharacterSnapshot = async (
       .eq('character_id', characterId);
 
     if (genError) {
-      console.error(`Failed to count generations for character ${characterId}`);
+      logger.error(`Failed to count generations for character ${characterId}`);
       return;
     }
 
@@ -111,7 +118,7 @@ const computeCharacterSnapshot = async (
       .eq('character_id', characterId);
 
     if (genIdsError || !generationIds) {
-      console.error(`Failed to fetch generation IDs for character ${characterId}`);
+      logger.error(`Failed to fetch generation IDs for character ${characterId}`);
       return;
     }
 
@@ -125,7 +132,7 @@ const computeCharacterSnapshot = async (
       .in('content_generation_id', genIds);
 
     if (postsError) {
-      console.error(`Failed to count posts for character ${characterId}`);
+      logger.error(`Failed to count posts for character ${characterId}`);
       return;
     }
 
@@ -137,7 +144,7 @@ const computeCharacterSnapshot = async (
       .in('content_generation_id', genIds);
 
     if (fetchPostsError) {
-      console.error(`Failed to fetch posts for character ${characterId}`);
+      logger.error(`Failed to fetch posts for character ${characterId}`);
       return;
     }
 
@@ -189,6 +196,7 @@ const computeCharacterSnapshot = async (
     }
 
     // Upsert analytics snapshot
+    const engagementRecord: Record<string, unknown> = { ...totalEngagement };
     await supabase
       .from('analytics_snapshots')
       .upsert({
@@ -196,14 +204,15 @@ const computeCharacterSnapshot = async (
         snapshot_date: snapshotDate,
         total_generations: totalGenerations || 0,
         total_posts: totalPosts || 0,
-        total_engagement: totalEngagement,
+        total_engagement: engagementRecord,
         avg_quality_score: avgQualityScore,
         top_performing_content_id: topPerformingContentId,
       }, {
         onConflict: 'character_id,snapshot_date',
       });
   } catch (error) {
-    console.error(`Failed to compute snapshot for character ${characterId}:`, error);
+    const errorMeta = error instanceof Error ? { message: error.message } : { error: String(error) };
+    logger.error(`Failed to compute snapshot for character ${characterId}`, errorMeta);
   }
 };
 
@@ -260,7 +269,7 @@ export const refreshEngagementMetrics = async (): Promise<number> => {
     .in('id', contentIds);
 
   if (genError || !generations) {
-    console.error('Failed to fetch generations for snapshot computation');
+    logger.error('Failed to fetch generations for snapshot computation');
     return posts.length;
   }
 
@@ -274,6 +283,48 @@ export const refreshEngagementMetrics = async (): Promise<number> => {
     computeCharacterSnapshot(charId, today, supabase)
   );
   await Promise.allSettled(snapshotPromises);
+
+  // Award engagement milestone points for posts that crossed 10-engagement boundaries
+  for (const post of posts) {
+    const metrics = computeTotalEngagement(post.engagement_metrics);
+    const totalEngagement = metrics.total;
+
+    // Check if total engagements crossed a 10-engagement boundary
+    const milestoneCrossed = Math.floor(totalEngagement / 10);
+
+    if (milestoneCrossed > 0) {
+      // Fetch character to get wallet_address
+      const { data: content } = await supabase
+        .from('content_generations')
+        .select('character_id')
+        .eq('id', post.content_generation_id)
+        .single();
+
+      if (content) {
+        const { data: character } = await supabase
+          .from('characters')
+          .select('wallet_address')
+          .eq('id', content.character_id)
+          .single();
+
+        if (character) {
+          // Award engagement milestone points (async, don't fail the job)
+          void import('@/lib/gamification/points')
+            .then(({ awardPoints, POINTS_VALUES }) =>
+              awardPoints({
+                walletAddress: character.wallet_address,
+                pointsType: PointsType.ENGAGEMENT,
+                pointsAmount: POINTS_VALUES.ENGAGEMENT_MILESTONE * milestoneCrossed,
+                description: `Engagement milestone: ${totalEngagement} total engagements`,
+                sourceType: PointsSourceType.SOCIAL_POST,
+                sourceId: post.id,
+              })
+            )
+            .catch(() => {});
+        }
+      }
+    }
+  }
 
   return posts.length;
 };

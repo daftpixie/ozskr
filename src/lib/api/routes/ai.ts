@@ -21,7 +21,7 @@ import {
 import { authMiddleware } from '../middleware/auth';
 import { createAuthenticatedClient } from '../supabase';
 import type { Character, ContentGeneration } from '@/types/database';
-import { GenerationType, ModerationStatus } from '@/types/database';
+import { GenerationType, ModerationStatus, PointsType, PointsSourceType } from '@/types/database';
 import { runPipeline } from '@/lib/ai/pipeline';
 import type { PipelineProgress, PipelineStage } from '@/lib/ai/pipeline/types';
 
@@ -195,6 +195,25 @@ ai.post('/characters', zValidator('json', CharacterCreateSchema), async (c) => {
         500
       );
     }
+
+    // Award points for agent creation (async, don't fail the main operation)
+    import('@/lib/gamification/points')
+      .then(({ awardPoints, POINTS_VALUES }) =>
+        awardPoints({
+          walletAddress: auth.walletAddress,
+          pointsType: PointsType.CREATION,
+          pointsAmount: POINTS_VALUES.AGENT_CREATED,
+          description: `Created agent: ${character.name}`,
+          sourceType: PointsSourceType.CHARACTER,
+          sourceId: character.id,
+        })
+      )
+      .catch(() => {});
+
+    // Update streak (async, don't fail the main operation)
+    import('@/lib/gamification/streaks')
+      .then(({ updateStreak }) => updateStreak(auth.walletAddress))
+      .catch(() => {});
 
     return c.json(mapCharacterToResponse(character), 201);
   } catch {

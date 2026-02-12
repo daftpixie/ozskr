@@ -7,6 +7,7 @@ import type { CharacterContext } from './context';
 import type { ProgressCallback, PipelineResult } from './types';
 import { createAuthenticatedClient } from '@/lib/api/supabase';
 import { createAgentMemory } from '@/lib/ai/memory';
+import { PointsType, PointsSourceType } from '@/types/database';
 
 /**
  * Error thrown during storage
@@ -142,6 +143,40 @@ export const storeAndNotify = async (
         qualityScore: result.qualityScore,
       },
     });
+
+    // Award points for content generation (async, don't fail the pipeline)
+    // Fetch character to get wallet_address
+    void (async () => {
+      try {
+        const { data: character } = await supabase
+          .from('characters')
+          .select('wallet_address')
+          .eq('id', context.dna.id)
+          .single();
+
+        if (character) {
+          const { awardPoints, POINTS_VALUES } = await import('@/lib/gamification/points');
+          const generationType = context.sessionContext.generationType;
+          const pointsMap: Record<string, number> = {
+            text: POINTS_VALUES.CONTENT_GENERATED_TEXT,
+            image: POINTS_VALUES.CONTENT_GENERATED_IMAGE,
+            video: POINTS_VALUES.CONTENT_GENERATED_VIDEO,
+          };
+          const pointsAmount = pointsMap[generationType] || POINTS_VALUES.CONTENT_GENERATED_TEXT;
+
+          await awardPoints({
+            walletAddress: character.wallet_address,
+            pointsType: PointsType.GENERATION,
+            pointsAmount,
+            description: `Generated ${generationType} content`,
+            sourceType: PointsSourceType.CONTENT,
+            sourceId: generationId,
+          });
+        }
+      } catch {
+        // Ignore gamification errors
+      }
+    })();
   } catch (error) {
     if (error instanceof StorageError) {
       throw error;
