@@ -136,7 +136,7 @@ export async function getTokenBalance(
       const decoded = Buffer.from(data, 'base64');
       amountBytes = decoded.slice(64, 72);
     } else if (Array.isArray(data) && data.length === 2) {
-      // [base64String, encoding]
+      // RPC returns [base64String, encoding] tuple — first element is always a string
       const decoded = Buffer.from(data[0] as string, 'base64');
       amountBytes = decoded.slice(64, 72);
     } else {
@@ -161,6 +161,7 @@ export async function getTokenBalance(
       const decoded = Buffer.from(mintData, 'base64');
       decimals = decoded[44];
     } else if (Array.isArray(mintData) && mintData.length === 2) {
+      // RPC returns [base64String, encoding] tuple — first element is always a string
       const decoded = Buffer.from(mintData[0] as string, 'base64');
       decimals = decoded[44];
     }

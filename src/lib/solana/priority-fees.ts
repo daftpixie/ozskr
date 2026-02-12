@@ -110,7 +110,7 @@ export async function getPriorityFeeEstimate(
     });
 
     if (!response.ok) {
-      console.warn(`Helius priority fee estimation failed (HTTP ${response.status}), using fallback`);
+      // Helius HTTP error — fall through to use fallback priority fee
     } else {
       const responseBody = await response.json();
       const parseResult = HeliusPriorityFeeResponseSchema.safeParse(responseBody);
@@ -119,25 +119,19 @@ export async function getPriorityFeeEstimate(
         const data = parseResult.data;
 
         if (data.error) {
-          console.warn(
-            `Helius priority fee estimation error: ${data.error.message}, using fallback`
-          );
+          // RPC error — fall through to use fallback priority fee
         } else if (data.result?.priorityFeeEstimate !== undefined) {
           // Convert to bigint (microlamports)
           priorityFeeMicrolamports = BigInt(Math.ceil(data.result.priorityFeeEstimate));
         } else {
-          console.warn('No priority fee estimate in response, using fallback');
+          // No estimate in response — fall through to use fallback priority fee
         }
       } else {
-        console.warn(
-          `Invalid Helius response format: ${parseResult.error.message}, using fallback`
-        );
+        // Invalid response format — fall through to use fallback priority fee
       }
     }
-  } catch (err) {
-    console.warn(
-      `Priority fee estimation failed: ${err instanceof Error ? err.message : 'Unknown error'}, using fallback`
-    );
+  } catch {
+    // Network/parse error — fall through to use fallback priority fee
   }
 
   // Convert microlamports to lamports (1 lamport = 1,000,000 microlamports)

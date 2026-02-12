@@ -238,6 +238,7 @@ function parseSimulationError(err: unknown, logs: string[]): string {
   // Try to extract meaningful error from err object
   if (typeof err === 'object' && err !== null) {
     if ('InstructionError' in err) {
+      // Solana RPC error shape: { InstructionError: [index, errorKind] }
       const instructionError = (err as { InstructionError: unknown[] }).InstructionError;
       if (Array.isArray(instructionError) && instructionError.length >= 2) {
         return `Transaction failed at instruction ${instructionError[0]}: ${JSON.stringify(instructionError[1])}`;

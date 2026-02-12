@@ -24,7 +24,7 @@ export const SwapQuoteRequestSchema = z.object({
   inputMint: z.string().min(32).max(44), // Solana token mint address
   outputMint: z.string().min(32).max(44), // Solana token mint address
   amount: z.string().regex(/^\d+$/, 'Amount must be a stringified bigint'), // Stringified bigint
-  slippageBps: z.number().int().min(1).max(1000).default(50), // 1-1000 bps (0.01%-10%)
+  slippageBps: z.number().int().min(1).max(300).default(50), // 1-300 bps (0.01%-3%)
 });
 
 export type SwapQuoteRequest = z.infer<typeof SwapQuoteRequestSchema>;
@@ -56,7 +56,7 @@ export const SwapExecuteRequestSchema = z.object({
   inputMint: z.string().min(32).max(44),
   outputMint: z.string().min(32).max(44),
   inputAmount: z.string().regex(/^\d+$/, 'Amount must be a stringified bigint'),
-  slippageBps: z.number().int().min(1).max(1000).default(50),
+  slippageBps: z.number().int().min(1).max(300).default(50),
   priorityFeeLamports: z.string().regex(/^\d+$/, 'Priority fee must be a stringified bigint').default('0'),
 });
 

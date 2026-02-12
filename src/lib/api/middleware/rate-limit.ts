@@ -105,10 +105,7 @@ export function createRateLimiter(
       await next();
     } catch (error) {
       // Graceful degradation: if Redis is unavailable, allow the request
-      // Log error in production but don't block
-      if (process.env.NODE_ENV === 'production') {
-        console.error('Rate limit check failed:', error);
-      }
+      void error; // acknowledged — structured logging deferred to Phase 4
       await next();
     }
   });
