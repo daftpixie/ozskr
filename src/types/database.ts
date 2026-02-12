@@ -50,6 +50,13 @@ export enum GenerationType {
   VIDEO = 'video',
 }
 
+export enum SwapStatus {
+  PENDING = 'pending',
+  SIMULATED = 'simulated',
+  CONFIRMED = 'confirmed',
+  FAILED = 'failed',
+}
+
 // =============================================================================
 // TABLE TYPES
 // =============================================================================
@@ -146,6 +153,42 @@ export interface CharacterMemory {
   updated_at: string;
 }
 
+export interface SwapHistory {
+  id: string;
+  wallet_address: string;
+  input_mint: string;
+  output_mint: string;
+  input_amount: string;
+  output_amount: string | null;
+  slippage_bps: number;
+  priority_fee_lamports: string;
+  jupiter_order_id: string | null;
+  transaction_signature: string | null;
+  status: SwapStatus;
+  error_message: string | null;
+  simulation_result: Record<string, unknown> | null;
+  created_at: string;
+  confirmed_at: string | null;
+}
+
+export interface Watchlist {
+  id: string;
+  wallet_address: string;
+  token_mint: string;
+  token_symbol: string;
+  token_name: string;
+  added_at: string;
+}
+
+export interface TokenBalanceCache {
+  wallet_address: string;
+  token_mint: string;
+  balance: string;
+  decimals: number;
+  usd_value: string | null;
+  last_updated_at: string;
+}
+
 // =============================================================================
 // INSERT TYPES (Optional fields for creation)
 // =============================================================================
@@ -193,6 +236,36 @@ export type ContentGenerationInsert = Pick<
 export type CharacterMemoryInsert = Pick<CharacterMemory, 'character_id' | 'mem0_namespace'> &
   Partial<Pick<CharacterMemory, 'memory_count' | 'last_synced_at' | 'total_retrievals'>>;
 
+export type SwapHistoryInsert = Pick<
+  SwapHistory,
+  'wallet_address' | 'input_mint' | 'output_mint' | 'input_amount'
+> &
+  Partial<
+    Pick<
+      SwapHistory,
+      | 'output_amount'
+      | 'slippage_bps'
+      | 'priority_fee_lamports'
+      | 'jupiter_order_id'
+      | 'transaction_signature'
+      | 'status'
+      | 'error_message'
+      | 'simulation_result'
+      | 'confirmed_at'
+    >
+  >;
+
+export type WatchlistInsert = Pick<
+  Watchlist,
+  'wallet_address' | 'token_mint' | 'token_symbol' | 'token_name'
+>;
+
+export type TokenBalanceCacheInsert = Pick<
+  TokenBalanceCache,
+  'wallet_address' | 'token_mint' | 'balance' | 'decimals'
+> &
+  Partial<Pick<TokenBalanceCache, 'usd_value' | 'last_updated_at'>>;
+
 
 // =============================================================================
 // UPDATE TYPES (All fields optional)
@@ -233,6 +306,22 @@ export type ContentGenerationUpdate = Partial<
 
 export type CharacterMemoryUpdate = Partial<
   Pick<CharacterMemory, 'memory_count' | 'last_synced_at' | 'total_retrievals'>
+>;
+
+export type SwapHistoryUpdate = Partial<
+  Pick<
+    SwapHistory,
+    | 'output_amount'
+    | 'transaction_signature'
+    | 'status'
+    | 'error_message'
+    | 'simulation_result'
+    | 'confirmed_at'
+  >
+>;
+
+export type TokenBalanceCacheUpdate = Partial<
+  Pick<TokenBalanceCache, 'balance' | 'decimals' | 'usd_value' | 'last_updated_at'>
 >;
 
 // =============================================================================
@@ -277,6 +366,21 @@ export interface Database {
         Insert: CharacterMemoryInsert;
         Update: CharacterMemoryUpdate;
       };
+      swap_history: {
+        Row: SwapHistory;
+        Insert: SwapHistoryInsert;
+        Update: SwapHistoryUpdate;
+      };
+      watchlist: {
+        Row: Watchlist;
+        Insert: WatchlistInsert;
+        Update: never; // Watchlist items are immutable
+      };
+      token_balances_cache: {
+        Row: TokenBalanceCache;
+        Insert: TokenBalanceCacheInsert;
+        Update: TokenBalanceCacheUpdate;
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -287,6 +391,7 @@ export interface Database {
       content_type: ContentType;
       moderation_status: ModerationStatus;
       generation_type: GenerationType;
+      swap_status: SwapStatus;
     };
   };
 }
