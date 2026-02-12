@@ -16,9 +16,11 @@ import {
   Settings,
   LogOut,
   Wallet,
+  Sparkles,
 } from 'lucide-react';
 import { useWalletAuth } from '@/features/wallet/hooks/use-wallet-auth';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { useCharacters } from '@/hooks/use-characters';
 import { cn } from '@/lib/utils';
 
 interface CommandBarProps {
@@ -30,7 +32,11 @@ export function CommandBar({ open, onOpenChange }: CommandBarProps) {
   const router = useRouter();
   const { isAuthenticated, signOut } = useWalletAuth();
   const { connected } = useWallet();
+  const { data: charactersData } = useCharacters({ limit: 5 });
   const [search, setSearch] = useState('');
+
+  // Get first 5 active agents for quick commands
+  const quickAgents = charactersData?.data.slice(0, 5) || [];
 
   // Handle keyboard shortcut
   useEffect(() => {
@@ -123,6 +129,23 @@ export function CommandBar({ open, onOpenChange }: CommandBarProps) {
                 onSelect={() => handleNavigate('/settings')}
               />
             </Command.Group>
+
+            {/* Quick Agents Group */}
+            {quickAgents.length > 0 && (
+              <Command.Group
+                heading="Quick Generate"
+                className="px-2 py-2 text-xs font-medium text-muted-foreground"
+              >
+                {quickAgents.map((agent) => (
+                  <CommandItem
+                    key={agent.id}
+                    icon={Sparkles}
+                    label={`Generate with ${agent.name}`}
+                    onSelect={() => handleNavigate(`/agents/${agent.id}`)}
+                  />
+                ))}
+              </Command.Group>
+            )}
 
             {/* Actions Group */}
             <Command.Group
