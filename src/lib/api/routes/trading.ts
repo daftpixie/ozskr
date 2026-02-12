@@ -5,7 +5,6 @@
 
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { z } from 'zod';
 import {
   SwapQuoteRequestSchema,
   SwapQuoteResponseSchema,
@@ -13,7 +12,6 @@ import {
   SwapHistoryResponseSchema,
   SwapHistoryQuerySchema,
   WatchlistItemSchema,
-  WatchlistResponseSchema,
   TokenBalancesResponseSchema,
 } from '@/types/trading';
 import { UuidSchema, paginatedResponse } from '@/types/schemas';

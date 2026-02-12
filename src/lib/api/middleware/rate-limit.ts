@@ -53,9 +53,6 @@ export function createRateLimiter(
     });
   }
 
-  // Calculate window in milliseconds
-  const windowMs = windowSeconds * 1000;
-
   // Create Redis client from environment variables
   const redis = (Redis as { fromEnv: () => unknown }).fromEnv();
 
