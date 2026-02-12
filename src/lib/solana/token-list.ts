@@ -28,6 +28,13 @@ export interface TokenInfo {
  */
 const TOKEN_LIST: TokenInfo[] = [
   {
+    mint: 'HoPExxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    symbol: 'HOPE',
+    name: 'Hope Token',
+    decimals: 6,
+    logoURI: '', // Gradient circle used instead
+  },
+  {
     mint: 'So11111111111111111111111111111111111111112',
     symbol: 'SOL',
     name: 'Solana',

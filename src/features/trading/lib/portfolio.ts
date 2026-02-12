@@ -9,6 +9,7 @@ import { address } from '@solana/kit';
 import { getSolBalance, getTokenBalance } from '@/lib/solana/tokens';
 import { getAllTokens } from '@/lib/solana/token-list';
 import type { TokenInfo } from '@/lib/solana/token-list';
+import { HOPE_MINT } from '@/lib/solana/hope-token';
 
 // =============================================================================
 // TYPES
@@ -119,8 +120,10 @@ export async function fetchPortfolio(
 
   const balances = await Promise.all(balancePromises);
 
-  // Filter out zero balances
-  const nonZeroBalances = balances.filter((b) => b.balance > 0n);
+  // Filter out zero balances, BUT always keep $HOPE (even if zero)
+  const nonZeroBalances = balances.filter(
+    (b) => b.balance > 0n || b.token.mint === HOPE_MINT
+  );
 
   // Get USD prices for non-zero balances
   const prices = await fetchPrices(nonZeroBalances.map((b) => b.token.mint));

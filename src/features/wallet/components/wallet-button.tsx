@@ -10,6 +10,7 @@ import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useWalletAuth } from '../hooks/use-wallet-auth';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { HopeBalance } from './hope-balance';
 
 export function WalletButton() {
   const { connected, connecting, publicKey } = useWallet();
@@ -140,12 +141,18 @@ export function WalletButton() {
           />
 
           {/* Menu content */}
-          <div className="absolute right-0 mt-2 w-56 z-20 rounded-lg bg-[#0A0A0B] border border-[#9945FF]/30 shadow-xl">
+          <div className="absolute right-0 mt-2 w-64 z-20 rounded-lg bg-[#0A0A0B] border border-[#9945FF]/30 shadow-xl">
             <div className="p-3 border-b border-[#9945FF]/20">
               <div className="text-xs text-gray-400">Wallet</div>
               <div className="font-mono text-sm text-white mt-1">
                 {truncateAddress(walletAddress)}
               </div>
+            </div>
+
+            {/* $HOPE Balance */}
+            <div className="p-3 border-b border-[#9945FF]/20">
+              <div className="text-xs text-gray-400 mb-2">Platform Token</div>
+              <HopeBalance />
             </div>
 
             <div className="p-1">

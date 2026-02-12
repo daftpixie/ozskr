@@ -19,6 +19,7 @@ import {
 import { useWalletAuth } from '@/features/wallet/hooks/use-wallet-auth';
 import { usePortfolio } from '@/hooks/use-trading';
 import { cn } from '@/lib/utils';
+import { HOPE_MINT } from '@/lib/solana/hope-token';
 
 type SortMode = 'value' | 'alphabetical';
 
@@ -27,9 +28,17 @@ export default function PortfolioPage() {
   const { data: portfolio, isLoading, refetch } = usePortfolio(user?.walletAddress);
   const [sortMode, setSortMode] = useState<SortMode>('value');
 
-  // Sort tokens
+  // Sort tokens - pin $HOPE to top
   const sortedTokens = portfolio?.tokens
     ? [...portfolio.tokens].sort((a, b) => {
+        // $HOPE always goes first
+        const aIsHope = a.token.mint === HOPE_MINT;
+        const bIsHope = b.token.mint === HOPE_MINT;
+
+        if (aIsHope && !bIsHope) return -1;
+        if (!aIsHope && bIsHope) return 1;
+
+        // Normal sorting for non-$HOPE tokens
         if (sortMode === 'value') {
           const aValue = a.usdValue ?? 0;
           const bValue = b.usdValue ?? 0;
@@ -172,57 +181,96 @@ export default function PortfolioPage() {
           {/* Token List */}
           {!isLoading && sortedTokens.length > 0 && (
             <div className="space-y-3">
-              {sortedTokens.map((item) => (
-                <div
-                  key={item.token.mint}
-                  className="flex items-center justify-between rounded-lg border border-border/50 bg-card p-4 transition-colors hover:bg-accent/50"
-                >
-                  {/* Token Info */}
-                  <div className="flex items-center gap-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={item.token.logoURI}
-                      alt={item.token.symbol}
-                      className="h-10 w-10 rounded-full"
-                    />
-                    <div>
-                      <p className="font-medium text-white">
-                        {item.token.symbol}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.token.name}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Balance and Value */}
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="font-mono text-sm font-medium text-white">
-                        {item.formattedBalance}
-                      </p>
-                      {item.usdValue !== null && (
-                        <p className="font-mono text-xs text-muted-foreground">
-                          ${item.usdValue.toLocaleString('en-US', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </p>
+              {sortedTokens.map((item) => {
+                const isHope = item.token.mint === HOPE_MINT;
+                return (
+                  <div
+                    key={item.token.mint}
+                    className={cn(
+                      'flex items-center justify-between rounded-lg border p-4 transition-colors',
+                      isHope
+                        ? 'border-[#F59E0B]/50 bg-[#F59E0B]/5 hover:bg-[#F59E0B]/10'
+                        : 'border-border/50 bg-card hover:bg-accent/50'
+                    )}
+                  >
+                    {/* Token Info */}
+                    <div className="flex items-center gap-3">
+                      {/* Token icon or gradient circle for $HOPE */}
+                      {isHope ? (
+                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#9945FF] to-[#14F195]" />
+                      ) : (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={item.token.logoURI}
+                          alt={item.token.symbol}
+                          className="h-10 w-10 rounded-full"
+                        />
                       )}
+                      <div>
+                        <p
+                          className={cn(
+                            'font-medium',
+                            isHope ? 'text-[#F59E0B]' : 'text-white'
+                          )}
+                        >
+                          {item.token.symbol}
+                          {isHope && (
+                            <span className="ml-2 text-xs text-[#F59E0B]/60">
+                              Platform Token
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.token.name}
+                        </p>
+                      </div>
                     </div>
 
-                    {/* Trade Button */}
-                    <Link
-                      href={`/dashboard/trade?input=${item.token.mint}`}
-                    >
-                      <Button variant="outline" size="sm">
-                        Trade
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </Link>
+                    {/* Balance and Value */}
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p
+                          className={cn(
+                            'font-mono text-sm font-medium',
+                            isHope ? 'text-[#F59E0B]' : 'text-white'
+                          )}
+                        >
+                          {item.formattedBalance}
+                        </p>
+                        {item.usdValue !== null && (
+                          <p className="font-mono text-xs text-muted-foreground">
+                            ${item.usdValue.toLocaleString('en-US', {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Trade Button */}
+                      <Link
+                        href={
+                          isHope
+                            ? `/dashboard/trade?output=HOPE`
+                            : `/dashboard/trade?input=${item.token.mint}`
+                        }
+                      >
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            isHope &&
+                              'border-[#F59E0B]/30 text-[#F59E0B] hover:border-[#F59E0B] hover:bg-[#F59E0B]/10'
+                          )}
+                        >
+                          {isHope ? 'Get More' : 'Trade'}
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
