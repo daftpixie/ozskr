@@ -13,6 +13,8 @@ import {
   Plus,
   BarChart3,
   Settings,
+  ArrowLeftRight,
+  Wallet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -27,6 +29,8 @@ const navigationItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'My Agents', href: '/agents', icon: Bot },
   { label: 'Create Agent', href: '/agents/create', icon: Plus },
+  { label: 'Trade', href: '/dashboard/trade', icon: ArrowLeftRight },
+  { label: 'Portfolio', href: '/dashboard/portfolio', icon: Wallet },
   { label: 'Analytics', href: '/analytics', icon: BarChart3 },
 ];
 

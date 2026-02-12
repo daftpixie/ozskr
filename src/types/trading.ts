@@ -24,7 +24,7 @@ export const SwapQuoteRequestSchema = z.object({
   inputMint: z.string().min(32).max(44), // Solana token mint address
   outputMint: z.string().min(32).max(44), // Solana token mint address
   amount: z.string().regex(/^\d+$/, 'Amount must be a stringified bigint'), // Stringified bigint
-  slippageBps: z.number().int().min(1).max(300).default(50), // 1-300 bps (0.01%-3%)
+  slippageBps: z.coerce.number().int().min(1).max(300).default(50), // 1-300 bps (0.01%-3%) - coerce from string query param
 });
 
 export type SwapQuoteRequest = z.infer<typeof SwapQuoteRequestSchema>;
