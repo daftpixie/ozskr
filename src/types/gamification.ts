@@ -12,7 +12,7 @@ import {
   AchievementRequirementType,
   LeaderboardPeriod,
 } from './database';
-import { UuidSchema, TimestampSchema, WalletAddressSchema, PaginationSchema, paginatedResponse } from './schemas';
+import { UuidSchema, TimestampSchema, WalletAddressSchema, paginatedResponse } from './schemas';
 
 // =============================================================================
 // ENUMS

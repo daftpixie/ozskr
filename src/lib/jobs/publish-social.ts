@@ -53,6 +53,13 @@ const publishToAccount = async (
       throw new Error('Social account is not connected');
     }
 
+    // Verify content passed moderation before publishing
+    if (content.moderation_status !== ModerationStatus.APPROVED) {
+      throw new Error(
+        `Content moderation status is '${content.moderation_status}', expected 'approved'`
+      );
+    }
+
     // Prepare post content
     const postText = content.output_text || '';
     if (!postText) {

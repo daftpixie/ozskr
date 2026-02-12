@@ -142,6 +142,7 @@ export interface Session {
   id: string;
   wallet_address: string;
   jwt_token: string;
+  nonce: string | null;
   expires_at: string;
   created_at: string;
   updated_at: string;
@@ -376,7 +377,8 @@ export interface LeaderboardEntry {
 export type UserInsert = Pick<User, 'wallet_address'> &
   Partial<Pick<User, 'display_name' | 'avatar_url'>>;
 
-export type SessionInsert = Pick<Session, 'wallet_address' | 'jwt_token' | 'expires_at'>;
+export type SessionInsert = Pick<Session, 'wallet_address' | 'jwt_token' | 'expires_at'> &
+  Partial<Pick<Session, 'nonce'>>;
 
 export type CharacterInsert = Pick<
   Character,

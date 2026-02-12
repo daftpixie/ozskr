@@ -11,6 +11,7 @@ import { createSupabaseServerClient } from '../supabase';
 import { authMiddleware } from '../middleware/auth';
 import { address } from '@solana/kit';
 import { verifySiwsSignature } from '@/lib/solana/siws';
+import { logger } from '@/lib/utils/logger';
 import type { Context } from 'hono';
 
 /**
@@ -56,11 +57,29 @@ auth.post('/verify', zValidator('json', SiwsVerifyRequestSchema), async (c) => {
       );
     }
 
-    // TODO: In production, verify nonce hasn't been used before
-    // - Extract nonce from message
-    // - Check against sessions table or dedicated nonces table
-    // - Store nonce with expiration timestamp
-    // This prevents replay attacks
+    // STEP 2b: Replay prevention — extract nonce and verify it hasn't been used
+    const nonceMatch = message.match(/Nonce: (.+)/);
+    if (!nonceMatch || !nonceMatch[1]) {
+      return c.json(
+        { error: 'SIWS message missing nonce', code: 'INVALID_NONCE' },
+        400
+      );
+    }
+    const nonce = nonceMatch[1].trim();
+
+    // Check if this nonce was already used (stored in sessions table)
+    const { data: existingSession } = await getServiceClient()
+      .from('sessions')
+      .select('id')
+      .eq('nonce', nonce)
+      .maybeSingle();
+
+    if (existingSession) {
+      return c.json(
+        { error: 'Nonce already used — possible replay attack', code: 'NONCE_REUSED' },
+        400
+      );
+    }
 
     // STEP 3: Upsert user in Supabase (service role bypasses RLS for first-time signup)
     const supabase = getServiceClient();
@@ -110,11 +129,12 @@ auth.post('/verify', zValidator('json', SiwsVerifyRequestSchema), async (c) => {
       .setExpirationTime('30d')
       .sign(secret);
 
-    // STEP 5: Store session in database
+    // STEP 5: Store session in database (nonce stored for replay prevention)
     const { error: sessionError } = await supabase.from('sessions').insert({
       wallet_address: walletAddress,
       jwt_token: token,
       expires_at: expiresAt.toISOString(),
+      nonce,
     });
 
     if (sessionError) {
@@ -140,9 +160,13 @@ auth.post('/verify', zValidator('json', SiwsVerifyRequestSchema), async (c) => {
 
     return c.json(response, 200);
   } catch (error) {
+    // Log full error server-side, return generic message to client
+    logger.error('Authentication failed', {
+      error: error instanceof Error ? error.message : 'Unknown',
+    });
     return c.json(
       {
-        error: error instanceof Error ? error.message : 'Authentication failed',
+        error: 'Authentication failed',
         code: 'INTERNAL_ERROR',
       },
       500
@@ -269,9 +293,12 @@ auth.get('/session', authMiddleware, async (c: Context) => {
       200
     );
   } catch (error) {
+    logger.error('Session validation failed', {
+      error: error instanceof Error ? error.message : 'Unknown',
+    });
     return c.json(
       {
-        error: error instanceof Error ? error.message : 'Session validation failed',
+        error: 'Session validation failed',
         code: 'INTERNAL_ERROR',
       },
       500

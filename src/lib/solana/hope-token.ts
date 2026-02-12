@@ -51,9 +51,10 @@ export async function getHopeBalance(walletAddress: string): Promise<number> {
     const tokenBalance = await getTokenBalance(rpcUrl, walletAddress, HOPE_MINT);
 
     // Convert bigint balance to human-readable number
-    // NO floating point math — use string conversion
+    // parseFloat used for DISPLAY ONLY — not for financial calculations
+    // Financial math uses BigInt throughout swap-flow.ts and transactions.ts
     const formattedBalance = formatTokenAmount(tokenBalance.balance, HOPE_DECIMALS);
-    return parseFloat(formattedBalance);
+    return parseFloat(formattedBalance); // Display precision only
   } catch (err) {
     // If token account doesn't exist, balance is 0
     if (err instanceof Error && err.message.includes('not found')) {

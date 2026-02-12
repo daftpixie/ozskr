@@ -8,7 +8,6 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { logger } from '@/lib/utils/logger';
 import {
-  UserPointsResponseSchema,
   UserStatsResponseSchema,
   AllAchievementsResponseSchema,
   LeaderboardResponseSchema,
@@ -23,7 +22,6 @@ import type {
   UserPoints,
   UserStats,
   Achievement,
-  UserAchievement,
   LeaderboardEntry,
 } from '@/types/database';
 import { calculateTierProgress } from '@/lib/gamification/tiers';
@@ -203,11 +201,12 @@ gamification.get('/me/stats', async (c) => {
     const supabase = createAuthenticatedClient(auth.jwtToken);
 
     // Fetch or create user stats
-    let { data: stats, error: statsError } = await supabase
+    const { data: initialStats, error: statsError } = await supabase
       .from('user_stats')
       .select('*')
       .eq('wallet_address', auth.walletAddress)
       .single();
+    let stats = initialStats;
 
     // If stats don't exist, create default entry
     if (statsError && statsError.code === 'PGRST116') {

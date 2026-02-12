@@ -91,11 +91,12 @@ export async function awardPoints(params: AwardPointsParams): Promise<AwardPoint
     }
 
     // 2. Fetch or create user_stats
-    let { data: stats, error: statsError } = await supabase
+    const { data: initialStats, error: statsError } = await supabase
       .from('user_stats')
       .select('*')
       .eq('wallet_address', params.walletAddress)
       .single();
+    let stats = initialStats;
 
     // If stats don't exist, create default entry
     if (statsError && statsError.code === 'PGRST116') {

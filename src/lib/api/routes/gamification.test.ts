@@ -237,7 +237,6 @@ describe('Gamification Routes', () => {
 
   describe('GET /gamification/me/achievements', () => {
     it('should return unlocked and locked achievements with progress', async () => {
-      let callCount = 0;
       mockFrom.mockImplementation((tableName: string) => {
         if (tableName === 'achievements') {
           return {
@@ -405,7 +404,6 @@ describe('Gamification Routes', () => {
 
   describe('GET /gamification/leaderboard', () => {
     it('should return leaderboard by period', async () => {
-      let callCount = 0;
       mockFrom.mockImplementation((tableName: string) => {
         if (tableName === 'leaderboard_cache') {
           // Return stale/missing cache

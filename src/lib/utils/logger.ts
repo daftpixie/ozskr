@@ -26,36 +26,54 @@ const formatEntry = (entry: LogEntry): string => {
   return `[${level.toUpperCase()}] ${message}${extra}`;
 };
 
+/** Keys that should be redacted from log output */
+const SENSITIVE_KEYS = new Set([
+  'password', 'secret', 'token', 'apiKey', 'api_key',
+  'privateKey', 'private_key', 'secretKey', 'secret_key',
+  'authorization', 'cookie', 'ayrshare_profile_key',
+]);
+
+/** Redact sensitive values from metadata */
+const redactSensitive = (meta: Record<string, unknown>): Record<string, unknown> => {
+  const redacted: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(meta)) {
+    if (SENSITIVE_KEYS.has(key.toLowerCase())) {
+      redacted[key] = '[REDACTED]';
+    } else {
+      redacted[key] = value;
+    }
+  }
+  return redacted;
+};
+
 const log = (level: LogLevel, message: string, meta?: Record<string, unknown>) => {
   // Skip debug logs in production
   if (level === 'debug' && process.env.NODE_ENV === 'production') {
     return;
   }
 
+  const safeMeta = meta ? redactSensitive(meta) : undefined;
+
   const entry: LogEntry = {
     level,
     message,
     timestamp: new Date().toISOString(),
-    ...meta,
+    ...safeMeta,
   };
 
   const formatted = formatEntry(entry);
 
   switch (level) {
     case 'error':
-      // eslint-disable-next-line no-console
       console.error(formatted);
       break;
     case 'warn':
-      // eslint-disable-next-line no-console
       console.warn(formatted);
       break;
     case 'debug':
-      // eslint-disable-next-line no-console
       console.debug(formatted);
       break;
     default:
-      // eslint-disable-next-line no-console
       console.info(formatted);
   }
 };

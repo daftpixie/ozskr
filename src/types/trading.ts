@@ -21,8 +21,8 @@ export const SwapStatusSchema = z.nativeEnum(SwapStatus);
  * Request schema for getting a swap quote from Jupiter Ultra
  */
 export const SwapQuoteRequestSchema = z.object({
-  inputMint: z.string().min(32).max(44), // Solana token mint address
-  outputMint: z.string().min(32).max(44), // Solana token mint address
+  inputMint: z.string().min(32).max(44).regex(/^[1-9A-HJ-NP-Za-km-z]+$/, 'Invalid base58 address'),
+  outputMint: z.string().min(32).max(44).regex(/^[1-9A-HJ-NP-Za-km-z]+$/, 'Invalid base58 address'),
   amount: z.string().regex(/^\d+$/, 'Amount must be a stringified bigint'), // Stringified bigint
   slippageBps: z.coerce.number().int().min(1).max(300).default(50), // 1-300 bps (0.01%-3%) - coerce from string query param
 });
@@ -53,8 +53,8 @@ export type SwapQuoteResponse = z.infer<typeof SwapQuoteResponseSchema>;
  */
 export const SwapExecuteRequestSchema = z.object({
   quoteId: z.string().optional(), // Optional quote ID for tracking
-  inputMint: z.string().min(32).max(44),
-  outputMint: z.string().min(32).max(44),
+  inputMint: z.string().min(32).max(44).regex(/^[1-9A-HJ-NP-Za-km-z]+$/, 'Invalid base58 address'),
+  outputMint: z.string().min(32).max(44).regex(/^[1-9A-HJ-NP-Za-km-z]+$/, 'Invalid base58 address'),
   inputAmount: z.string().regex(/^\d+$/, 'Amount must be a stringified bigint'),
   slippageBps: z.number().int().min(1).max(300).default(50),
   priorityFeeLamports: z.string().regex(/^\d+$/, 'Priority fee must be a stringified bigint').default('0'),
