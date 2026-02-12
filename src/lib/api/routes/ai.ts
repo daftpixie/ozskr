@@ -21,6 +21,9 @@ import {
 import { authMiddleware } from '../middleware/auth';
 import { createAuthenticatedClient } from '../supabase';
 import type { Character, ContentGeneration } from '@/types/database';
+import { GenerationType, ModerationStatus } from '@/types/database';
+import { runPipeline } from '@/lib/ai/pipeline';
+import type { PipelineProgress } from '@/lib/ai/pipeline/types';
 
 /** Hono env with auth middleware variables */
 type AiEnv = {
@@ -111,6 +114,22 @@ function extractOwnerWallet(joinResult: unknown): string | null {
   }
   return null;
 }
+
+/**
+ * Map pipeline stage names to client-facing stage names.
+ * Returns null for internal-only stages that should not be sent to the client.
+ */
+const PIPELINE_STAGE_MAP: Record<string, string | null> = {
+  parsing: 'loading_character',
+  loading_context: 'loading_character',
+  enhancing: 'enhancing_prompt',
+  generating: 'generating_content',
+  quality_check: 'quality_check',
+  moderating: 'moderation',
+  storing: null,
+  complete: 'complete',
+  error: 'error',
+};
 
 // =============================================================================
 // CHARACTER ROUTES
@@ -405,7 +424,7 @@ ai.put(
 
 /**
  * POST /api/ai/characters/:id/generate
- * Trigger content generation (202 Accepted)
+ * Create generation record and return 202. Client subscribes to SSE to trigger execution.
  */
 ai.post(
   '/characters/:id/generate',
@@ -446,7 +465,7 @@ ai.post(
         );
       }
 
-      // Rate limit: check generation_count in last hour (max 30 per character)
+      // Rate limit: max 30 generations per character per hour
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
       const { data: recentGenerations, error: countError } = await supabase
         .from('content_generations')
@@ -472,8 +491,7 @@ ai.post(
         );
       }
 
-      // Create generation record with status 'pending'
-      // Actual generation will be handled by background job in Sprint 2.2
+      // Create generation record — pipeline runs when client subscribes to SSE
       const { data: generation, error: insertError } = await supabase
         .from('content_generations')
         .insert({
@@ -482,7 +500,7 @@ ai.post(
           input_prompt: input.inputPrompt,
           model_used: 'pending',
           model_params: input.modelParams || {},
-          moderation_status: 'pending',
+          moderation_status: ModerationStatus.PENDING,
         })
         .select()
         .single();
@@ -571,10 +589,16 @@ ai.get('/generations/:id', async (c) => {
 
 /**
  * GET /api/ai/generations/:id/stream
- * SSE endpoint for generation progress
+ * SSE endpoint — runs the pipeline inline and streams progress events.
+ *
+ * Flow:
+ * 1. Verify JWT from query param (EventSource can't set Authorization header)
+ * 2. Verify ownership via character join
+ * 3. Atomically claim the generation (pending → processing)
+ * 4. Run pipeline with progress callback that writes SSE events
+ * 5. On completion, send final result and close
  */
 ai.get('/generations/:id/stream', async (c) => {
-  // For SSE with EventSource, auth token comes via query param
   const token = c.req.query('token');
   const generationId = c.req.param('id');
 
@@ -595,7 +619,7 @@ ai.get('/generations/:id/stream', async (c) => {
   }
 
   try {
-    // Verify JWT manually for SSE (EventSource can't set Authorization header)
+    // Verify JWT manually for SSE
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
       return c.json(
@@ -614,7 +638,7 @@ ai.get('/generations/:id/stream', async (c) => {
 
     const supabase = createAuthenticatedClient(token);
 
-    // Verify ownership
+    // Fetch generation with ownership verification
     const { data: generation, error: verifyError } = await supabase
       .from('content_generations')
       .select('*, characters!inner(wallet_address)')
@@ -633,55 +657,160 @@ ai.get('/generations/:id/stream', async (c) => {
       return c.json({ error: 'Forbidden', code: 'FORBIDDEN' }, 403);
     }
 
-    // Set SSE headers before stream creation
+    // If already complete, send the final result immediately
+    if (
+      generation.moderation_status === ModerationStatus.APPROVED ||
+      generation.moderation_status === ModerationStatus.REJECTED ||
+      generation.moderation_status === ModerationStatus.FLAGGED
+    ) {
+      c.header('Content-Type', 'text/event-stream');
+      c.header('Cache-Control', 'no-cache');
+      c.header('Connection', 'keep-alive');
+
+      return stream(c, async (sseStream) => {
+        const stage =
+          generation.moderation_status === ModerationStatus.APPROVED
+            ? 'complete'
+            : 'error';
+        await sseStream.write(
+          `data: ${JSON.stringify({
+            stage,
+            message: 'Generation already completed',
+            result: mapGenerationToResponse(generation),
+          })}\n\n`
+        );
+      });
+    }
+
+    // If already being processed by another connection, tell client to wait
+    if (generation.moderation_status === ModerationStatus.PROCESSING) {
+      c.header('Content-Type', 'text/event-stream');
+      c.header('Cache-Control', 'no-cache');
+      c.header('Connection', 'keep-alive');
+
+      return stream(c, async (sseStream) => {
+        await sseStream.write(
+          `data: ${JSON.stringify({
+            stage: 'generating_content',
+            message: 'Generation already in progress',
+          })}\n\n`
+        );
+
+        // Poll until complete (max 5 min)
+        const startTime = Date.now();
+        const maxDuration = 5 * 60 * 1000;
+
+        const poll = async (): Promise<void> => {
+          while (Date.now() - startTime < maxDuration) {
+            await new Promise((r) => setTimeout(r, 2000));
+
+            const { data: currentGen } = await supabase
+              .from('content_generations')
+              .select('*')
+              .eq('id', generationId)
+              .single();
+
+            if (!currentGen) break;
+
+            if (
+              currentGen.moderation_status === ModerationStatus.APPROVED ||
+              currentGen.moderation_status === ModerationStatus.REJECTED ||
+              currentGen.moderation_status === ModerationStatus.FLAGGED
+            ) {
+              const endStage =
+                currentGen.moderation_status === ModerationStatus.APPROVED
+                  ? 'complete'
+                  : 'error';
+              await sseStream.write(
+                `data: ${JSON.stringify({
+                  stage: endStage,
+                  message: 'Generation complete',
+                  result: mapGenerationToResponse(currentGen),
+                })}\n\n`
+              );
+              return;
+            }
+          }
+        };
+
+        await poll();
+      });
+    }
+
+    // Atomically claim the generation (pending → processing)
+    const { data: claimed, error: claimError } = await supabase
+      .from('content_generations')
+      .update({ moderation_status: ModerationStatus.PROCESSING })
+      .eq('id', generationId)
+      .eq('moderation_status', ModerationStatus.PENDING)
+      .select()
+      .single();
+
+    if (claimError || !claimed) {
+      // Race condition — another connection claimed it
+      return c.json(
+        { error: 'Generation already in progress', code: 'CONFLICT' },
+        409
+      );
+    }
+
+    // Run pipeline and stream progress via SSE
     c.header('Content-Type', 'text/event-stream');
     c.header('Cache-Control', 'no-cache');
     c.header('Connection', 'keep-alive');
 
-    // Return SSE stream
     return stream(c, async (sseStream) => {
-      const startTime = Date.now();
-      const maxDuration = 5 * 60 * 1000; // 5 minutes timeout
+      // Progress callback: map pipeline stages to client-facing names and write SSE
+      const onProgress = (progress: PipelineProgress): void => {
+        const frontendStage = PIPELINE_STAGE_MAP[progress.stage];
+        if (frontendStage === null || frontendStage === undefined) return;
 
-      // Poll database for status updates
-      const pollInterval = setInterval(async () => {
-        try {
-          const { data: currentGen } = await supabase
-            .from('content_generations')
-            .select('moderation_status')
-            .eq('id', generationId)
-            .single();
+        void sseStream.write(
+          `data: ${JSON.stringify({
+            stage: frontendStage,
+            message: progress.message,
+          })}\n\n`
+        );
+      };
 
-          if (currentGen) {
-            await sseStream.write(
-              `event: status\ndata: ${JSON.stringify({ status: currentGen.moderation_status })}\n\n`
-            );
+      try {
+        await runPipeline(
+          {
+            generationId,
+            characterId: generation.character_id,
+            generationType: generation.generation_type as GenerationType,
+            inputPrompt: generation.input_prompt,
+            modelParams: (generation.model_params as Record<string, unknown>) || {},
+            jwtToken: token,
+          },
+          onProgress
+        );
 
-            // Close stream if complete or failed
-            if (
-              currentGen.moderation_status === 'approved' ||
-              currentGen.moderation_status === 'rejected'
-            ) {
-              clearInterval(pollInterval);
-              await sseStream.close();
-            }
-          }
-        } catch {
-          clearInterval(pollInterval);
-          await sseStream.close();
-        }
+        // Fetch final generation record for the complete event
+        const { data: finalGen } = await supabase
+          .from('content_generations')
+          .select('*')
+          .eq('id', generationId)
+          .single();
 
-        // Timeout after 5 minutes
-        if (Date.now() - startTime > maxDuration) {
-          clearInterval(pollInterval);
-          await sseStream.close();
-        }
-      }, 2000);
-
-      // Cleanup on stream close
-      sseStream.onAbort(() => {
-        clearInterval(pollInterval);
-      });
+        await sseStream.write(
+          `data: ${JSON.stringify({
+            stage: 'complete',
+            message: 'Generation complete',
+            result: finalGen ? mapGenerationToResponse(finalGen) : null,
+          })}\n\n`
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Pipeline failed';
+        await sseStream.write(
+          `data: ${JSON.stringify({
+            stage: 'error',
+            message,
+            error: message,
+          })}\n\n`
+        );
+      }
     });
   } catch {
     return c.json(

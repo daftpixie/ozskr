@@ -38,6 +38,7 @@ export enum ContentType {
 
 export enum ModerationStatus {
   PENDING = 'pending',
+  PROCESSING = 'processing',
   APPROVED = 'approved',
   REJECTED = 'rejected',
   FLAGGED = 'flagged',
