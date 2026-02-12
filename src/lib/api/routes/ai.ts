@@ -7,11 +7,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { stream } from 'hono/streaming';
-import type {
-  CharacterCreate,
-  CharacterUpdate,
-  GenerateContentRequest,
-} from '@/types/schemas';
+import { jwtVerify } from 'jose';
 import {
   CharacterCreateSchema,
   CharacterUpdateSchema,
@@ -19,37 +15,43 @@ import {
   CharacterWithStatsSchema,
   GenerateContentRequestSchema,
   GenerationAcceptedResponseSchema,
-  ContentGenerationResponseSchema,
   UuidSchema,
   paginatedResponse,
 } from '@/types/schemas';
 import { authMiddleware } from '../middleware/auth';
 import { createAuthenticatedClient } from '../supabase';
-import type { Context } from 'hono';
 import type { Character, ContentGeneration } from '@/types/database';
 
-const ai = new Hono();
+/** Hono env with auth middleware variables */
+type AiEnv = {
+  Variables: {
+    walletAddress: string;
+    jwtToken: string;
+  };
+};
+
+const ai = new Hono<AiEnv>();
 
 // All AI routes require authentication
 ai.use('/*', authMiddleware);
 
 /**
- * Helper to create service role client for background operations
+ * Helper to extract auth context from Hono context with type narrowing
  */
-function getServiceClient() {
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceRoleKey) {
-    throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY');
+function getAuthContext(c: { get: (key: string) => unknown }) {
+  const walletAddress = c.get('walletAddress');
+  const jwtToken = c.get('jwtToken');
+  if (typeof walletAddress !== 'string' || typeof jwtToken !== 'string') {
+    return null;
   }
-  const { createSupabaseServerClient } = require('../supabase');
-  return createSupabaseServerClient(serviceRoleKey);
+  return { walletAddress, jwtToken };
 }
 
 /**
  * Helper to map database Character to API response
  */
 function mapCharacterToResponse(char: Character) {
-  return CharacterResponseSchema.parse({
+  return {
     id: char.id,
     walletAddress: char.wallet_address,
     name: char.name,
@@ -66,14 +68,14 @@ function mapCharacterToResponse(char: Character) {
     lastGeneratedAt: char.last_generated_at,
     createdAt: char.created_at,
     updatedAt: char.updated_at,
-  });
+  };
 }
 
 /**
  * Helper to map database ContentGeneration to API response
  */
 function mapGenerationToResponse(gen: ContentGeneration) {
-  return ContentGenerationResponseSchema.parse({
+  return {
     id: gen.id,
     characterId: gen.character_id,
     generationType: gen.generation_type,
@@ -91,7 +93,23 @@ function mapGenerationToResponse(gen: ContentGeneration) {
     latencyMs: gen.latency_ms,
     cacheHit: gen.cache_hit,
     createdAt: gen.created_at,
-  });
+  };
+}
+
+/**
+ * Extract wallet_address from a Supabase join result safely.
+ * Used when querying content_generations with characters!inner join.
+ */
+function extractOwnerWallet(joinResult: unknown): string | null {
+  if (
+    typeof joinResult === 'object' &&
+    joinResult !== null &&
+    'wallet_address' in joinResult
+  ) {
+    const addr = (joinResult as Record<string, unknown>).wallet_address;
+    return typeof addr === 'string' ? addr : null;
+  }
+  return null;
 }
 
 // =============================================================================
@@ -102,14 +120,16 @@ function mapGenerationToResponse(gen: ContentGeneration) {
  * POST /api/ai/characters
  * Create a new AI character with full DNA
  */
-ai.post('/characters', zValidator('json', CharacterCreateSchema), async (c: Context) => {
-  const walletAddress = c.get('walletAddress') as string;
-  const jwtToken = c.get('jwtToken') as string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const input = (c.req as any).valid('json') as CharacterCreate;
+ai.post('/characters', zValidator('json', CharacterCreateSchema), async (c) => {
+  const auth = getAuthContext(c);
+  if (!auth) {
+    return c.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, 401);
+  }
+
+  const input = c.req.valid('json');
 
   try {
-    const supabase = createAuthenticatedClient(jwtToken);
+    const supabase = createAuthenticatedClient(auth.jwtToken);
 
     // Generate unique mem0_namespace
     const mem0Namespace = `char_${crypto.randomUUID()}`;
@@ -118,7 +138,7 @@ ai.post('/characters', zValidator('json', CharacterCreateSchema), async (c: Cont
     const { data: character, error: characterError } = await supabase
       .from('characters')
       .insert({
-        wallet_address: walletAddress,
+        wallet_address: auth.walletAddress,
         name: input.name,
         persona: input.persona,
         visual_style: input.visualStyle,
@@ -134,27 +154,24 @@ ai.post('/characters', zValidator('json', CharacterCreateSchema), async (c: Cont
 
     if (characterError || !character) {
       return c.json(
-        {
-          error: 'Failed to create character',
-          code: 'DATABASE_ERROR',
-          details: characterError,
-        },
+        { error: 'Failed to create character', code: 'DATABASE_ERROR' },
         500
       );
     }
 
     // Auto-create character_memory record
-    const { error: memoryError } = await supabase.from('character_memory').insert({
-      character_id: character.id,
-      mem0_namespace: mem0Namespace,
-    });
+    const { error: memoryError } = await supabase
+      .from('character_memory')
+      .insert({
+        character_id: character.id,
+        mem0_namespace: mem0Namespace,
+      });
 
     if (memoryError) {
       return c.json(
         {
           error: 'Character created but memory record failed',
           code: 'DATABASE_ERROR',
-          details: memoryError,
         },
         500
       );
@@ -163,10 +180,7 @@ ai.post('/characters', zValidator('json', CharacterCreateSchema), async (c: Cont
     return c.json(mapCharacterToResponse(character), 201);
   } catch (error) {
     return c.json(
-      {
-        error: error instanceof Error ? error.message : 'Failed to create character',
-        code: 'INTERNAL_ERROR',
-      },
+      { error: 'Failed to create character', code: 'INTERNAL_ERROR' },
       500
     );
   }
@@ -185,29 +199,27 @@ ai.get(
       limit: z.string().optional().default('20').transform(Number),
     })
   ),
-  async (c: Context) => {
-    const walletAddress = c.get('walletAddress') as string;
-    const jwtToken = c.get('jwtToken') as string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { page, limit } = (c.req as any).valid('query') as { page: number; limit: number };
+  async (c) => {
+    const auth = getAuthContext(c);
+    if (!auth) {
+      return c.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, 401);
+    }
+
+    const { page, limit } = c.req.valid('query');
 
     try {
-      const supabase = createAuthenticatedClient(jwtToken);
+      const supabase = createAuthenticatedClient(auth.jwtToken);
       const offset = (page - 1) * limit;
 
       // Get total count
       const { count, error: countError } = await supabase
         .from('characters')
         .select('*', { count: 'exact', head: true })
-        .eq('wallet_address', walletAddress);
+        .eq('wallet_address', auth.walletAddress);
 
       if (countError) {
         return c.json(
-          {
-            error: 'Failed to count characters',
-            code: 'DATABASE_ERROR',
-            details: countError,
-          },
+          { error: 'Failed to count characters', code: 'DATABASE_ERROR' },
           500
         );
       }
@@ -216,17 +228,13 @@ ai.get(
       const { data: characters, error: selectError } = await supabase
         .from('characters')
         .select('*')
-        .eq('wallet_address', walletAddress)
+        .eq('wallet_address', auth.walletAddress)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
       if (selectError) {
         return c.json(
-          {
-            error: 'Failed to fetch characters',
-            code: 'DATABASE_ERROR',
-            details: selectError,
-          },
+          { error: 'Failed to fetch characters', code: 'DATABASE_ERROR' },
           500
         );
       }
@@ -246,10 +254,7 @@ ai.get(
       return c.json(response, 200);
     } catch (error) {
       return c.json(
-        {
-          error: error instanceof Error ? error.message : 'Failed to fetch characters',
-          code: 'INTERNAL_ERROR',
-        },
+        { error: 'Failed to fetch characters', code: 'INTERNAL_ERROR' },
         500
       );
     }
@@ -260,41 +265,37 @@ ai.get(
  * GET /api/ai/characters/:id
  * Get character with generation stats
  */
-ai.get('/characters/:id', async (c: Context) => {
-  const walletAddress = c.get('walletAddress') as string;
-  const jwtToken = c.get('jwtToken') as string;
+ai.get('/characters/:id', async (c) => {
+  const auth = getAuthContext(c);
+  if (!auth) {
+    return c.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, 401);
+  }
+
   const characterId = c.req.param('id');
 
   // Validate UUID format
   const validationResult = UuidSchema.safeParse(characterId);
   if (!validationResult.success) {
     return c.json(
-      {
-        error: 'Invalid character ID format',
-        code: 'VALIDATION_ERROR',
-        details: validationResult.error,
-      },
+      { error: 'Invalid character ID format', code: 'VALIDATION_ERROR' },
       400
     );
   }
 
   try {
-    const supabase = createAuthenticatedClient(jwtToken);
+    const supabase = createAuthenticatedClient(auth.jwtToken);
 
     // Fetch character with ownership verification
     const { data: character, error: characterError } = await supabase
       .from('characters')
       .select('*')
       .eq('id', characterId)
-      .eq('wallet_address', walletAddress)
+      .eq('wallet_address', auth.walletAddress)
       .single();
 
     if (characterError || !character) {
       return c.json(
-        {
-          error: 'Character not found',
-          code: 'NOT_FOUND',
-        },
+        { error: 'Character not found', code: 'NOT_FOUND' },
         404
       );
     }
@@ -309,16 +310,14 @@ ai.get('/characters/:id', async (c: Context) => {
 
     const response = CharacterWithStatsSchema.parse({
       ...mapCharacterToResponse(character),
-      recentGenerations: recentGenerations?.map(mapGenerationToResponse) || [],
+      recentGenerations:
+        recentGenerations?.map(mapGenerationToResponse) || [],
     });
 
     return c.json(response, 200);
-  } catch (error) {
+  } catch {
     return c.json(
-      {
-        error: error instanceof Error ? error.message : 'Failed to fetch character',
-        code: 'INTERNAL_ERROR',
-      },
+      { error: 'Failed to fetch character', code: 'INTERNAL_ERROR' },
       500
     );
   }
@@ -331,43 +330,38 @@ ai.get('/characters/:id', async (c: Context) => {
 ai.put(
   '/characters/:id',
   zValidator('json', CharacterUpdateSchema),
-  async (c: Context) => {
-    const walletAddress = c.get('walletAddress') as string;
-    const jwtToken = c.get('jwtToken') as string;
+  async (c) => {
+    const auth = getAuthContext(c);
+    if (!auth) {
+      return c.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, 401);
+    }
+
     const characterId = c.req.param('id');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const input = (c.req as any).valid('json') as CharacterUpdate;
+    const input = c.req.valid('json');
 
     // Validate UUID format
     const validationResult = UuidSchema.safeParse(characterId);
     if (!validationResult.success) {
       return c.json(
-        {
-          error: 'Invalid character ID format',
-          code: 'VALIDATION_ERROR',
-          details: validationResult.error,
-        },
+        { error: 'Invalid character ID format', code: 'VALIDATION_ERROR' },
         400
       );
     }
 
     try {
-      const supabase = createAuthenticatedClient(jwtToken);
+      const supabase = createAuthenticatedClient(auth.jwtToken);
 
       // Verify ownership first
       const { data: existing, error: verifyError } = await supabase
         .from('characters')
         .select('id')
         .eq('id', characterId)
-        .eq('wallet_address', walletAddress)
+        .eq('wallet_address', auth.walletAddress)
         .single();
 
       if (verifyError || !existing) {
         return c.json(
-          {
-            error: 'Character not found',
-            code: 'NOT_FOUND',
-          },
+          { error: 'Character not found', code: 'NOT_FOUND' },
           404
         );
       }
@@ -390,22 +384,15 @@ ai.put(
 
       if (updateError || !character) {
         return c.json(
-          {
-            error: 'Failed to update character',
-            code: 'DATABASE_ERROR',
-            details: updateError,
-          },
+          { error: 'Failed to update character', code: 'DATABASE_ERROR' },
           500
         );
       }
 
       return c.json(mapCharacterToResponse(character), 200);
-    } catch (error) {
+    } catch {
       return c.json(
-        {
-          error: error instanceof Error ? error.message : 'Failed to update character',
-          code: 'INTERNAL_ERROR',
-        },
+        { error: 'Failed to update character', code: 'INTERNAL_ERROR' },
         500
       );
     }
@@ -423,48 +410,43 @@ ai.put(
 ai.post(
   '/characters/:id/generate',
   zValidator('json', GenerateContentRequestSchema),
-  async (c: Context) => {
-    const walletAddress = c.get('walletAddress') as string;
-    const jwtToken = c.get('jwtToken') as string;
+  async (c) => {
+    const auth = getAuthContext(c);
+    if (!auth) {
+      return c.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, 401);
+    }
+
     const characterId = c.req.param('id');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const input = (c.req as any).valid('json') as GenerateContentRequest;
+    const input = c.req.valid('json');
 
     // Validate UUID format
     const validationResult = UuidSchema.safeParse(characterId);
     if (!validationResult.success) {
       return c.json(
-        {
-          error: 'Invalid character ID format',
-          code: 'VALIDATION_ERROR',
-          details: validationResult.error,
-        },
+        { error: 'Invalid character ID format', code: 'VALIDATION_ERROR' },
         400
       );
     }
 
     try {
-      const supabase = createAuthenticatedClient(jwtToken);
+      const supabase = createAuthenticatedClient(auth.jwtToken);
 
       // Verify ownership
       const { data: character, error: verifyError } = await supabase
         .from('characters')
         .select('id')
         .eq('id', characterId)
-        .eq('wallet_address', walletAddress)
+        .eq('wallet_address', auth.walletAddress)
         .single();
 
       if (verifyError || !character) {
         return c.json(
-          {
-            error: 'Character not found',
-            code: 'NOT_FOUND',
-          },
+          { error: 'Character not found', code: 'NOT_FOUND' },
           404
         );
       }
 
-      // Rate limit: check generation_count in last hour (max 30 per wallet)
+      // Rate limit: check generation_count in last hour (max 30 per character)
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
       const { data: recentGenerations, error: countError } = await supabase
         .from('content_generations')
@@ -474,11 +456,7 @@ ai.post(
 
       if (countError) {
         return c.json(
-          {
-            error: 'Failed to check rate limit',
-            code: 'DATABASE_ERROR',
-            details: countError,
-          },
+          { error: 'Failed to check rate limit', code: 'DATABASE_ERROR' },
           500
         );
       }
@@ -502,7 +480,7 @@ ai.post(
           character_id: characterId,
           generation_type: input.generationType,
           input_prompt: input.inputPrompt,
-          model_used: 'pending', // Will be set by background job
+          model_used: 'pending',
           model_params: input.modelParams || {},
           moderation_status: 'pending',
         })
@@ -514,7 +492,6 @@ ai.post(
           {
             error: 'Failed to create generation record',
             code: 'DATABASE_ERROR',
-            details: insertError,
           },
           500
         );
@@ -527,12 +504,9 @@ ai.post(
       });
 
       return c.json(response, 202);
-    } catch (error) {
+    } catch {
       return c.json(
-        {
-          error: error instanceof Error ? error.message : 'Failed to trigger generation',
-          code: 'INTERNAL_ERROR',
-        },
+        { error: 'Failed to trigger generation', code: 'INTERNAL_ERROR' },
         500
       );
     }
@@ -543,28 +517,27 @@ ai.post(
  * GET /api/ai/generations/:id
  * Get generation result
  */
-ai.get('/generations/:id', async (c: Context) => {
-  const walletAddress = c.get('walletAddress') as string;
-  const jwtToken = c.get('jwtToken') as string;
+ai.get('/generations/:id', async (c) => {
+  const auth = getAuthContext(c);
+  if (!auth) {
+    return c.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, 401);
+  }
+
   const generationId = c.req.param('id');
 
   // Validate UUID format
   const validationResult = UuidSchema.safeParse(generationId);
   if (!validationResult.success) {
     return c.json(
-      {
-        error: 'Invalid generation ID format',
-        code: 'VALIDATION_ERROR',
-        details: validationResult.error,
-      },
+      { error: 'Invalid generation ID format', code: 'VALIDATION_ERROR' },
       400
     );
   }
 
   try {
-    const supabase = createAuthenticatedClient(jwtToken);
+    const supabase = createAuthenticatedClient(auth.jwtToken);
 
-    // Fetch generation with character ownership verification
+    // Fetch generation with character ownership join
     const { data: generation, error: generationError } = await supabase
       .from('content_generations')
       .select('*, characters!inner(wallet_address)')
@@ -573,33 +546,24 @@ ai.get('/generations/:id', async (c: Context) => {
 
     if (generationError || !generation) {
       return c.json(
-        {
-          error: 'Generation not found',
-          code: 'NOT_FOUND',
-        },
+        { error: 'Generation not found', code: 'NOT_FOUND' },
         404
       );
     }
 
-    // Verify ownership through character
-    const characterData = generation.characters as unknown as { wallet_address: string };
-    if (characterData.wallet_address !== walletAddress) {
+    // Verify ownership through character join
+    const ownerWallet = extractOwnerWallet(generation.characters);
+    if (ownerWallet !== auth.walletAddress) {
       return c.json(
-        {
-          error: 'Unauthorized access to this generation',
-          code: 'FORBIDDEN',
-        },
+        { error: 'Unauthorized access to this generation', code: 'FORBIDDEN' },
         403
       );
     }
 
-    return c.json(mapGenerationToResponse(generation as unknown as ContentGeneration), 200);
-  } catch (error) {
+    return c.json(mapGenerationToResponse(generation), 200);
+  } catch {
     return c.json(
-      {
-        error: error instanceof Error ? error.message : 'Failed to fetch generation',
-        code: 'INTERNAL_ERROR',
-      },
+      { error: 'Failed to fetch generation', code: 'INTERNAL_ERROR' },
       500
     );
   }
@@ -609,17 +573,14 @@ ai.get('/generations/:id', async (c: Context) => {
  * GET /api/ai/generations/:id/stream
  * SSE endpoint for generation progress
  */
-ai.get('/generations/:id/stream', async (c: Context) => {
+ai.get('/generations/:id/stream', async (c) => {
   // For SSE with EventSource, auth token comes via query param
   const token = c.req.query('token');
   const generationId = c.req.param('id');
 
   if (!token) {
     return c.json(
-      {
-        error: 'Missing auth token in query params',
-        code: 'UNAUTHORIZED',
-      },
+      { error: 'Missing auth token in query params', code: 'UNAUTHORIZED' },
       401
     );
   }
@@ -628,27 +589,26 @@ ai.get('/generations/:id/stream', async (c: Context) => {
   const validationResult = UuidSchema.safeParse(generationId);
   if (!validationResult.success) {
     return c.json(
-      {
-        error: 'Invalid generation ID format',
-        code: 'VALIDATION_ERROR',
-      },
+      { error: 'Invalid generation ID format', code: 'VALIDATION_ERROR' },
       400
     );
   }
 
   try {
-    // Verify JWT manually for SSE
-    const { jwtVerify } = require('jose');
+    // Verify JWT manually for SSE (EventSource can't set Authorization header)
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
-      return c.json({ error: 'JWT configuration error', code: 'INTERNAL_ERROR' }, 500);
+      return c.json(
+        { error: 'JWT configuration error', code: 'INTERNAL_ERROR' },
+        500
+      );
     }
 
     const secret = new TextEncoder().encode(jwtSecret);
     const { payload } = await jwtVerify(token, secret);
-    const walletAddress = payload.wallet_address as string;
+    const walletAddress = payload.wallet_address;
 
-    if (!walletAddress) {
+    if (typeof walletAddress !== 'string' || !walletAddress) {
       return c.json({ error: 'Invalid token', code: 'UNAUTHORIZED' }, 401);
     }
 
@@ -662,21 +622,24 @@ ai.get('/generations/:id/stream', async (c: Context) => {
       .single();
 
     if (verifyError || !generation) {
-      return c.json({ error: 'Generation not found', code: 'NOT_FOUND' }, 404);
+      return c.json(
+        { error: 'Generation not found', code: 'NOT_FOUND' },
+        404
+      );
     }
 
-    const characterData = generation.characters as unknown as { wallet_address: string };
-    if (characterData.wallet_address !== walletAddress) {
+    const ownerWallet = extractOwnerWallet(generation.characters);
+    if (ownerWallet !== walletAddress) {
       return c.json({ error: 'Forbidden', code: 'FORBIDDEN' }, 403);
     }
 
-    // Return SSE stream
-    return stream(c, async (stream) => {
-      // Set SSE headers
-      c.header('Content-Type', 'text/event-stream');
-      c.header('Cache-Control', 'no-cache');
-      c.header('Connection', 'keep-alive');
+    // Set SSE headers before stream creation
+    c.header('Content-Type', 'text/event-stream');
+    c.header('Cache-Control', 'no-cache');
+    c.header('Connection', 'keep-alive');
 
+    // Return SSE stream
+    return stream(c, async (sseStream) => {
       const startTime = Date.now();
       const maxDuration = 5 * 60 * 1000; // 5 minutes timeout
 
@@ -690,7 +653,7 @@ ai.get('/generations/:id/stream', async (c: Context) => {
             .single();
 
           if (currentGen) {
-            await stream.write(
+            await sseStream.write(
               `event: status\ndata: ${JSON.stringify({ status: currentGen.moderation_status })}\n\n`
             );
 
@@ -700,32 +663,29 @@ ai.get('/generations/:id/stream', async (c: Context) => {
               currentGen.moderation_status === 'rejected'
             ) {
               clearInterval(pollInterval);
-              await stream.close();
+              await sseStream.close();
             }
           }
-        } catch (error) {
+        } catch {
           clearInterval(pollInterval);
-          await stream.close();
+          await sseStream.close();
         }
 
         // Timeout after 5 minutes
         if (Date.now() - startTime > maxDuration) {
           clearInterval(pollInterval);
-          await stream.close();
+          await sseStream.close();
         }
-      }, 2000); // Poll every 2 seconds
+      }, 2000);
 
       // Cleanup on stream close
-      stream.onAbort(() => {
+      sseStream.onAbort(() => {
         clearInterval(pollInterval);
       });
     });
-  } catch (error) {
+  } catch {
     return c.json(
-      {
-        error: error instanceof Error ? error.message : 'Failed to establish stream',
-        code: 'INTERNAL_ERROR',
-      },
+      { error: 'Failed to establish stream', code: 'INTERNAL_ERROR' },
       500
     );
   }

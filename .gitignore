@@ -9,6 +9,9 @@ dist/
 build/
 tsconfig.tsbuildinfo
 
+# Supabase local state
+supabase/.temp/
+
 # Environment & Secrets
 .env
 .env.local
