@@ -1,0 +1,54 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'src/lib/solana/**'
+      - 'src/features/trading/**'
+      - 'src/features/wallet/**'
+      - 'src/app/api/**'
+      - 'src/lib/ai/**'
+      - 'src/features/agents/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  security-review:
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.changed_files, 'src/lib/solana/') || contains(github.event.pull_request.changed_files, 'src/features/trading/')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Review this PR for Solana/DeFi security issues. Check for:
+            - Private key exposure
+            - Missing transaction simulation
+            - Slippage guard absence
+            - Address validation gaps
+            - Server-side signing attempts
+            Report findings using the security-auditor format.
+          allowed_tools: Read,Grep,Glob
+          model: sonnet
+
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Review this PR for code quality. Check for:
+            - TypeScript strict compliance (no `any`)
+            - Named exports only
+            - @solana/kit usage (no web3.js)
+            - Zod schemas on API boundaries
+            - Conventional commit messages
+            Report Pass/Fail with file:line references.
+          allowed_tools: Read,Grep,Glob
+          model: haiku

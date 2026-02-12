@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build
+.next/
+out/
+dist/
+build/
+tsconfig.tsbuildinfo
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# Solana keypairs — NEVER commit these
+*.json
+!package.json
+!tsconfig.json
+!tsconfig.*.json
+!components.json
+!turbo.json
+!.vscode/*.json
+~/.config/solana/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Testing
+coverage/
+.playwright/
+test-results/
+
+# Vercel
+.vercel/
+
+# Claude Code local preferences
+CLAUDE.local.md
+
+# Turborepo
+.turbo/
