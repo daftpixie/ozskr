@@ -9,8 +9,8 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon } from 'lucide-react';
-import { useContentSchedules } from '@/hooks/use-schedules';
+import { ChevronLeft, ChevronRight, Plus, Play, Calendar as CalendarIcon } from 'lucide-react';
+import { useContentSchedules, useTriggerSchedule } from '@/hooks/use-schedules';
 import { useCharacters } from '@/hooks/use-characters';
 import { ScheduleModal } from '@/features/agents/components/schedule-modal';
 import { cn } from '@/lib/utils';
@@ -23,6 +23,7 @@ export default function CalendarPage() {
 
   const { data: schedulesData, isLoading } = useContentSchedules();
   const { data: charactersData } = useCharacters();
+  const triggerSchedule = useTriggerSchedule();
 
   const schedules = schedulesData?.data || [];
   const characters = charactersData?.data || [];
@@ -260,12 +261,24 @@ export default function CalendarPage() {
                             <Badge variant="secondary" className="text-xs">
                               {schedule.contentType}
                             </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(schedule.nextRunAt).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(schedule.nextRunAt).toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => triggerSchedule.mutate(schedule.id)}
+                                disabled={triggerSchedule.isPending}
+                                title="Run now"
+                              >
+                                <Play className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </div>
                           {character && (
                             <p className="text-sm font-medium text-white">

@@ -54,6 +54,7 @@ function mapScheduleToResponse(schedule: ContentSchedule) {
     contentType: schedule.content_type,
     promptTemplate: schedule.prompt_template,
     isActive: schedule.is_active,
+    autoPublish: schedule.auto_publish,
     lastRunAt: schedule.last_run_at,
     runCount: schedule.run_count,
     createdAt: schedule.created_at,
@@ -116,6 +117,7 @@ schedules.post('/', zValidator('json', ContentScheduleCreateSchema), async (c) =
         next_run_at: input.nextRunAt,
         content_type: input.contentType,
         prompt_template: input.promptTemplate,
+        auto_publish: input.autoPublish ?? false,
       })
       .select()
       .single();
@@ -320,6 +322,7 @@ schedules.put(
       if (input.contentType !== undefined) updateData.content_type = input.contentType;
       if (input.promptTemplate !== undefined) updateData.prompt_template = input.promptTemplate;
       if (input.isActive !== undefined) updateData.is_active = input.isActive;
+      if (input.autoPublish !== undefined) updateData.auto_publish = input.autoPublish;
 
       const { data: schedule, error: updateError } = await supabase
         .from('content_schedules')

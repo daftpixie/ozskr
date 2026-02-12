@@ -102,6 +102,38 @@ const processSingleSchedule = async (
       }
     );
 
+    // Auto-publish if configured and content is approved
+    if (schedule.auto_publish) {
+      // Fetch the updated generation to check moderation status
+      const { data: updatedGen } = await supabase
+        .from('content_generations')
+        .select('moderation_status')
+        .eq('id', generation.id)
+        .single();
+
+      if (updatedGen?.moderation_status === ModerationStatus.APPROVED) {
+        // Fetch character's connected social accounts
+        const { data: socialAccounts } = await supabase
+          .from('social_accounts')
+          .select('id')
+          .eq('wallet_address', character.wallet_address)
+          .eq('is_connected', true);
+
+        if (socialAccounts && socialAccounts.length > 0) {
+          try {
+            const { publishToSocial } = await import('./publish-social');
+            await publishToSocial(
+              generation.id,
+              socialAccounts.map((a) => a.id)
+            );
+          } catch (publishError) {
+            // Log but don't fail the schedule - content is generated successfully
+            console.error(`Auto-publish failed for generation ${generation.id}:`, publishError);
+          }
+        }
+      }
+    }
+
     // Update schedule metadata
     const now = new Date().toISOString();
     const updates: Record<string, unknown> = {

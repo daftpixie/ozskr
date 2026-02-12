@@ -5,7 +5,8 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,15 +26,21 @@ import { SwapConfirmModal } from '@/features/trading/components/swap-confirm-mod
 import { SwapHistory } from '@/features/trading/components/swap-history';
 import { cn } from '@/lib/utils';
 import { parseTokenAmount, formatTokenAmount } from '@/lib/solana/tokens';
+import { HOPE_MINT } from '@/lib/solana/hope-token';
 import type { SwapQuoteRequest } from '@/types/trading';
 
-export default function TradePage() {
+function TradePageContent() {
   const { user, isAuthenticated } = useWalletAuth();
   const { data: tokens, isLoading: tokensLoading } = useTokenList();
+  const searchParams = useSearchParams();
 
   // Token selection
   const [inputMint, setInputMint] = useState('So11111111111111111111111111111111111111112'); // SOL
-  const [outputMint, setOutputMint] = useState('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'); // USDC
+  const [outputMint, setOutputMint] = useState(() => {
+    const outputParam = searchParams.get('output');
+    if (outputParam === 'HOPE') return HOPE_MINT;
+    return 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'; // USDC
+  });
 
   // Amount and slippage
   const [amount, setAmount] = useState('');
@@ -372,5 +379,13 @@ export default function TradePage() {
         }}
       />
     </div>
+  );
+}
+
+export default function TradePage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-[60vh] items-center justify-center"><p className="text-muted-foreground">Loading trade...</p></div>}>
+      <TradePageContent />
+    </Suspense>
   );
 }

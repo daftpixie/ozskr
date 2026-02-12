@@ -28,6 +28,7 @@ export const ContentScheduleCreateSchema = z.object({
   nextRunAt: TimestampSchema,
   contentType: ScheduleContentTypeSchema,
   promptTemplate: z.string().min(10).max(5000),
+  autoPublish: z.boolean().optional().default(false),
 });
 
 export type ContentScheduleCreate = z.infer<typeof ContentScheduleCreateSchema>;
@@ -42,6 +43,7 @@ export const ContentScheduleUpdateSchema = z.object({
   contentType: ScheduleContentTypeSchema.optional(),
   promptTemplate: z.string().min(10).max(5000).optional(),
   isActive: z.boolean().optional(),
+  autoPublish: z.boolean().optional(),
 });
 
 export type ContentScheduleUpdate = z.infer<typeof ContentScheduleUpdateSchema>;
@@ -58,6 +60,7 @@ export const ContentScheduleResponseSchema = z.object({
   contentType: ScheduleContentTypeSchema,
   promptTemplate: z.string(),
   isActive: z.boolean(),
+  autoPublish: z.boolean(),
   lastRunAt: TimestampSchema.nullable(),
   runCount: z.number().int().min(0),
   createdAt: TimestampSchema,

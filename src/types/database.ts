@@ -223,6 +223,7 @@ export interface ContentSchedule {
   content_type: ScheduleContentType;
   prompt_template: string;
   is_active: boolean;
+  auto_publish: boolean;
   last_run_at: string | null;
   run_count: number;
   created_at: string;
@@ -350,7 +351,7 @@ export type ContentScheduleInsert = Pick<
   ContentSchedule,
   'character_id' | 'schedule_type' | 'next_run_at' | 'content_type' | 'prompt_template'
 > &
-  Partial<Pick<ContentSchedule, 'cron_expression' | 'is_active' | 'last_run_at' | 'run_count'>>;
+  Partial<Pick<ContentSchedule, 'cron_expression' | 'is_active' | 'auto_publish' | 'last_run_at' | 'run_count'>>;
 
 export type SocialAccountInsert = Pick<
   SocialAccount,
@@ -451,6 +452,7 @@ export type ContentScheduleUpdate = Partial<
     | 'content_type'
     | 'prompt_template'
     | 'is_active'
+    | 'auto_publish'
     | 'last_run_at'
     | 'run_count'
   >

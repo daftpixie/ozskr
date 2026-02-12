@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Calendar, Clock, Repeat, FileText, Image as ImageIcon } from 'lucide-react';
 import { useCharacters } from '@/hooks/use-characters';
 import { useCreateSchedule } from '@/hooks/use-schedules';
@@ -42,6 +43,7 @@ export function ScheduleModal({ open, onOpenChange, characterId }: ScheduleModal
   const [frequency, setFrequency] = useState<'daily' | 'every-2-days' | 'weekly' | 'custom'>('daily');
   const [customCron, setCustomCron] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [autoPublish, setAutoPublish] = useState(false);
 
   const { data: charactersData } = useCharacters();
   const { mutate: createSchedule, isPending } = useCreateSchedule();
@@ -119,6 +121,7 @@ export function ScheduleModal({ open, onOpenChange, characterId }: ScheduleModal
         nextRunAt,
         contentType,
         promptTemplate,
+        autoPublish,
       },
       {
         onSuccess: () => {
@@ -140,6 +143,7 @@ export function ScheduleModal({ open, onOpenChange, characterId }: ScheduleModal
       setFrequency('daily');
       setCustomCron('');
       setShowAdvanced(false);
+      setAutoPublish(false);
     }, 300);
   };
 
@@ -361,6 +365,26 @@ export function ScheduleModal({ open, onOpenChange, characterId }: ScheduleModal
               </div>
             </Card>
           )}
+
+          {/* Auto-publish Option */}
+          <div className="flex items-center space-x-2 rounded-lg border border-border/50 bg-card p-4">
+            <Checkbox
+              id="auto-publish"
+              checked={autoPublish}
+              onCheckedChange={(checked) => setAutoPublish(checked === true)}
+            />
+            <div className="grid gap-1.5 leading-none">
+              <Label
+                htmlFor="auto-publish"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Auto-publish to connected accounts
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Automatically publish approved content to your connected social media accounts
+              </p>
+            </div>
+          </div>
 
           {/* Submit Button */}
           <div className="flex justify-end gap-2">
