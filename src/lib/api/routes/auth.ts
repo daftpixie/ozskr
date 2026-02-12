@@ -10,6 +10,7 @@ import { SiwsVerifyRequestSchema, SessionResponseSchema, ApiSuccessSchema } from
 import { createSupabaseServerClient } from '../supabase';
 import { authMiddleware } from '../middleware/auth';
 import { address } from '@solana/kit';
+import { verifySiwsSignature } from '@/lib/solana/siws';
 import type { Context } from 'hono';
 
 /**
@@ -38,19 +39,14 @@ auth.post('/verify', zValidator('json', SiwsVerifyRequestSchema), async (c) => {
     const walletAddress = address(publicKey);
 
     // STEP 2: Verify SIWS signature
-    // NOTE: In production, this should use @solana/kit or nacl to verify:
-    // - Parse the SIWS message (domain, nonce, timestamp, etc.)
-    // - Verify the signature against the message using the public key
-    // - Check timestamp is within acceptable range (e.g., 5 minutes)
-    // - Verify nonce hasn't been used before
-    //
-    // For Phase 1 scaffold, we document the verification steps:
-    // 1. Convert signature from base58 to Uint8Array
-    // 2. Convert message to Uint8Array
-    // 3. Use nacl.sign.detached.verify(messageBytes, signatureBytes, publicKeyBytes)
-    //
-    // Placeholder validation (MUST be replaced with actual signature verification)
-    if (!message || !signature) {
+    // Uses nacl to verify ed25519 signature and validates timestamp
+    const isValid = await verifySiwsSignature({
+      message,
+      signature,
+      publicKey,
+    });
+
+    if (!isValid) {
       return c.json(
         {
           error: 'Invalid SIWS message or signature',
@@ -59,6 +55,12 @@ auth.post('/verify', zValidator('json', SiwsVerifyRequestSchema), async (c) => {
         400
       );
     }
+
+    // TODO: In production, verify nonce hasn't been used before
+    // - Extract nonce from message
+    // - Check against sessions table or dedicated nonces table
+    // - Store nonce with expiration timestamp
+    // This prevents replay attacks
 
     // STEP 3: Upsert user in Supabase (service role bypasses RLS for first-time signup)
     const supabase = getServiceClient();

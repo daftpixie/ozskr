@@ -42,9 +42,9 @@ export const authMiddleware = createMiddleware(async (c: Context, next) => {
     const secret = new TextEncoder().encode(jwtSecret);
     const { payload } = await jwtVerify(token, secret);
 
-    const walletAddress = payload.wallet_address as string;
+    const walletAddress = payload.wallet_address;
 
-    if (!walletAddress) {
+    if (typeof walletAddress !== 'string' || !walletAddress) {
       return c.json(
         {
           error: 'Invalid token payload: missing wallet_address',
@@ -106,8 +106,8 @@ export const optionalAuthMiddleware = createMiddleware(async (c: Context, next) 
     const secret = new TextEncoder().encode(jwtSecret);
     const { payload } = await jwtVerify(token, secret);
 
-    const walletAddress = payload.wallet_address as string;
-    if (walletAddress) {
+    const walletAddress = payload.wallet_address;
+    if (typeof walletAddress === 'string' && walletAddress) {
       c.set('walletAddress', walletAddress);
       c.set('jwtToken', token);
     }
