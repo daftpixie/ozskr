@@ -1,0 +1,302 @@
+# Changelog
+
+All notable changes to ozskr.ai will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased] - Phase 6: Launch Operations
+
+### Added
+- CI/CD pipeline with GitHub Actions (lint, typecheck, test, build validation)
+- Automated security scanning with CodeQL and dependency audits
+- Railway deployment configuration with automatic preview environments
+- Monitoring and observability: health checks, error tracking, performance metrics
+- Backup and disaster recovery procedures
+- Secret rotation workflows with Infisical integration
+- Feature flags system for progressive rollout
+- Production deployment checklist and readiness report
+
+### Documentation
+- Open-source README with architecture diagram, quick-start guide, and feature overview
+- CONTRIBUTING.md with contribution workflow and PR process
+- CODE_OF_CONDUCT.md (Contributor Covenant v2.1)
+- SECURITY.md with vulnerability reporting process
+- Legal policy drafts (REQUIRES ATTORNEY REVIEW):
+  - Privacy Policy (multi-jurisdictional, wallet + AI data handling)
+  - Terms of Service (AI content IP, liability, crypto payment terms)
+  - Acceptable Use Policy
+  - DMCA/Copyright Policy
+  - Cookie Policy (CCPA-compliant, GPC signal support)
+  - Token Disclaimer ($HOPE utility-only framing, SEC-safe)
+  - Non-Custodial Wallet Disclaimer
+  - AI Content Disclosure Policy
+  - Data Retention Policy
+  - Content Moderation Policy
+
+### Changed
+- Social publishing migrated to Twitter Direct API (replacing Ayrshare)
+- Enhanced worker architecture with Cloudflare Workers for edge compute
+- Network configuration system with devnet/mainnet switching
+- Improved RPC client with automatic failover and health monitoring
+
+## [0.5.0] - 2026-02-12 - Phase 5: Polish
+
+### Added
+- Gamification engine with points system, achievements, and streak tracking
+- Leaderboard with global and friend rankings
+- Achievement page with progress tracking and unlockable rewards
+- Tier badges (Newbie, Rising Star, Influencer, Legend)
+- Streak display with milestone celebrations
+- Toast notifications for achievement unlocks
+- Comprehensive Playwright E2E test suite:
+  - Wallet connection and authentication flows
+  - Agent creation and management
+  - Content generation with SSE streaming
+  - Trading and swap execution
+  - Analytics dashboard interaction
+  - Gamification features (achievements, leaderboard)
+- Health check endpoints for monitoring
+
+### Changed
+- Production hardening: structured logging with correlation IDs and error context
+- Enhanced error handling with graceful degradation
+- Security headers: CSP, HSTS, X-Frame-Options, X-Content-Type-Options
+- Bundle optimization: code splitting, tree shaking, dynamic imports
+- React Query configuration tuning: stale times, cache management, deduplication
+- Image optimization: Next.js Image component, WebP format, lazy loading
+- Database connection pooling and query optimization
+
+### Security
+- Final pre-production security audit pass
+- Environment variable validation with Zod schemas
+- Sensitive data redaction in logs
+- Rate limiting configuration for production
+- Content Security Policy (CSP) enforcement
+- Supabase RLS policy audit and hardening
+
+### Fixed
+- Memory leaks in SSE connections
+- Race conditions in content generation pipeline
+- Transaction confirmation polling edge cases
+- Wallet adapter reconnection handling
+
+## [0.4.0] - 2026-02-11 - Phase 4: Scale
+
+### Added
+- Trigger.dev integration for scheduled background jobs
+- Automated content generation jobs with cron scheduling
+- Ayrshare social media publishing integration:
+  - Twitter, LinkedIn, Instagram, Facebook support
+  - Post scheduling and queue management
+  - Publishing status tracking
+- Content calendar UI:
+  - Weekly/monthly calendar views
+  - Drag-and-drop scheduling
+  - Publish now and schedule for later flows
+  - Draft management
+- Analytics dashboards with Recharts visualizations:
+  - Agent performance metrics (engagement, reach, conversion)
+  - Platform-wide statistics (total posts, active agents, user growth)
+  - Time-series charts for trend analysis
+  - Top performing content leaderboard
+- $HOPE token integration:
+  - Balance display in dashboard
+  - Portfolio value tracking
+  - Token metadata and price feed integration
+  - Transaction history
+
+### Changed
+- Content generation pipeline optimized for scheduled execution
+- Database schema extended for job tracking and publishing metadata
+- React Query configuration for real-time analytics updates
+
+### Performance
+- Implemented data pagination for analytics queries
+- Chart rendering optimized with memoization
+- Background job queue with concurrency limits
+
+## [0.3.0] - 2026-02-10 - Phase 3: Trading
+
+### Added
+- Jupiter Ultra swap client integration:
+  - Quote fetching with route optimization
+  - Priority fee calculation for faster settlement
+  - Slippage tolerance configuration (default 50 bps)
+- Transaction builder utilities using @solana/kit:
+  - Functional transaction composition with `pipe()`
+  - Address validation with `assertIsAddress()`
+  - Amount handling with BigInt and `lamports()`
+- Token utilities and SPL Token program integration
+- Swap execution flow:
+  - Pre-flight simulation (required before execution)
+  - Transaction signing via wallet adapter
+  - Confirmation polling with exponential backoff
+  - Error handling and retry logic
+- Trading UI components:
+  - Swap interface with token selection and amount input
+  - Real-time quote updates
+  - Transaction preview with fee breakdown
+  - Confirmation modal with transaction details
+- Portfolio view:
+  - Token balance display with USD values
+  - 24h price change indicators
+  - Portfolio allocation chart
+- Trading history:
+  - Transaction list with status indicators
+  - Solana Explorer links
+  - Filter by token and date range
+
+### Security
+- DeFi safety hardening:
+  - Mandatory transaction simulation before execution
+  - Slippage guards on all swap operations
+  - Human-in-the-loop approval for all DeFi transactions
+  - Input validation with Zod schemas
+  - Amount overflow protection with BigInt
+- Comprehensive edge case testing:
+  - Insufficient balance scenarios
+  - Slippage exceeded conditions
+  - Transaction timeout handling
+  - Network error recovery
+
+### Changed
+- Migrated from deprecated @solana/web3.js v1 to @solana/kit patterns
+- Enhanced RPC client with Jupiter API integration
+
+## [0.2.0] - 2026-02-09 - Phase 2: Agent Core
+
+### Added
+- Mastra AI agent framework integration:
+  - Claude 3.5 Sonnet as reasoning engine
+  - Tool calling for content generation and memory operations
+  - Streaming response support with Server-Sent Events (SSE)
+- Mem0 memory layer:
+  - Per-character namespace isolation (security-critical)
+  - Contextual memory retrieval for personalized content
+  - Memory management API routes
+  - Server-side enforcement of namespace boundaries
+- 7-stage content generation pipeline:
+  1. Parse: Request validation and intent extraction
+  2. Context: Memory retrieval from Mem0
+  3. Enhance: Prompt engineering with character DNA
+  4. Generate: Claude API call with streaming
+  5. Quality: Content quality scoring and refinement
+  6. Moderate: AI-powered content moderation (toxicity, compliance)
+  7. Store: Supabase persistence with metadata
+- Character DNA system:
+  - JSON-based character personality definitions
+  - Voice, tone, style, and content preferences
+  - Dynamic loading and validation
+- Langfuse tracing integration:
+  - Request/response logging for all Claude API calls
+  - Performance metrics and cost tracking
+  - Error monitoring and debugging
+- Agent creation wizard:
+  - Multi-step form with character DNA configuration
+  - Real-time preview of agent personality
+  - Image upload for avatar (fal.ai integration placeholder)
+- Agent management UI:
+  - Agent list with status indicators
+  - Edit and delete operations
+  - Character DNA editor
+- Content generation interface:
+  - Streaming content display with SSE
+  - Real-time progress indicators
+  - Regenerate and edit controls
+- API routes:
+  - POST /api/agents/create
+  - GET /api/agents/list
+  - POST /api/agents/generate (SSE endpoint)
+  - POST /api/agents/memory/add
+  - GET /api/agents/memory/retrieve
+
+### Security
+- Security review and hardening:
+  - Removed error.message leaks in API responses
+  - Enforced type safety in AI route handlers
+  - Added input sanitization for user-provided content
+  - Implemented rate limiting per wallet address
+  - Mem0 namespace isolation enforcement (prevents cross-character memory access)
+  - Content moderation pipeline (blocks toxic/prohibited content)
+
+### Changed
+- Enhanced error handling with structured error types
+- Improved API response schemas with Zod validation
+
+## [0.1.0] - 2026-02-08 - Phase 1: Foundation
+
+### Added
+- Next.js 15 App Router scaffold:
+  - TypeScript 5.x with strict mode
+  - App Router file structure
+  - Server and client component patterns
+- ozskr.ai design system:
+  - Brand colors: Solana Purple (#9945FF), Solana Green (#14F195), Brick Gold (#F59E0B)
+  - Dark mode default with Void Black (#0A0A0B) background
+  - Typography: Satoshi (display), Inter (body), JetBrains Mono (code)
+  - shadcn/ui component primitives
+  - Tailwind CSS configuration
+- Supabase integration:
+  - Database schema with tables: users, agents, content, sessions
+  - Row Level Security (RLS) policies on all tables
+  - Auth context integration
+  - TypeScript types generated from schema
+- Hono API scaffold:
+  - RESTful API routes with Zod validation
+  - JWT middleware for protected routes
+  - Error handling middleware
+  - CORS configuration
+- Sign-In with Solana (SIWS) authentication:
+  - Wallet connection via @solana/wallet-adapter-react
+  - Challenge-response flow with cryptographic signature verification
+  - Session management with HTTP-only cookies
+  - Automatic wallet reconnection
+- Dashboard shell:
+  - Responsive sidebar navigation
+  - Command palette (Cmd+K / Ctrl+K)
+  - User profile dropdown
+  - Breadcrumb navigation
+- Live SOL balance display:
+  - Real-time balance fetching from Solana RPC
+  - Auto-refresh on wallet change
+  - Formatted display with lamport conversion
+- Personalized welcome section:
+  - Wallet address display (truncated)
+  - Time-based greeting
+  - Quick action cards
+- Test infrastructure:
+  - Vitest configuration for unit and integration tests
+  - Solana devnet mock patterns
+  - Supabase test client setup
+  - API route testing utilities
+  - Wallet adapter mocking for component tests
+
+### Security
+- Client-side wallet signing only (no server-side key handling)
+- SIWS signature verification
+- JWT-based session management with secure cookies
+- Supabase RLS enforcement on all queries
+- Environment variable validation
+
+---
+
+## Development Notes
+
+- **Built exclusively with Claude Code** (Anthropic Claude Opus 4.6)
+- All Solana transactions use @solana/kit functional patterns (no deprecated web3.js v1)
+- All AI calls include Langfuse tracing for observability
+- TypeScript strict mode enforced — no `any` types
+- Conventional Commits used throughout
+- Security-first approach: simulation before execution, human-in-the-loop approvals, content moderation
+
+## License
+
+Open Source - See LICENSE file for details
+
+## Links
+
+- **Repository**: https://github.com/daftpixie/ozskr
+- **Documentation**: See /docs folder
+- **Security**: See SECURITY.md
+- **Contributing**: See CONTRIBUTING.md

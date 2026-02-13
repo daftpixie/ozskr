@@ -1,0 +1,15 @@
+# Cloudflare Workers Configuration
+# Edge rate limiter for API protection
+# Actual implementation deferred to Sprint 2
+
+name = "ozskr-rate-limiter"
+main = "workers/rate-limiter/index.ts"
+compatibility_date = "2025-01-01"
+
+[vars]
+ENVIRONMENT = "production"
+
+# Upstash Redis binding (configured in Cloudflare dashboard)
+# [[kv_namespaces]]
+# binding = "RATE_LIMIT_KV"
+# id = "to-be-configured"

@@ -1,0 +1,8 @@
+# Security-sensitive paths require @daftpixie review
+src/lib/solana/ @daftpixie
+src/features/trading/ @daftpixie
+src/features/wallet/ @daftpixie
+src/app/api/ @daftpixie
+src/lib/secrets/ @daftpixie
+supabase/ @daftpixie
+.github/ @daftpixie
