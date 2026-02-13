@@ -64,6 +64,9 @@ When implementing features, the orchestrator (Opus) should:
 | Test coverage across all domains | `test-writer` | All |
 | Security review (read-only, post-implementation) | `security-auditor` | §13 |
 | Fast code quality checks (read-only) | `code-reviewer` | All |
+| Infrastructure, CI/CD, secrets, deploy, monitoring | `devops-infra` | §14, Launch Ops |
+| Legal docs, marketing, open-source docs, community | `content-writer` | Launch Ops |
+| Social API migration, Twitter direct, SocialPublisher | `social-integration-dev` | §7, Launch Ops |
 
 ### Agent Interaction Rules
 
@@ -81,6 +84,20 @@ Subagents should escalate to the orchestrator when:
 - A new dependency addition exceeds 100KB bundle impact
 - Schema changes affect more than 3 database tables
 - Cross-agent coordination is required (e.g., API contract changes that affect frontend)
+
+### Launch Escalation Rules (Phase 6+)
+
+Hard rejections (no exceptions):
+- Any feature involving the platform signing transactions on behalf of users → REJECT
+- Any feature involving holding/converting crypto for users → REJECT
+- Content mentioning $HOPE value/price/returns → REJECT (SEC risk)
+
+Mandatory escalation:
+- Legal doc final versions → flag for Matt's attorney (never self-approve)
+- Reward distribution logic changes → escalate to orchestrator
+- Mainnet config changes → mandatory `devops-infra` + `security-auditor` dual approval
+- Payment wallet address changes → escalate to Matt directly
+- Open-source changes exposing internal patterns → `security-auditor` gate
 
 ### Agent Teams Parallelism (Phase 1 Example)
 
@@ -164,8 +181,10 @@ const pk = new PublicKey('...');
 
 ## Phase Status
 
-- [ ] Phase 1: Foundation (wallet, UI, auth, Hono API, Supabase schema)
-- [ ] Phase 2: Agent Core (Mastra agents, Mem0, content pipeline, Claude integration)
-- [ ] Phase 3: Trading (Jupiter Ultra swaps, positions, analytics)
-- [ ] Phase 4: Scale (multi-agent orchestration, performance optimization)
-- [ ] Phase 5: Polish (auto-stake, advanced analytics, platform maturity)
+- [x] Phase 1: Foundation (wallet, UI, auth, Hono API, Supabase schema)
+- [x] Phase 2: Agent Core (Mastra agents, Mem0, content pipeline, Claude integration)
+- [x] Phase 3: Trading (Jupiter Ultra swaps, positions, analytics)
+- [x] Phase 4: Scale (multi-agent orchestration, performance optimization)
+- [x] Phase 5: Polish (gamification, E2E tests, production hardening, security gate)
+- [ ] Phase 6: Launch Operations (CI/CD, legal, marketing, social API migration) ← CURRENT
+- [ ] Deferred: Auto-Stake Smart Contract (pending security audit budget)

@@ -5,6 +5,18 @@
  */
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+type ErrorTracker = (entry: LogEntry) => void;
+
+let _errorTracker: ErrorTracker | null = null;
+
+/**
+ * Set an external error tracker callback
+ * Called on every logger.error() invocation
+ * @param tracker Callback receiving the structured log entry
+ */
+export function setErrorTracker(tracker: ErrorTracker): void {
+  _errorTracker = tracker;
+}
 
 interface LogEntry {
   level: LogLevel;
@@ -66,6 +78,13 @@ const log = (level: LogLevel, message: string, meta?: Record<string, unknown>) =
   switch (level) {
     case 'error':
       console.error(formatted);
+      if (_errorTracker) {
+        try {
+          _errorTracker(entry);
+        } catch {
+          // Tracker itself failed — never crash
+        }
+      }
       break;
     case 'warn':
       console.warn(formatted);

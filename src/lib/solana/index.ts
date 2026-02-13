@@ -2,7 +2,7 @@
  * Solana Library Exports
  */
 
-export { getSolanaRpc, getDevnetRpc } from './rpc';
+export { getSolanaRpc, getFallbackRpc } from './rpc';
 export {
   createSiwsMessage,
   serializeSiwsMessage,

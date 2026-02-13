@@ -300,6 +300,8 @@ export interface SocialPost {
   error_message: string | null;
   engagement_metrics: Record<string, unknown>;
   last_metrics_update: string | null;
+  cost_usd: string | null;
+  provider: string | null;
   created_at: string;
 }
 
@@ -368,6 +370,16 @@ export interface LeaderboardEntry {
   tier: UserTier;
   period: LeaderboardPeriod;
   cached_at: string;
+}
+
+export interface TwitterToken {
+  social_account_id: string;
+  access_token_encrypted: string;
+  refresh_token_encrypted: string;
+  expires_at: string;
+  twitter_user_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // =============================================================================
@@ -467,7 +479,7 @@ export type SocialPostInsert = Pick<
   Partial<
     Pick<
       SocialPost,
-      'post_id' | 'post_url' | 'posted_at' | 'error_message' | 'engagement_metrics' | 'last_metrics_update'
+      'post_id' | 'post_url' | 'posted_at' | 'error_message' | 'engagement_metrics' | 'last_metrics_update' | 'cost_usd' | 'provider'
     >
   >;
 
@@ -530,6 +542,11 @@ export type LeaderboardEntryInsert = Pick<
   'wallet_address' | 'total_points' | 'rank' | 'tier' | 'period'
 > &
   Partial<Pick<LeaderboardEntry, 'display_name' | 'cached_at'>>;
+
+export type TwitterTokenInsert = Pick<
+  TwitterToken,
+  'social_account_id' | 'access_token_encrypted' | 'refresh_token_encrypted' | 'expires_at' | 'twitter_user_id'
+>;
 
 // =============================================================================
 // UPDATE TYPES (All fields optional)
@@ -617,6 +634,8 @@ export type SocialPostUpdate = Partial<
     | 'error_message'
     | 'engagement_metrics'
     | 'last_metrics_update'
+    | 'cost_usd'
+    | 'provider'
   >
 >;
 
@@ -647,6 +666,10 @@ export type UserStatsUpdate = Partial<
 
 export type LeaderboardEntryUpdate = Partial<
   Pick<LeaderboardEntry, 'display_name' | 'total_points' | 'rank' | 'tier' | 'cached_at'>
+>;
+
+export type TwitterTokenUpdate = Partial<
+  Pick<TwitterToken, 'access_token_encrypted' | 'refresh_token_encrypted' | 'expires_at'>
 >;
 
 // =============================================================================
@@ -750,6 +773,11 @@ export interface Database {
         Row: LeaderboardEntry;
         Insert: LeaderboardEntryInsert;
         Update: LeaderboardEntryUpdate;
+      };
+      twitter_tokens: {
+        Row: TwitterToken;
+        Insert: TwitterTokenInsert;
+        Update: TwitterTokenUpdate;
       };
     };
     Views: Record<string, never>;

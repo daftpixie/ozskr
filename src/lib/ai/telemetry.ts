@@ -15,7 +15,7 @@ export const getLangfuse = (): Langfuse => {
   if (!langfuseInstance) {
     const publicKey = process.env.LANGFUSE_PUBLIC_KEY;
     const secretKey = process.env.LANGFUSE_SECRET_KEY;
-    const host = process.env.LANGFUSE_HOST;
+    const host = process.env.LANGFUSE_BASEURL;
 
     if (!publicKey || !secretKey) {
       throw new Error(

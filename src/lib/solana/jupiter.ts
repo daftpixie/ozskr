@@ -120,10 +120,10 @@ export async function getQuote(params: JupiterQuoteParams): Promise<JupiterQuote
 
   // Validate slippage is within acceptable range
   const slippageBps = params.slippageBps ?? 50;
-  if (slippageBps < 1 || slippageBps > 300) {
+  if (slippageBps < 1 || slippageBps > 100) {
     throw new JupiterError(
       JupiterErrorCode.VALIDATION_ERROR,
-      'Slippage must be between 1 and 300 bps (0.01%-3%)'
+      'Slippage must be between 1 and 100 bps (0.01%-1%)'
     );
   }
 

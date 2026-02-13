@@ -102,6 +102,8 @@ describe('refresh-metrics', () => {
           error_message: null,
           engagement_metrics: {},
           last_metrics_update: null,
+          cost_usd: null,
+          provider: null,
           created_at: '2024-01-15T09:00:00Z',
         },
         {
@@ -116,6 +118,8 @@ describe('refresh-metrics', () => {
           error_message: null,
           engagement_metrics: {},
           last_metrics_update: null,
+          cost_usd: null,
+          provider: null,
           created_at: '2024-01-15T10:00:00Z',
         },
       ];
@@ -182,6 +186,8 @@ describe('refresh-metrics', () => {
         error_message: null,
         engagement_metrics: {},
         last_metrics_update: null,
+        cost_usd: null,
+        provider: null,
         created_at: '2024-01-15T09:00:00Z',
       };
 
@@ -254,6 +260,8 @@ describe('refresh-metrics', () => {
         error_message: null,
         engagement_metrics: {},
         last_metrics_update: null,
+        cost_usd: null,
+        provider: null,
         created_at: '2024-01-15T09:00:00Z',
       };
 
@@ -351,6 +359,8 @@ describe('refresh-metrics', () => {
         error_message: null,
         engagement_metrics: {},
         last_metrics_update: null,
+        cost_usd: null,
+        provider: null,
         created_at: '2024-01-15T09:00:00Z',
       };
 
@@ -418,6 +428,8 @@ describe('refresh-metrics', () => {
           error_message: null,
           engagement_metrics: {},
           last_metrics_update: null,
+          cost_usd: null,
+          provider: null,
           created_at: '2024-01-15T09:00:00Z',
         },
         {
@@ -432,6 +444,8 @@ describe('refresh-metrics', () => {
           error_message: null,
           engagement_metrics: {},
           last_metrics_update: null,
+          cost_usd: null,
+          provider: null,
           created_at: '2024-01-15T10:00:00Z',
         },
         {
@@ -446,6 +460,8 @@ describe('refresh-metrics', () => {
           error_message: null,
           engagement_metrics: {},
           last_metrics_update: null,
+          cost_usd: null,
+          provider: null,
           created_at: '2024-01-15T11:00:00Z',
         },
       ];

@@ -26,11 +26,14 @@ const queryClient = new QueryClient({
 });
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  // Get RPC endpoint from environment (fallback to devnet)
+  // Get RPC endpoint from environment (fallback based on network)
   const endpoint = useMemo(() => {
-    return (
-      process.env.NEXT_PUBLIC_HELIUS_RPC_URL || 'https://api.devnet.solana.com'
-    );
+    if (process.env.NEXT_PUBLIC_HELIUS_RPC_URL) {
+      return process.env.NEXT_PUBLIC_HELIUS_RPC_URL;
+    }
+    return process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'mainnet-beta'
+      ? 'https://api.mainnet-beta.solana.com'
+      : 'https://api.devnet.solana.com';
   }, []);
 
   // Wallets auto-register via Wallet Standard — no manual adapters needed

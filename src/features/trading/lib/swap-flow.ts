@@ -15,6 +15,7 @@ import type { TransactionCostEstimate } from '@/lib/solana/priority-fees';
 import { pollTransactionConfirmation } from '@/lib/solana/confirmation';
 import type { ConfirmationResult } from '@/lib/solana/confirmation';
 import { getTokenByMint } from '@/lib/solana/token-list';
+import { getExplorerUrl } from '@/lib/solana/network-config';
 import type { TokenInfo } from '@/lib/solana/token-list';
 import { formatTokenAmount } from '@/lib/solana/tokens';
 
@@ -75,12 +76,6 @@ export interface ExecuteSwapParams {
   walletAdapter: WalletSignerAdapter;
   onProgress?: SwapProgressCallback;
 }
-
-// =============================================================================
-// CONSTANTS
-// =============================================================================
-
-const SOLSCAN_EXPLORER_URL = 'https://solscan.io/tx';
 
 // =============================================================================
 // ERROR HANDLING
@@ -330,7 +325,7 @@ export async function executeSwap(params: ExecuteSwapParams): Promise<SwapResult
       return {
         success: false,
         transactionSignature: signature,
-        explorerUrl: `${SOLSCAN_EXPLORER_URL}/${signature}`,
+        explorerUrl: getExplorerUrl(signature),
         error: confirmationResult.error || 'Transaction failed on-chain',
       };
     }
@@ -340,7 +335,7 @@ export async function executeSwap(params: ExecuteSwapParams): Promise<SwapResult
       return {
         success: false,
         transactionSignature: signature,
-        explorerUrl: `${SOLSCAN_EXPLORER_URL}/${signature}`,
+        explorerUrl: getExplorerUrl(signature),
         error: 'Transaction confirmation timed out. Check explorer for status.',
       };
     }
@@ -367,7 +362,7 @@ export async function executeSwap(params: ExecuteSwapParams): Promise<SwapResult
     return {
       success: true,
       transactionSignature: signature,
-      explorerUrl: `${SOLSCAN_EXPLORER_URL}/${signature}`,
+      explorerUrl: getExplorerUrl(signature),
       swapId,
     };
   } catch (err) {

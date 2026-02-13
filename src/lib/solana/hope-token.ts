@@ -12,10 +12,10 @@ import { getTokenBalance, formatTokenAmount } from './tokens';
 // =============================================================================
 
 /**
- * $HOPE token mint address (devnet placeholder)
- * TODO: Replace with actual devnet mint address when deployed
+ * $HOPE token mint address
+ * Driven by NEXT_PUBLIC_HOPE_MINT env var, falls back to placeholder
  */
-export const HOPE_MINT = 'HoPExxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+export const HOPE_MINT = process.env.NEXT_PUBLIC_HOPE_MINT || 'HoPExxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
 
 /**
  * $HOPE token decimals (standard SPL token precision)

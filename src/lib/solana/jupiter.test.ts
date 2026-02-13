@@ -63,16 +63,16 @@ describe('Jupiter Ultra API Client', () => {
       });
     });
 
-    it('should reject slippage > 300 bps', async () => {
+    it('should reject slippage > 100 bps', async () => {
       const invalidParams = {
         ...validParams,
-        slippageBps: 500,
+        slippageBps: 150,
       };
 
       await expect(getQuote(invalidParams)).rejects.toThrow(JupiterError);
       await expect(getQuote(invalidParams)).rejects.toMatchObject({
         code: JupiterErrorCode.VALIDATION_ERROR,
-        message: expect.stringContaining('between 1 and 300 bps'),
+        message: expect.stringContaining('between 1 and 100 bps'),
       });
     });
 

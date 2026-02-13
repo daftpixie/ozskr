@@ -17,6 +17,7 @@ import { trading } from './routes/trading';
 import { analytics } from './routes/analytics';
 import { schedules } from './routes/schedules';
 import { social } from './routes/social';
+import { twitterOAuth } from './routes/twitter-oauth';
 import { gamification } from './routes/gamification';
 
 // App context variables type
@@ -84,6 +85,7 @@ app.route('/content', content);
 app.route('/trading', trading);
 app.route('/analytics', analytics);
 app.route('/social', social);
+app.route('/social/twitter', twitterOAuth);
 app.route('/gamification', gamification);
 
 // Global error handler with AppError support

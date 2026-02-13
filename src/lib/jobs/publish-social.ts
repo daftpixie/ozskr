@@ -1,10 +1,10 @@
 /**
  * Social Publishing Job
- * Publishes approved content to social media platforms via Ayrshare
+ * Publishes approved content to social media platforms via SocialPublisher abstraction
  */
 
 import { createSupabaseServerClient } from '@/lib/api/supabase';
-import { publishPost } from '@/lib/social/ayrshare';
+import { getPublisher, isPublishingEnabled } from '@/lib/social/publisher-factory';
 import { logger } from '@/lib/utils/logger';
 import { ModerationStatus, PointsType, PointsSourceType } from '@/types/database';
 import type {
@@ -40,7 +40,7 @@ export interface PublishResult {
 }
 
 /**
- * Publish to a single social account
+ * Publish to a single social account via the SocialPublisher abstraction
  */
 const publishToAccount = async (
   content: ContentGeneration,
@@ -69,6 +69,9 @@ const publishToAccount = async (
     // Prepare media URLs
     const mediaUrls = content.output_url ? [content.output_url] : undefined;
 
+    // Get the active publisher from factory
+    const publisher = getPublisher();
+
     // Create social_posts record (status: queued)
     const { data: socialPost, error: insertError } = await supabase
       .from('social_posts')
@@ -78,6 +81,7 @@ const publishToAccount = async (
         platform: account.platform,
         status: 'queued' as SocialPostStatus,
         engagement_metrics: {},
+        provider: publisher.provider,
       })
       .select('id')
       .single();
@@ -86,9 +90,9 @@ const publishToAccount = async (
       throw new Error(`Failed to create social_posts record: ${insertError?.message}`);
     }
 
-    // Publish via Ayrshare
-    const publishResponse = await publishPost({
-      post: postText,
+    // Publish via the SocialPublisher abstraction
+    const publishResponse = await publisher.publish({
+      text: postText,
       platforms: [account.platform],
       mediaUrls,
       profileKey: account.ayrshare_profile_key,
@@ -96,14 +100,14 @@ const publishToAccount = async (
 
     // Extract post ID and URL for this platform
     const platformKey = account.platform;
-    const postId = publishResponse.postIds[platformKey] as string | undefined;
-    const postUrl = publishResponse.postUrls?.[platformKey] as string | undefined;
+    const postId = publishResponse.platformPostIds[platformKey] as string | undefined;
+    const postUrl = publishResponse.platformPostUrls[platformKey] as string | undefined;
 
     if (!postId) {
-      throw new Error('Ayrshare did not return a post ID');
+      throw new Error(`Provider did not return a post ID for ${platformKey}`);
     }
 
-    // Update social_posts record (status: posted)
+    // Update social_posts record (status: posted, with cost tracking)
     const now = new Date().toISOString();
     await supabase
       .from('social_posts')
@@ -112,6 +116,7 @@ const publishToAccount = async (
         post_url: postUrl,
         status: 'posted' as SocialPostStatus,
         posted_at: now,
+        cost_usd: publishResponse.costUsd.toFixed(6),
       })
       .eq('id', socialPost.id);
 
@@ -122,7 +127,6 @@ const publishToAccount = async (
       .eq('id', account.id);
 
     // Award points for publishing (async, don't fail the main operation)
-    // Fetch character to get wallet_address
     void (async () => {
       try {
         const { data: character } = await supabase
@@ -186,14 +190,15 @@ const publishToAccount = async (
  * Publish approved content to multiple social accounts
  *
  * This function:
- * 1. Fetches the content_generation record
- * 2. Verifies moderation_status === 'approved'
- * 3. For each target social_account_id:
+ * 1. Checks if publishing is enabled via feature flags
+ * 2. Fetches the content_generation record
+ * 3. Verifies moderation_status === 'approved'
+ * 4. For each target social_account_id:
  *    a. Fetches the social_account record
- *    b. Publishes via Ayrshare
- *    c. Creates/updates social_posts record
+ *    b. Publishes via SocialPublisher (provider selected by feature flag)
+ *    c. Creates/updates social_posts record with cost tracking
  *    d. Updates social_accounts.last_posted_at
- * 4. Handles per-platform errors independently
+ * 5. Handles per-platform errors independently
  *
  * @param contentGenerationId - ID of the approved content generation
  * @param socialAccountIds - Array of social account IDs to publish to
@@ -203,6 +208,11 @@ export const publishToSocial = async (
   contentGenerationId: string,
   socialAccountIds: string[]
 ): Promise<PublishResult[]> => {
+  // Check feature flag
+  if (!isPublishingEnabled()) {
+    throw new PublishError('Social publishing is disabled');
+  }
+
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceRoleKey) {
     throw new PublishError('SUPABASE_SERVICE_ROLE_KEY environment variable not set');

@@ -24,7 +24,7 @@ export const SwapQuoteRequestSchema = z.object({
   inputMint: z.string().min(32).max(44).regex(/^[1-9A-HJ-NP-Za-km-z]+$/, 'Invalid base58 address'),
   outputMint: z.string().min(32).max(44).regex(/^[1-9A-HJ-NP-Za-km-z]+$/, 'Invalid base58 address'),
   amount: z.string().regex(/^\d+$/, 'Amount must be a stringified bigint'), // Stringified bigint
-  slippageBps: z.coerce.number().int().min(1).max(300).default(50), // 1-300 bps (0.01%-3%) - coerce from string query param
+  slippageBps: z.coerce.number().int().min(1).max(100).default(50), // 1-100 bps (0.01%-1%) - coerce from string query param
 });
 
 export type SwapQuoteRequest = z.infer<typeof SwapQuoteRequestSchema>;
@@ -56,7 +56,7 @@ export const SwapExecuteRequestSchema = z.object({
   inputMint: z.string().min(32).max(44).regex(/^[1-9A-HJ-NP-Za-km-z]+$/, 'Invalid base58 address'),
   outputMint: z.string().min(32).max(44).regex(/^[1-9A-HJ-NP-Za-km-z]+$/, 'Invalid base58 address'),
   inputAmount: z.string().regex(/^\d+$/, 'Amount must be a stringified bigint'),
-  slippageBps: z.number().int().min(1).max(300).default(50),
+  slippageBps: z.number().int().min(1).max(100).default(50),
   priorityFeeLamports: z.string().regex(/^\d+$/, 'Priority fee must be a stringified bigint').default('0'),
 });
 
