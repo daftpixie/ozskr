@@ -10,6 +10,7 @@ const envSchema = z.object({
   // Solana
   NEXT_PUBLIC_HELIUS_RPC_URL: z.string().url(),
   NEXT_PUBLIC_SOLANA_NETWORK: z.enum(['devnet', 'mainnet-beta']).default('devnet'),
+  NEXT_PUBLIC_HOPE_MINT: z.string().min(32).optional(),
 
   // Supabase
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
@@ -35,6 +36,10 @@ const envSchema = z.object({
   // Ayrshare
   AYRSHARE_API_KEY: z.string().min(1),
 
+  // Twitter/X Direct API (optional — only needed if using DIRECT provider)
+  TWITTER_CLIENT_ID: z.string().min(1).optional(),
+  TWITTER_TOKEN_ENCRYPTION_KEY: z.string().min(32).optional(),
+
   // Langfuse
   LANGFUSE_SECRET_KEY: z.string().min(1),
   LANGFUSE_PUBLIC_KEY: z.string().min(1),
@@ -45,6 +50,13 @@ const envSchema = z.object({
   R2_ACCESS_KEY_ID: z.string().min(1),
   R2_SECRET_ACCESS_KEY: z.string().min(1),
   R2_BUCKET_NAME: z.string().min(1),
+
+  // Infisical (opt-in secrets management)
+  INFISICAL_ENABLED: z.string().optional(),
+  INFISICAL_CLIENT_ID: z.string().optional(),
+  INFISICAL_CLIENT_SECRET: z.string().optional(),
+  INFISICAL_PROJECT_ID: z.string().optional(),
+  INFISICAL_SITE_URL: z.string().url().optional(),
 
   // App
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),

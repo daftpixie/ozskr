@@ -450,6 +450,7 @@ describe('publish-social', () => {
         content_generation_id: mockContentId,
         social_account_id: mockAccountId1,
         platform: SocialPlatform.TWITTER,
+        provider: 'ayrshare',
         status: SocialPostStatus.QUEUED,
         engagement_metrics: {},
       });
