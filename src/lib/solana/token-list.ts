@@ -1,10 +1,10 @@
 /**
  * Token List Utility
- * Curated list of common Solana tokens with metadata
- * Uses mainnet mint addresses
+ * Network-aware curated list of Solana tokens with metadata
  */
 
 import { address } from '@solana/kit';
+import { getNetworkConfig } from '@/lib/solana/network-config';
 
 // =============================================================================
 // TYPES
@@ -19,21 +19,13 @@ export interface TokenInfo {
 }
 
 // =============================================================================
-// CURATED TOKEN LIST
+// CURATED TOKEN LISTS
 // =============================================================================
 
 /**
- * Curated list of popular Solana tokens
- * All mainnet mint addresses
+ * Mainnet tokens (HOPE is prepended dynamically with env-driven mint)
  */
-const TOKEN_LIST: TokenInfo[] = [
-  {
-    mint: 'HoPExxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-    symbol: 'HOPE',
-    name: 'Hope Token',
-    decimals: 6,
-    logoURI: '', // Gradient circle used instead
-  },
+const MAINNET_TOKEN_LIST: TokenInfo[] = [
   {
     mint: 'So11111111111111111111111111111111111111112',
     symbol: 'SOL',
@@ -106,17 +98,58 @@ const TOKEN_LIST: TokenInfo[] = [
   },
 ];
 
+/**
+ * Devnet tokens (limited set for development)
+ */
+const DEVNET_TOKEN_LIST: TokenInfo[] = [
+  {
+    mint: 'So11111111111111111111111111111111111111112',
+    symbol: 'SOL',
+    name: 'Solana',
+    decimals: 9,
+    logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png',
+  },
+  {
+    mint: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
+    symbol: 'USDC',
+    name: 'USD Coin (Devnet)',
+    decimals: 6,
+    logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+  },
+];
+
 // =============================================================================
-// INDEXES
+// LAZY INDEXES
 // =============================================================================
 
-const TOKEN_BY_MINT = new Map<string, TokenInfo>();
-const TOKEN_BY_SYMBOL = new Map<string, TokenInfo>();
+let _cachedNetwork: string | null = null;
+let _activeList: TokenInfo[] | null = null;
+let _mintIndex: Map<string, TokenInfo> | null = null;
+let _symbolIndex: Map<string, TokenInfo> | null = null;
 
-// Build indexes on module load
-for (const token of TOKEN_LIST) {
-  TOKEN_BY_MINT.set(token.mint, token);
-  TOKEN_BY_SYMBOL.set(token.symbol.toUpperCase(), token);
+function ensureIndexes(): void {
+  const config = getNetworkConfig();
+  if (_cachedNetwork === config.network && _activeList) return;
+
+  _cachedNetwork = config.network;
+
+  const hopeToken: TokenInfo = {
+    mint: config.hopeMint,
+    symbol: 'HOPE',
+    name: 'Hope Token',
+    decimals: 6,
+    logoURI: '',
+  };
+
+  const base = config.network === 'mainnet-beta' ? MAINNET_TOKEN_LIST : DEVNET_TOKEN_LIST;
+  _activeList = [hopeToken, ...base];
+
+  _mintIndex = new Map();
+  _symbolIndex = new Map();
+  for (const token of _activeList) {
+    _mintIndex.set(token.mint, token);
+    _symbolIndex.set(token.symbol.toUpperCase(), token);
+  }
 }
 
 // =============================================================================
@@ -129,13 +162,13 @@ for (const token of TOKEN_LIST) {
  * @returns Token info or undefined if not found
  */
 export function getTokenByMint(mint: string): TokenInfo | undefined {
-  // Validate address first
   try {
     address(mint);
   } catch {
     return undefined;
   }
-  return TOKEN_BY_MINT.get(mint);
+  ensureIndexes();
+  return _mintIndex!.get(mint);
 }
 
 /**
@@ -144,7 +177,8 @@ export function getTokenByMint(mint: string): TokenInfo | undefined {
  * @returns Token info or undefined if not found
  */
 export function getTokenBySymbol(symbol: string): TokenInfo | undefined {
-  return TOKEN_BY_SYMBOL.get(symbol.toUpperCase());
+  ensureIndexes();
+  return _symbolIndex!.get(symbol.toUpperCase());
 }
 
 /**
@@ -153,13 +187,15 @@ export function getTokenBySymbol(symbol: string): TokenInfo | undefined {
  * @returns Array of matching tokens
  */
 export function searchTokens(query: string): TokenInfo[] {
+  ensureIndexes();
+
   if (!query || query.trim() === '') {
-    return TOKEN_LIST;
+    return [..._activeList!];
   }
 
   const normalizedQuery = query.toLowerCase().trim();
 
-  return TOKEN_LIST.filter((token) => {
+  return _activeList!.filter((token) => {
     const symbolMatch = token.symbol.toLowerCase().includes(normalizedQuery);
     const nameMatch = token.name.toLowerCase().includes(normalizedQuery);
     return symbolMatch || nameMatch;
@@ -177,7 +213,8 @@ export function isKnownToken(mint: string): boolean {
   } catch {
     return false;
   }
-  return TOKEN_BY_MINT.has(mint);
+  ensureIndexes();
+  return _mintIndex!.has(mint);
 }
 
 /**
@@ -185,5 +222,6 @@ export function isKnownToken(mint: string): boolean {
  * @returns Array of all tokens
  */
 export function getAllTokens(): TokenInfo[] {
-  return [...TOKEN_LIST];
+  ensureIndexes();
+  return [..._activeList!];
 }

@@ -34,6 +34,6 @@ export class TriggerClient {
 
 export const triggerClient = new TriggerClient({
   id: 'ozskr-ai',
-  apiKey: process.env.TRIGGER_DEV_API_KEY,
-  apiUrl: process.env.TRIGGER_DEV_API_URL,
+  apiKey: process.env.TRIGGER_API_KEY,
+  apiUrl: process.env.TRIGGER_API_URL,
 });

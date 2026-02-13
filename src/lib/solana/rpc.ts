@@ -4,6 +4,7 @@
  */
 
 import { createSolanaRpc } from '@solana/kit';
+import { getNetworkConfig } from '@/lib/solana/network-config';
 
 /**
  * Get the Solana RPC client configured with Helius endpoint.
@@ -19,10 +20,10 @@ export function getSolanaRpc() {
 }
 
 /**
- * Get the Solana devnet RPC client.
- * Fallback for development and testing.
- * @returns Solana RPC client instance for devnet
+ * Get the fallback Solana RPC client.
+ * Uses the public RPC endpoint for the configured network.
+ * @returns Solana RPC client instance
  */
-export function getDevnetRpc() {
-  return createSolanaRpc('https://api.devnet.solana.com');
+export function getFallbackRpc() {
+  return createSolanaRpc(getNetworkConfig().defaultRpcFallback);
 }

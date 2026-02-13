@@ -27,6 +27,7 @@ import { SwapHistory } from '@/features/trading/components/swap-history';
 import { cn } from '@/lib/utils';
 import { parseTokenAmount, formatTokenAmount } from '@/lib/solana/tokens';
 import { HOPE_MINT } from '@/lib/solana/hope-token';
+import { getNetworkConfig } from '@/lib/solana/network-config';
 import type { SwapQuoteRequest } from '@/types/trading';
 
 function TradePageContent() {
@@ -39,7 +40,7 @@ function TradePageContent() {
   const [outputMint, setOutputMint] = useState(() => {
     const outputParam = searchParams.get('output');
     if (outputParam === 'HOPE') return HOPE_MINT;
-    return 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'; // USDC
+    return getNetworkConfig().usdcMint;
   });
 
   // Amount and slippage
