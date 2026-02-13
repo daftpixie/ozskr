@@ -1,8 +1,12 @@
-# Security-sensitive paths require @daftpixie review
+# Default - all changes require maintainer review
+* @daftpixie
+
+# Security-critical paths - require explicit security review
 src/lib/solana/ @daftpixie
+src/lib/api/routes/ @daftpixie
+src/lib/social/twitter/ @daftpixie
 src/features/trading/ @daftpixie
 src/features/wallet/ @daftpixie
-src/app/api/ @daftpixie
 src/lib/secrets/ @daftpixie
-supabase/ @daftpixie
-.github/ @daftpixie
+supabase/migrations/ @daftpixie
+.github/workflows/ @daftpixie

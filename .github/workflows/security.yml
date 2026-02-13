@@ -2,13 +2,14 @@ name: Security
 
 on:
   schedule:
-    - cron: '0 6 * * 1' # Monday 6am UTC
+    - cron: '0 2 * * 0' # Sunday 2am UTC
   pull_request:
     paths:
       - 'src/lib/solana/**'
       - 'src/features/trading/**'
       - 'src/features/wallet/**'
-      - 'src/app/api/**'
+      - 'src/lib/api/**'
+      - 'src/lib/social/twitter/**'
       - 'src/lib/secrets/**'
       - 'package.json'
       - 'pnpm-lock.yaml'

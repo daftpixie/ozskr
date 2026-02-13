@@ -9,17 +9,17 @@
 - [ ] Test
 - [ ] Chore
 
-## Security Checklist
-- [ ] No private keys or secrets committed
-- [ ] No hardcoded RPC endpoints
-- [ ] Transaction simulation required before execution
-- [ ] Slippage guards on swap operations
-- [ ] Input validation with Zod schemas
-- [ ] RLS policies for new database tables
-
-## Test Checklist
-- [ ] Unit tests added/updated
+## Checklist
 - [ ] `pnpm typecheck` passes
 - [ ] `pnpm lint` passes
 - [ ] `pnpm test` passes
-- [ ] E2E tests updated (if applicable)
+- [ ] Tests added/updated for changes
+- [ ] No secrets or API keys in diff
+- [ ] Security implications considered
+
+## Solana / DeFi Changes
+<!-- Skip if not applicable -->
+- [ ] Transaction simulation verified
+- [ ] Slippage guards checked
+- [ ] No server-side signing
+- [ ] Address validation with `assertIsAddress()`

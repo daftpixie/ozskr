@@ -8,37 +8,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - Phase 6: Launch Operations
 
 ### Added
-- CI/CD pipeline with GitHub Actions (lint, typecheck, test, build validation)
-- Automated security scanning with CodeQL and dependency audits
-- Railway deployment configuration with automatic preview environments
-- Monitoring and observability: health checks, error tracking, performance metrics
+- SocialPublisher abstraction layer with adapter pattern:
+  - Unified `SocialPublisher` interface for multi-provider publishing
+  - `AyrshareAdapter` wrapping existing client ($0.01/platform/publish)
+  - `TwitterAdapter` for zero-cost direct API publishing
+  - Publisher factory with feature-flag driven provider selection
+  - Per-publish cost tracking (`cost_usd`, `provider` columns on social_posts)
+- Twitter/X direct API integration:
+  - OAuth 2.0 PKCE flow (public client, no server-side secrets)
+  - Encrypted token storage via pgcrypto (AES-256) in Supabase
+  - Auto-refresh on expired tokens with 60-second buffer
+  - Tweet posting with media upload (v2 API + v1.1 media endpoint)
+  - Rate limiter with exponential backoff, jitter, and Retry-After support
+  - Token revocation on account disconnect
+- CI/CD pipeline with GitHub Actions:
+  - Parallelized jobs: lint, typecheck, test, build
+  - Automated security scanning with CodeQL and `pnpm audit`
+  - Claude Code automated PR review for security-critical paths
+- Feature flags system for progressive rollout
+- Railway deployment configuration with preview environments
+- Monitoring: health checks, error tracking, performance metrics
 - Backup and disaster recovery procedures
 - Secret rotation workflows with Infisical integration
-- Feature flags system for progressive rollout
-- Production deployment checklist and readiness report
+- 63 new tests across SocialPublisher and Twitter integration (452 total)
 
 ### Documentation
-- Open-source README with architecture diagram, quick-start guide, and feature overview
-- CONTRIBUTING.md with contribution workflow and PR process
-- CODE_OF_CONDUCT.md (Contributor Covenant v2.1)
-- SECURITY.md with vulnerability reporting process
+- Open-source README with Mermaid architecture diagram and quick-start guide
+- CONTRIBUTING.md with AI-assisted development policy
+- GitHub infrastructure: CODEOWNERS, issue/PR templates, dependabot, branch protection
 - Legal policy drafts (REQUIRES ATTORNEY REVIEW):
-  - Privacy Policy (multi-jurisdictional, wallet + AI data handling)
-  - Terms of Service (AI content IP, liability, crypto payment terms)
-  - Acceptable Use Policy
-  - DMCA/Copyright Policy
-  - Cookie Policy (CCPA-compliant, GPC signal support)
-  - Token Disclaimer ($HOPE utility-only framing, SEC-safe)
-  - Non-Custodial Wallet Disclaimer
+  - Privacy Policy, Terms of Service, Acceptable Use Policy
+  - Token Disclaimer ($HOPE utility-only framing)
   - AI Content Disclosure Policy
-  - Data Retention Policy
-  - Content Moderation Policy
 
 ### Changed
-- Social publishing migrated to Twitter Direct API (replacing Ayrshare)
+- Social publishing now supports dual providers (Ayrshare + Twitter direct)
 - Enhanced worker architecture with Cloudflare Workers for edge compute
 - Network configuration system with devnet/mainnet switching
 - Improved RPC client with automatic failover and health monitoring
+
+### Security
+- Max swap slippage reduced from 300 bps to 100 bps (anti-sandwich protection)
+- Twitter OAuth token revocation on account disconnect
+- Pre-open-source security audit: secrets scan, RLS verification, OWASP review
 
 ## [0.5.0] - 2026-02-12 - Phase 5: Polish
 

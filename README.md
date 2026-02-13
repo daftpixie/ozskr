@@ -4,62 +4,76 @@
 
 ### Pay no mind to the agents behind the emerald curtain.
 
-**Web3 AI Influencer Platform on Solana — built entirely by Claude Code.**
+**AI agent influencer platform on Solana — built entirely with Claude Code.**
 
-[![Next.js 15](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript)](https://typescriptlang.org)
-[![Solana](https://img.shields.io/badge/Solana-@solana/kit-9945FF?logo=solana)](https://solana.com)
-[![Claude API](https://img.shields.io/badge/Claude-Opus_4.6-D4A574?logo=anthropic)](https://anthropic.com)
-[![Tests](https://img.shields.io/badge/Tests-389_passing-brightgreen)]()
+[![CI](https://github.com/daftpixie/ozskr/actions/workflows/ci.yml/badge.svg)](https://github.com/daftpixie/ozskr/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-
-[Live Demo](https://ozskr.ai) | [Documentation](docs/) | [Contributing](CONTRIBUTING.md) | [Security](SECURITY.md)
+[![Solana](https://img.shields.io/badge/Solana-@solana/kit-9945FF?logo=solana)](https://solana.com)
+[![Built with Claude Code](https://img.shields.io/badge/Built_with-Claude_Code-D4A574?logo=anthropic)](https://claude.com/claude-code)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x_strict-3178C6?logo=typescript)](https://typescriptlang.org)
+[![Tests](https://img.shields.io/badge/Tests-452_passing-brightgreen)]()
 
 </div>
 
 ---
 
-## The Story
-
-ozskr.ai is an AI agent platform where users create AI characters that generate content, publish to social media, and trade tokens on Solana. The recursive part? **The entire platform was designed, architected, and coded by the same kind of AI agent orchestration it provides to users.**
-
-Every line of production code, every test, every deployment config — orchestrated by Claude Opus 4.6 delegating to specialist sub-agents: a Solana developer, a frontend engineer, an API architect, a test writer, and a security auditor. The agents behind the emerald curtain built their own stage.
-
 ## Features
 
 **AI Agent Creation** — Design characters with custom personas, voice styles, and visual identities. Each agent gets persistent memory via Mem0.
 
-**Content Generation Pipeline** — 7-stage pipeline: parse, context recall, enhance, generate (Claude), quality check, moderation, store. All content passes through automated moderation before storage or publishing.
+**Content Generation Pipeline** — 7-stage pipeline: parse, context recall, enhance, generate (Claude), quality check, moderation, store. All content passes through automated moderation before publishing.
 
-**Social Publishing** — Multi-platform publishing via Ayrshare. Schedule content, track engagement, view analytics per agent.
+**Social Publishing** — Multi-platform publishing via Ayrshare or Twitter direct API. OAuth 2.0 PKCE flow for zero-cost direct posting. Schedule content, track engagement, view analytics per agent.
 
-**DeFi Trading** — Non-custodial token swaps via Jupiter Ultra. Transaction simulation required before execution. Slippage protection enforced. All signing is client-side via wallet adapter.
+**DeFi Trading** — Non-custodial token swaps via Jupiter Ultra. Transaction simulation required before execution. Slippage protection enforced (max 100 bps). All signing is client-side via wallet adapter.
+
+**Gamification** — Points, achievements, streaks, and leaderboards. Tier badges from Newbie to Legend.
 
 **$HOPE Token** — Utility token for platform services. Not an investment. See [Token Disclaimer](docs/legal/token-disclaimer.md).
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                     Next.js 15 App Router                │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────┐ │
-│  │  Agents  │  │  Trade   │  │ Calendar │  │Analytics│ │
-│  │  UI/SSE  │  │  Swap UI │  │ Schedule │  │Dashboard│ │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬────┘ │
-│       │              │              │              │      │
-│  ┌────▼──────────────▼──────────────▼──────────────▼────┐ │
-│  │              Hono API Layer + Zod Validation          │ │
-│  └────┬──────────────┬──────────────┬──────────────┬────┘ │
-└───────┼──────────────┼──────────────┼──────────────┼─────┘
-        │              │              │              │
-   ┌────▼────┐   ┌─────▼────┐   ┌────▼────┐   ┌────▼─────┐
-   │ Claude  │   │ Jupiter  │   │Ayrshare │   │ Supabase │
-   │ + Mem0  │   │  Ultra   │   │ Social  │   │ + RLS    │
-   │ + fal   │   │(client)  │   │  Pub    │   │          │
-   └─────────┘   └──────────┘   └─────────┘   └──────────┘
-   AI Pipeline    DeFi (non-     Publishing     PostgreSQL
-   7 stages       custodial)     Multi-plat     Row-Level
-                                                Security
+```mermaid
+graph TB
+    subgraph "Next.js 15 App Router"
+        UI[Dashboard / Agent UI / Trade UI]
+    end
+
+    subgraph "Hono API Layer"
+        API[Zod Validation + Auth Middleware]
+    end
+
+    UI --> API
+
+    subgraph "Services"
+        Claude[Claude API + Mem0]
+        Jupiter[Jupiter Ultra]
+        Social[SocialPublisher]
+        Supabase[(Supabase + RLS)]
+    end
+
+    API --> Claude
+    API --> Jupiter
+    API --> Social
+    API --> Supabase
+
+    subgraph "Social Providers"
+        Ayrshare[Ayrshare]
+        Twitter[Twitter Direct API]
+    end
+
+    Social --> Ayrshare
+    Social --> Twitter
+
+    subgraph "Infrastructure"
+        Trigger[Trigger.dev Jobs]
+        Langfuse[Langfuse Tracing]
+        Upstash[Upstash Rate Limiting]
+    end
+
+    API --> Trigger
+    API --> Langfuse
+    API --> Upstash
 ```
 
 ## Tech Stack
@@ -74,12 +88,12 @@ Every line of production code, every test, every deployment config — orchestra
 | API | Hono, Zod validation |
 | State | React Query (server), Zustand (client) |
 | Auth | Sign-In with Solana (SIWS) |
+| Social | SocialPublisher (Ayrshare + Twitter direct) |
 | Jobs | Trigger.dev |
 | Observability | Langfuse (AI tracing) |
 | Rate Limiting | Upstash Redis |
-| Storage | Cloudflare R2 |
 | Secrets | Infisical |
-| Testing | Vitest (389 tests), Playwright (E2E) |
+| Testing | Vitest (452 tests), Playwright (E2E) |
 | UI | Tailwind CSS 4, shadcn/ui, Radix |
 
 ## Quick Start
@@ -93,18 +107,11 @@ Every line of production code, every test, every deployment config — orchestra
 ### Setup
 
 ```bash
-# Clone
 git clone https://github.com/daftpixie/ozskr.git
 cd ozskr
-
-# Install
 pnpm install
-
-# Configure
 cp .env.example .env.local
 # Fill in your API keys (see .env.example for descriptions)
-
-# Run
 pnpm dev
 ```
 
@@ -117,7 +124,7 @@ pnpm dev          # Start dev server (port 3000)
 pnpm build        # Production build
 pnpm typecheck    # TypeScript strict check
 pnpm lint         # ESLint
-pnpm test         # Run all 389 tests
+pnpm test         # Run all 452 tests
 pnpm test:e2e     # Playwright end-to-end tests
 ```
 
@@ -135,6 +142,7 @@ src/
 │   ├── solana/             # RPC, transactions, tokens (@solana/kit)
 │   ├── ai/                 # Claude integration, pipeline, memory
 │   ├── api/                # Hono routes, Zod schemas
+│   ├── social/             # SocialPublisher, Ayrshare, Twitter direct
 │   ├── secrets/            # Infisical integration
 │   └── utils/              # Logger, formatters
 ├── hooks/                  # React hooks
@@ -145,11 +153,12 @@ src/
 
 - All signing is client-side — the platform **never** handles private keys
 - Transaction simulation required before every execution
-- Slippage guards on all swap operations (max 300 bps)
+- Slippage guards on all swap operations (max 100 bps)
 - Content moderation pipeline on all AI outputs
 - Row Level Security on every database table
 - Mem0 namespace isolation per character
 - Zod validation on all API boundaries
+- OAuth tokens encrypted at rest via pgcrypto
 
 Found a vulnerability? See [SECURITY.md](SECURITY.md).
 
@@ -162,23 +171,15 @@ This project was built exclusively with [Claude Code](https://claude.com/claude-
 - **Review agents** (security-auditor, code-reviewer) gate every change
 - **Test writer** ensures coverage across all domains
 
-389 tests. 35+ test files. Zero `any` types. Every line AI-generated, human-reviewed.
+452 tests. 45 test files. Zero `any` types. Every line AI-generated, human-reviewed.
 
 ## Contributing
 
-We welcome contributions from both human developers and AI-assisted workflows. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+We welcome contributions. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## License
 
 [MIT](LICENSE)
-
-## Legal
-
-- [Privacy Policy](docs/legal/privacy-policy.md)
-- [Terms of Service](docs/legal/terms-of-service.md)
-- [Acceptable Use Policy](docs/legal/acceptable-use-policy.md)
-- [Token Disclaimer](docs/legal/token-disclaimer.md)
-- [AI Content Disclosure](docs/legal/ai-content-disclosure.md)
 
 ---
 
