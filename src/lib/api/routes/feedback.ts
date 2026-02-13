@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { createSupabaseClient } from '../supabase';
 import { authMiddleware } from '../middleware/auth';
 import { logger } from '@/lib/utils/logger';
+import { autoCreateIssueFromSurvey } from './admin-issues';
 
 const FeedbackSchema = z.object({
   rating: z.number().int().min(1).max(5),
@@ -86,6 +87,18 @@ feedback.post('/survey', zValidator('json', SurveySchema), async (c) => {
     if (error) {
       logger.error('Survey insert error', { error: error.message });
       return c.json({ error: 'Failed to submit survey' }, 500);
+    }
+
+    // Auto-create issue from low-rated surveys (rating 1-2)
+    if (rating && rating <= 2) {
+      autoCreateIssueFromSurvey({
+        triggerPoint,
+        response,
+        walletAddress,
+        surveyId: undefined,
+      }).catch(() => {
+        // Fire-and-forget — don't fail the survey submission
+      });
     }
 
     return c.json({ message: 'Survey submitted' }, 201);

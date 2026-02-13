@@ -54,6 +54,24 @@ function mockSupabaseChain(result: { data: unknown; error: unknown }) {
     delete: vi.fn(() => ({
       eq: vi.fn(() => Promise.resolve(result)),
     })),
+    update: vi.fn(() => ({
+      in: vi.fn(() => Promise.resolve(result)),
+    })),
+  }));
+}
+
+/** Chain that supports batch upsert (returns array, no .single()) */
+function mockBatchChain(result: { data: unknown; error: unknown }) {
+  return vi.fn(() => ({
+    select: vi.fn(() => ({
+      order: vi.fn(() => Promise.resolve(result)),
+    })),
+    upsert: vi.fn(() => ({
+      select: vi.fn(() => Promise.resolve(result)),
+    })),
+    update: vi.fn(() => ({
+      in: vi.fn(() => Promise.resolve(result)),
+    })),
   }));
 }
 
@@ -221,6 +239,127 @@ describe('Admin Whitelist Routes', () => {
       expect(res.status).toBe(200);
       const body = await res.json();
       expect(body.message).toBe('Wallet removed from whitelist');
+    });
+  });
+
+  describe('POST /admin-whitelist/batch', () => {
+    it('adds multiple wallets at once', async () => {
+      mockJwt(ADMIN_WALLET);
+      const addedData = [
+        { wallet_address: TARGET_WALLET, access_tier: 'ALPHA' },
+        { wallet_address: NON_ADMIN_WALLET, access_tier: 'BETA' },
+      ];
+      mockFrom.mockImplementation(mockBatchChain({ data: addedData, error: null }));
+
+      const res = await app.request('/api/admin-whitelist/batch', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer test-token',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          wallets: [
+            { walletAddress: TARGET_WALLET, accessTier: 'ALPHA' },
+            { walletAddress: NON_ADMIN_WALLET, accessTier: 'BETA' },
+          ],
+        }),
+      });
+
+      expect(res.status).toBe(201);
+      const body = await res.json();
+      expect(body.added).toBe(2);
+    });
+
+    it('rejects empty wallets array', async () => {
+      mockJwt(ADMIN_WALLET);
+
+      const res = await app.request('/api/admin-whitelist/batch', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer test-token',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ wallets: [] }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('rejects more than 100 wallets', async () => {
+      mockJwt(ADMIN_WALLET);
+      const wallets = Array.from({ length: 101 }, (_, i) => ({
+        walletAddress: `${'x'.repeat(32)}${String(i).padStart(12, '0')}`,
+        accessTier: 'ALPHA' as const,
+      }));
+
+      const res = await app.request('/api/admin-whitelist/batch', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer test-token',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ wallets }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+  });
+
+  describe('POST /admin-whitelist/convert', () => {
+    it('converts waitlist entries to whitelisted', async () => {
+      mockJwt(ADMIN_WALLET);
+      const converted = [{ wallet_address: TARGET_WALLET, access_tier: 'ALPHA' }];
+      mockFrom.mockImplementation(mockBatchChain({ data: converted, error: null }));
+
+      const res = await app.request('/api/admin-whitelist/convert', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer test-token',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          walletAddresses: [TARGET_WALLET],
+          accessTier: 'ALPHA',
+        }),
+      });
+
+      expect(res.status).toBe(201);
+      const body = await res.json();
+      expect(body.converted).toBe(1);
+      expect(body.accessTier).toBe('ALPHA');
+    });
+
+    it('rejects empty wallet list', async () => {
+      mockJwt(ADMIN_WALLET);
+
+      const res = await app.request('/api/admin-whitelist/convert', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer test-token',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ walletAddresses: [] }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('rejects WAITLIST tier for conversion', async () => {
+      mockJwt(ADMIN_WALLET);
+
+      const res = await app.request('/api/admin-whitelist/convert', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer test-token',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          walletAddresses: [TARGET_WALLET],
+          accessTier: 'WAITLIST',
+        }),
+      });
+
+      expect(res.status).toBe(400);
     });
   });
 });

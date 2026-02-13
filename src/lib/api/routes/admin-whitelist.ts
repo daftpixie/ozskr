@@ -11,7 +11,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { authMiddleware } from '../middleware/auth';
 import { createSupabaseServerClient } from '../supabase';
-import { AccessTierSchema } from '@/lib/auth/access-tier';
+import { AccessTierSchema, AccessTier } from '@/lib/auth/access-tier';
 import { logger } from '@/lib/utils/logger';
 
 function getAdminWallets(): string[] {
@@ -39,6 +39,21 @@ const AddWhitelistSchema = z.object({
   walletAddress: z.string().min(32).max(44),
   accessTier: AccessTierSchema.exclude(['WAITLIST']),
   notes: z.string().max(500).optional(),
+});
+
+const BatchAddSchema = z.object({
+  wallets: z.array(
+    z.object({
+      walletAddress: z.string().min(32).max(44),
+      accessTier: AccessTierSchema.exclude(['WAITLIST']).default(AccessTier.ALPHA),
+      notes: z.string().max(500).optional(),
+    })
+  ).min(1).max(100),
+});
+
+const ConvertWaitlistSchema = z.object({
+  walletAddresses: z.array(z.string().min(32).max(44)).min(1).max(100),
+  accessTier: AccessTierSchema.exclude(['WAITLIST']).default(AccessTier.ALPHA),
 });
 
 const adminWhitelist = new Hono();
@@ -182,6 +197,110 @@ adminWhitelist.delete('/:wallet', async (c: Context) => {
     return c.json({ message: 'Wallet removed from whitelist', wallet });
   } catch (err) {
     logger.error('Whitelist delete error', { error: err instanceof Error ? err.message : 'Unknown' });
+    return c.json({ error: 'Internal server error', code: 'INTERNAL_ERROR' }, 500);
+  }
+});
+
+/**
+ * POST /whitelist/batch — Add multiple wallets at once (max 100)
+ */
+adminWhitelist.post('/batch', zValidator('json', BatchAddSchema), async (c) => {
+  const adminWallet = (c as unknown as { get: (key: string) => unknown }).get('walletAddress') as string;
+  const { wallets } = c.req.valid('json');
+
+  try {
+    const supabase = getServiceClient();
+
+    const rows = wallets.map((w) => ({
+      wallet_address: w.walletAddress,
+      access_tier: w.accessTier,
+      notes: w.notes || null,
+      added_by: adminWallet,
+      updated_at: new Date().toISOString(),
+    }));
+
+    const { data, error } = await supabase
+      .from('alpha_whitelist')
+      .upsert(rows, { onConflict: 'wallet_address' })
+      .select();
+
+    if (error) {
+      logger.error('Batch whitelist error', { error: error.message });
+      return c.json({ error: 'Failed to add wallets', code: 'DATABASE_ERROR' }, 500);
+    }
+
+    logger.info('Batch whitelist add', {
+      count: wallets.length,
+      addedBy: adminWallet.slice(0, 8),
+    });
+
+    return c.json({
+      message: `${(data ?? []).length} wallets added`,
+      added: (data ?? []).length,
+    }, 201);
+  } catch (err) {
+    logger.error('Batch whitelist error', { error: err instanceof Error ? err.message : 'Unknown' });
+    return c.json({ error: 'Internal server error', code: 'INTERNAL_ERROR' }, 500);
+  }
+});
+
+/**
+ * POST /whitelist/convert — Convert waitlist entries to whitelisted alpha users
+ * Updates waitlist status to 'converted' and adds to alpha_whitelist
+ */
+adminWhitelist.post('/convert', zValidator('json', ConvertWaitlistSchema), async (c) => {
+  const adminWallet = (c as unknown as { get: (key: string) => unknown }).get('walletAddress') as string;
+  const { walletAddresses, accessTier } = c.req.valid('json');
+
+  try {
+    const supabase = getServiceClient();
+
+    // Update waitlist entries to 'converted'
+    const { error: waitlistError } = await supabase
+      .from('waitlist')
+      .update({
+        status: 'converted',
+        converted_at: new Date().toISOString(),
+      })
+      .in('wallet_address', walletAddresses);
+
+    if (waitlistError) {
+      logger.error('Waitlist conversion error', { error: waitlistError.message });
+      return c.json({ error: 'Failed to update waitlist', code: 'DATABASE_ERROR' }, 500);
+    }
+
+    // Add to alpha whitelist
+    const rows = walletAddresses.map((wallet) => ({
+      wallet_address: wallet,
+      access_tier: accessTier,
+      notes: 'Converted from waitlist',
+      added_by: adminWallet,
+      updated_at: new Date().toISOString(),
+    }));
+
+    const { data, error: whitelistError } = await supabase
+      .from('alpha_whitelist')
+      .upsert(rows, { onConflict: 'wallet_address' })
+      .select();
+
+    if (whitelistError) {
+      logger.error('Whitelist conversion error', { error: whitelistError.message });
+      return c.json({ error: 'Failed to add to whitelist', code: 'DATABASE_ERROR' }, 500);
+    }
+
+    logger.info('Waitlist conversion', {
+      count: walletAddresses.length,
+      tier: accessTier,
+      addedBy: adminWallet.slice(0, 8),
+    });
+
+    return c.json({
+      message: `${walletAddresses.length} waitlist entries converted`,
+      converted: (data ?? []).length,
+      accessTier,
+    }, 201);
+  } catch (err) {
+    logger.error('Waitlist conversion error', { error: err instanceof Error ? err.message : 'Unknown' });
     return c.json({ error: 'Internal server error', code: 'INTERNAL_ERROR' }, 500);
   }
 });
