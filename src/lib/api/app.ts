@@ -21,6 +21,7 @@ import { twitterOAuth } from './routes/twitter-oauth';
 import { gamification } from './routes/gamification';
 import { waitlist } from './routes/waitlist';
 import { feedback } from './routes/feedback';
+import { adminMetrics } from './routes/admin-metrics';
 
 // App context variables type
 type AppVariables = {
@@ -91,6 +92,7 @@ app.route('/social/twitter', twitterOAuth);
 app.route('/gamification', gamification);
 app.route('/waitlist', waitlist);
 app.route('/feedback', feedback);
+app.route('/admin', adminMetrics);
 
 // Global error handler with AppError support
 app.onError((err, c) => {
