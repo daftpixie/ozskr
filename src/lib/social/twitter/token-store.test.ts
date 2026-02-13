@@ -220,22 +220,55 @@ describe('twitter/token-store', () => {
 
   describe('deleteTokens', () => {
     it('should delete tokens for a social account', async () => {
-      const deleteMock = vi.fn().mockReturnThis();
-      const eqMock = vi.fn().mockResolvedValue({ error: null });
-      mockFrom.mockReturnValue({ delete: deleteMock, eq: eqMock });
-      // Chain: from().delete().eq()
-      deleteMock.mockReturnValue({ eq: eqMock });
+      // First call: select for revocation lookup
+      const selectEqMock = vi.fn().mockReturnThis();
+      const singleMock = vi.fn().mockResolvedValue({
+        data: { access_token_encrypted: 'enc-access' },
+        error: null,
+      });
+      mockFrom.mockReturnValueOnce({
+        select: vi.fn().mockReturnValue({ eq: selectEqMock }),
+      });
+      selectEqMock.mockReturnValue({ single: singleMock });
+
+      // Mock decrypt for revocation
+      mockRpc.mockResolvedValueOnce({ data: 'decrypted-token', error: null });
+
+      // Mock global fetch for revocation call
+      const originalFetch = global.fetch;
+      global.fetch = vi.fn().mockResolvedValue(new Response('ok', { status: 200 }));
+
+      // Second call: delete
+      const deleteMock = vi.fn();
+      const deleteEqMock = vi.fn().mockResolvedValue({ error: null });
+      deleteMock.mockReturnValue({ eq: deleteEqMock });
+      mockFrom.mockReturnValueOnce({ delete: deleteMock });
+
+      process.env.TWITTER_CLIENT_ID = 'test-client-id';
 
       await deleteTokens('social-account-1');
 
       expect(mockFrom).toHaveBeenCalledWith('twitter_tokens');
+      global.fetch = originalFetch;
     });
 
     it('should throw on delete failure', async () => {
+      // First call: select for revocation (returns nothing)
+      mockFrom.mockReturnValueOnce({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+          }),
+        }),
+      });
+
+      // Second call: delete fails
       const deleteMock = vi.fn();
       const eqMock = vi.fn().mockResolvedValue({ error: { message: 'db error' } });
       deleteMock.mockReturnValue({ eq: eqMock });
-      mockFrom.mockReturnValue({ delete: deleteMock });
+      mockFrom.mockReturnValueOnce({ delete: deleteMock });
+
+      process.env.TWITTER_CLIENT_ID = 'test-client-id';
 
       await expect(deleteTokens('social-account-1')).rejects.toThrow(TokenStoreError);
     });

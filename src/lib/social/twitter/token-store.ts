@@ -191,12 +191,50 @@ export const getAccessToken = async (socialAccountId: string): Promise<string> =
 };
 
 /**
- * Delete stored tokens when a user disconnects their Twitter account
+ * Delete stored tokens when a user disconnects their Twitter account.
+ * Revokes the token with Twitter before deleting from database.
  *
  * @param socialAccountId - ID of the social_accounts row
  */
 export const deleteTokens = async (socialAccountId: string): Promise<void> => {
   const supabase = getSupabase();
+  const encryptionKey = getEncryptionKey();
+
+  // Retrieve and revoke token before deletion (best-effort)
+  const clientId = process.env.TWITTER_CLIENT_ID;
+  if (clientId) {
+    const { data: row } = await supabase
+      .from('twitter_tokens')
+      .select('access_token_encrypted')
+      .eq('social_account_id', socialAccountId)
+      .single();
+
+    if (row) {
+      try {
+        const { data: accessToken } = await supabase.rpc('pgp_sym_decrypt_text', {
+          encrypted_value: row.access_token_encrypted,
+          encryption_key: encryptionKey,
+        });
+
+        if (accessToken) {
+          await fetch('https://api.twitter.com/2/oauth2/revoke', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              token: accessToken,
+              client_id: clientId,
+              token_type_hint: 'access_token',
+            }).toString(),
+          }).catch(() => {
+            // Best-effort revocation — don't block deletion
+          });
+        }
+      } catch {
+        // Decryption/revocation failure should not block deletion
+        logger.warn('Failed to revoke Twitter token before deletion', { socialAccountId });
+      }
+    }
+  }
 
   const { error } = await supabase
     .from('twitter_tokens')
@@ -207,5 +245,5 @@ export const deleteTokens = async (socialAccountId: string): Promise<void> => {
     throw new TokenStoreError('Failed to delete tokens', error);
   }
 
-  logger.info('Twitter tokens deleted', { socialAccountId });
+  logger.info('Twitter tokens deleted and revoked', { socialAccountId });
 };
