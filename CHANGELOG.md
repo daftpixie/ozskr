@@ -30,16 +30,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Monitoring: health checks, error tracking, performance metrics
 - Backup and disaster recovery procedures
 - Secret rotation workflows with Infisical integration
-- 63 new tests across SocialPublisher and Twitter integration (452 total)
+- 63 new tests across SocialPublisher and Twitter integration (482 total)
+- Waitlist system with 500-spot cap, status endpoint, and remaining spots display
+- Feature flags hardened with server-side verification via Supabase RPC
+- In-app feedback widget with star rating, message, and Supabase storage
 
 ### Documentation
 - Open-source README with Mermaid architecture diagram and quick-start guide
 - CONTRIBUTING.md with AI-assisted development policy
 - GitHub infrastructure: CODEOWNERS, issue/PR templates, dependabot, branch protection
-- Legal policy drafts (REQUIRES ATTORNEY REVIEW):
+- Legal policy drafts — all 10/10 complete (REQUIRES ATTORNEY REVIEW):
   - Privacy Policy, Terms of Service, Acceptable Use Policy
   - Token Disclaimer ($HOPE utility-only framing)
-  - AI Content Disclosure Policy
+  - AI Content Disclosure, Token Usage Terms
+  - Cookie Policy, Data Retention Policy, DMCA Policy
+  - Content Moderation Policy, Wallet & Transaction Terms
+- Marketing content:
+  - 25-tweet backlog across 5 categories
+  - 3 build-in-public Twitter thread scripts
+  - 2 blog posts (architecture deep-dive + "How AI Built an AI Platform")
+  - Product Hunt launch copy with maker comment and launch checklist
+- Community infrastructure:
+  - Discord server structure (7 categories, 20+ channels, roles, welcome flow)
+  - Zealy quest campaign ("Follow the Yellow Brick Road", 20 quests across 4 tiers)
+  - KOL briefing package (talking points, sample posts, FAQ, compliance notes)
 
 ### Changed
 - Social publishing now supports dual providers (Ayrshare + Twitter direct)
