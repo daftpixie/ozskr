@@ -34,7 +34,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Go-to-Market escalation rules
   - 2 new agents in ownership map
   - Key References table
-- Test count: 547 passing across 54 files (up from 503/52)
+- Test count: 587 passing across 58 files (up from 503/52)
+
+### Sprint 2: Alpha Readiness + Content Activation
+
+#### Added — Track A: Alpha Infrastructure
+- Token-gated $HOPE access system:
+  - `AccessTier` enum (ALPHA/BETA/EARLY_ACCESS/WAITLIST) with threshold-based determination
+  - Cached balance checker via Helius `getTokenAccountsByOwner` with 5-min Redis TTL
+  - Whitelist fallback for devnet/early alpha when Helius is unreachable
+  - `AccessGate` component for feature gating with upgrade prompt + Jupiter link
+  - 22 tests (tier boundaries, cache hit/miss, Helius fetch, whitelist tiers)
+- Alpha whitelist management:
+  - Supabase `alpha_whitelist` table with RLS (service role only)
+  - Admin CRUD API: POST/GET/DELETE at `/api/admin-whitelist`
+  - Non-admin wallets receive 404 (hides route existence)
+  - Upsert support, Zod validation rejects WAITLIST tier
+  - 9 tests covering admin gating, CRUD, validation
+- Devnet testing configuration:
+  - `scripts/devnet-setup.sh`: env validation, Solana CLI config, prereq checks
+  - `docs/alpha-testing/devnet-guide.md`: comprehensive alpha testing guide
+  - Added `HELIUS_API_KEY` and `ADMIN_WALLETS` to `.env.example`
+- E2E Playwright tests:
+  - `alpha-journey.spec.ts`: 8 scenarios (landing → dashboard → agents flow)
+  - `access-gating.spec.ts`: 8 scenarios (auth redirects, admin endpoint guards)
+- Feedback micro-surveys:
+  - Supabase `feedback_surveys` table with RLS
+  - `MicroSurvey` component for contextual feedback at key moments
+  - Zustand store with localStorage persistence for dismissed surveys
+  - 5 trigger points: first_generation, first_publish, third_agent, first_schedule, weekly_checkin
+  - API route: POST `/api/feedback/survey` with Zod validation
+  - 9 tests for store state management and config validation
+- Admin alpha dashboard:
+  - `/admin` page with platform metrics summary
+  - Error rate alerts display for active monitoring
+  - Whitelist CRUD UI: add/remove wallets with tier selection
+  - Non-admin wallets see "Page Not Found" (hides route)
+
+#### Added — Track B: Content Activation
+- 2-week content calendar (Weeks 1-2, March 3-16, 2026)
+- Publish-ready blog: "How We Built an AI Platform with Nothing But AI Agents"
+- Publish-ready thread: 12-tweet build-in-public thread
+
+#### Added — Track C: Business Development
+- Comprehensive revenue model with margin analysis:
+  - Cost per user: $12.71 (100 users) → $2.91 (10K users)
+  - Pricing tiers: Starter $29, Creator $79, Pro $199 + $HOPE discount
+  - Break-even at 3 paying users, 92%+ margin at 1,000 users
+  - Sensitivity analysis: 81%+ margin even in worst case
+- 3 partnership outreach templates (Jupiter, Anthropic, fal.ai)
 
 ## [0.6.0] - 2026-02-13 - Phase 6: Launch Operations
 

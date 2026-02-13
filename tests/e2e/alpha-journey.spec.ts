@@ -4,7 +4,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { setupWalletMock, mockAuthenticatedSession, TEST_WALLET_ADDRESS } from './helpers/wallet-mock';
+import { setupWalletMock, mockAuthenticatedSession } from './helpers/wallet-mock';
 import { setupApiMocks } from './helpers/api-mocks';
 
 test.describe('Alpha User Journey', () => {

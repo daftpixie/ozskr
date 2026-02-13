@@ -50,7 +50,7 @@ src/
 - **Content Storage:** Cloudflare R2 (bucket: ozskr-content)
 - **Domain:** ozskr.vercel.app (production)
 - **Network:** devnet (current) — toggle via SOLANA_NETWORK env var
-- **Tests:** 547 passing across 54 files
+- **Tests:** 587 passing across 58 files
 
 Railway deferred — Hono runs inside Next.js, not as standalone server.
 Infisical deferred — secrets direct in Vercel/Trigger.dev for now.
@@ -256,14 +256,16 @@ All agents MUST follow this language guide when generating content mentioning $H
 - [x] Phase 5: Polish (multi-agent orchestration, performance, gamification)
 - [x] Phase 6: Launch Operations — COMPLETE
 - [ ] Phase 7: Go-to-Market ← CURRENT
-  - [ ] 7.1: CLAUDE.md Phase 7 update + new agent definitions
-  - [ ] 7.2: AI compliance infrastructure (auto-disclosure, endorsement guardrails)
-  - [ ] 7.3: Funding materials (Solana Foundation grant, one-pager, FUNDING.yml)
-  - [ ] 7.4: Community launch (Discord setup, Zealy activation, KOL outreach)
-  - [ ] 7.5: Product Hunt launch execution
-  - [ ] 7.6: Mainnet preparation (network switch, final security audit)
-  - [ ] 7.7: Token launch preparation ($HOPE deployment, liquidity)
-  - [ ] 7.8: Post-launch monitoring and iteration
+  - [x] 7.1: CLAUDE.md Phase 7 update + new agent definitions (glinda-cmo, toto-funding)
+  - [x] 7.2: AI compliance infrastructure (auto-disclosure, endorsement guardrails)
+  - [x] 7.3: Funding materials (Solana Foundation grant, one-pager, FUNDING.yml)
+  - [x] 7.4: Alpha infrastructure (access tiers, whitelist, admin dashboard, micro-surveys, E2E tests)
+  - [x] 7.5: Content activation (2-week calendar, publish-ready blog + thread)
+  - [x] 7.6: Business development (revenue model, 3 partnership outreach templates)
+  - [ ] 7.7: Community launch (Discord setup, Zealy activation, KOL outreach)
+  - [ ] 7.8: Product Hunt launch execution
+  - [ ] 7.9: Mainnet preparation (network switch, final security audit)
+  - [ ] 7.10: Post-launch monitoring and iteration
 - [ ] Deferred: Auto-Stake Smart Contract (pending security audit budget $15-30K)
 
 ### Phase 6 Completion Record
@@ -287,4 +289,4 @@ All agents MUST follow this language guide when generating content mentioning $H
 | 6.13 | Monitoring + alerting | Complete |
 | 6.14 | GitHub discoverability | Manual (pending) |
 
-Phase 6 engineering complete. 547 tests across 54 files (includes Phase 7 Sprint 1 additions). Remaining items are manual: GitHub Topics, repo public toggle, Discord creation, Product Hunt account.
+Phase 6 engineering complete. Phase 7 Sprint 1 (compliance + funding) and Sprint 2 (alpha readiness + content activation) complete. 587 tests across 58 files. Remaining items: community launch, Product Hunt, mainnet prep.
