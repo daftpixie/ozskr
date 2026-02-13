@@ -20,6 +20,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated command bar, feedback widget with brand voice
 
 ### Added
+- Monitoring and cost tracking infrastructure:
+  - Error tracking middleware with hourly Redis counters per endpoint
+  - Cost tracker for Claude API, fal.ai, and social publish costs
+  - `platform_metrics` Supabase table with RLS (service role only)
+  - Admin-only metrics API: `/admin/metrics/{errors,costs,summary}`
+  - Alerts for >5% error rate and >2x daily cost spike detection
+- Beta onboarding wizard (4-step flow):
+  - Welcome screen with brand-aligned design
+  - Waitlist status gating (approved/pending/not-on-list)
+  - Profile setup with display name and content category preferences
+  - First agent teaser with create/explore CTAs
+  - OnboardingGuard component for dashboard route protection
+- 21 new tests across monitoring and onboarding (503 total)
 - SocialPublisher abstraction layer with adapter pattern:
   - Unified `SocialPublisher` interface for multi-provider publishing
   - `AyrshareAdapter` wrapping existing client ($0.01/platform/publish)
@@ -42,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Monitoring: health checks, error tracking, performance metrics
 - Backup and disaster recovery procedures
 - Secret rotation workflows with Infisical integration
-- 63 new tests across SocialPublisher and Twitter integration (482 total)
+- 63 new tests across SocialPublisher and Twitter integration
 - Waitlist system with 500-spot cap, status endpoint, and remaining spots display
 - Feature flags hardened with server-side verification via Supabase RPC
 - In-app feedback widget with star rating, message, and Supabase storage
