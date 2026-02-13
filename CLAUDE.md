@@ -48,7 +48,7 @@ src/
 - **Content Storage:** Cloudflare R2 (bucket: ozskr-content)
 - **Domain:** ozskr.vercel.app (production)
 - **Network:** devnet (current) — toggle via SOLANA_NETWORK env var
-- **Tests:** 452 passing across 45 files
+- **Tests:** 482 passing across 48 files
 
 Railway deferred — Hono runs inside Next.js, not as standalone server.
 Infisical deferred — secrets direct in Vercel/Trigger.dev for now.
@@ -207,12 +207,12 @@ const pk = new PublicKey('...');
   - [x] 6.4: Vercel production deployment (live at ozskr.vercel.app, auth working)
   - [x] 6.5: Public landing page + auth gate (brand-aligned, Wizard of Oz theming)
   - [x] 6.6: Security re-audit — ALPHA GATE PASSED (0 critical, see docs/security-audit-pre-alpha.md)
-  - [x] 6.7: Legal policy drafts — 5/10 complete (privacy, ToS, AUP, AI disclosure, token usage terms)
+  - [x] 6.7: Legal policy drafts — 10/10 complete (privacy, ToS, AUP, AI disclosure, token usage terms, cookie, data retention, DMCA, content moderation, wallet terms)
   - [x] 6.8: Open-source docs (README, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, CHANGELOG, LICENSE)
-  - [ ] 6.9: Remaining 5 legal drafts (DMCA, Cookie, Wallet Terms, Data Retention, Content Moderation)
+  - [x] 6.9: Remaining 5 legal drafts (DMCA, Cookie, Wallet Terms, Data Retention, Content Moderation)
   - [ ] 6.10: Marketing content (20+ tweets, 3 build-in-public threads, 2 blog posts, Product Hunt)
   - [ ] 6.11: Community infrastructure (Discord structure, Zealy quests, KOL briefing)
-  - [ ] 6.12: Beta infrastructure (waitlist Supabase table, feature flag hardening, onboarding flow, feedback widget)
+  - [x] 6.12: Beta infrastructure (waitlist 500-spot cap, feature flag hardening with server-side verification, feedback widget)
   - [ ] 6.13: Monitoring + alerting (>5% error rate, cost spike alerts)
   - [ ] 6.14: GitHub discoverability (20 Topics, repo public)
 - [ ] Deferred: Auto-Stake Smart Contract (pending security audit budget $15-30K)
