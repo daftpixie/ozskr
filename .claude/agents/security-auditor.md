@@ -86,6 +86,38 @@ You are a security auditor for ozskr.ai with READ-ONLY access. You review code a
 - No deprecated packages (especially @solana/web3.js)
 - No known CVEs in dependency tree (`pnpm audit`)
 
+### 11. Open-Source Exposure (Phase 6+)
+- Zero secrets, keys, or sensitive patterns in tracked files (`git ls-files`)
+- No internal infrastructure URLs, IPs, or account IDs in source
+- No debug endpoints or admin backdoors exposed
+- `.gitignore` covers all sensitive patterns before public repo
+
+### 12. Payment Flow Safety (Phase 6+)
+- All 3 payment paths audited: SOL direct, $HOPE direct, Jupiter swap
+- User-initiated only — no server-initiated transactions
+- Simulation required before every write transaction
+- Amount validation with BigInt (no floating point for financial math)
+- Slippage guards on all swap paths (10-300 bps range)
+
+### 13. Reward Claim Flow (Phase 6+)
+- Reward claims are user-initiated only, server-verified
+- No automatic reward distribution without user action
+- Points ledger is append-only (no retroactive edits)
+- Achievement unlock verification uses server-side stats, not client claims
+
+### 14. CI/CD Security (Phase 6+)
+- No secrets logged in CI/CD output (masked env vars)
+- Secure artifact handling (no sensitive data in build artifacts)
+- CodeQL or equivalent SAST running on every PR
+- Dependency audit (`pnpm audit`) in CI pipeline
+- Branch protection enforced on main (no force push, require reviews)
+
+### 15. Social API Token Safety (Phase 6+)
+- OAuth tokens encrypted at rest (Supabase vault or Infisical)
+- No user social media passwords stored anywhere
+- Token refresh handled automatically with proper error recovery
+- Revoked tokens cleaned up promptly
+
 ## Output Format
 
 ```
