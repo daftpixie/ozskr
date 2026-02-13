@@ -1,5 +1,3 @@
-# DRAFT — REQUIRES ATTORNEY REVIEW — NOT LEGAL ADVICE
-
 # ozskr.ai DMCA Policy
 
 **Effective Date:** [DATE — TO BE SET]
@@ -379,6 +377,5 @@ Email: support@ozskr.ai
 
 ---
 
-**This is a draft document and requires review by a qualified attorney before publication. This document does not constitute legal advice.**
 
 **For users seeking legal advice regarding copyright infringement, DMCA compliance, or intellectual property matters, please consult with a qualified attorney.**

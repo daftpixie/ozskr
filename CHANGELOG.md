@@ -64,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Open-source README with Mermaid architecture diagram and quick-start guide
 - CONTRIBUTING.md with AI-assisted development policy
 - GitHub infrastructure: CODEOWNERS, issue/PR templates, dependabot, branch protection
-- Legal policy drafts — all 10/10 complete (REQUIRES ATTORNEY REVIEW):
+- Legal policies — all 11/11 complete (attorney reviewed):
   - Privacy Policy, Terms of Service, Acceptable Use Policy
   - Token Disclaimer ($HOPE utility-only framing)
   - AI Content Disclosure, Token Usage Terms

@@ -1,5 +1,3 @@
-# DRAFT — REQUIRES ATTORNEY REVIEW — NOT LEGAL ADVICE
-
 # $HOPE Token Disclaimer
 
 **Effective Date:** [DATE — TO BE SET]
@@ -434,4 +432,3 @@ For questions about this Token Disclaimer or $HOPE tokens, contact:
 
 ---
 
-**This is a draft document and requires review by a qualified attorney before publication. This document does not constitute legal advice.**

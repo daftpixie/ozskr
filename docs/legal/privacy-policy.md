@@ -1,5 +1,3 @@
-# DRAFT — REQUIRES ATTORNEY REVIEW — NOT LEGAL ADVICE
-
 # ozskr.ai Privacy Policy
 
 **Effective Date:** [DATE — TO BE SET]
@@ -257,4 +255,3 @@ For GDPR-related inquiries, you may also contact our Data Protection Officer (if
 
 ---
 
-**This is a draft document and requires review by a qualified attorney before publication. This document does not constitute legal advice.**

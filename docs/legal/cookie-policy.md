@@ -1,5 +1,3 @@
-# DRAFT — REQUIRES ATTORNEY REVIEW — NOT LEGAL ADVICE
-
 # ozskr.ai Cookie & Local Storage Policy
 
 **Effective Date:** [DATE — TO BE SET]
@@ -327,4 +325,3 @@ For GDPR-related cookie inquiries, you may also contact our Data Protection Offi
 
 ---
 
-**This is a draft document and requires review by a qualified attorney before publication. This document does not constitute legal advice.**

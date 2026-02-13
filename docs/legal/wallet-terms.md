@@ -1,5 +1,3 @@
-# DRAFT — REQUIRES ATTORNEY REVIEW — NOT LEGAL ADVICE
-
 # ozskr.ai Wallet & Transaction Terms
 
 **Effective Date:** [DATE — TO BE SET]
@@ -432,6 +430,5 @@ For general support inquiries, please refer to our Terms of Service for contact 
 
 ---
 
-**This is a draft document and requires review by a qualified attorney before publication. This document does not constitute legal advice.**
 
 **By using wallet-connected features on the Platform, you acknowledge that you have read, understood, and agreed to these Wallet & Transaction Terms.**

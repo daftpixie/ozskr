@@ -1,5 +1,3 @@
-# DRAFT — REQUIRES ATTORNEY REVIEW — NOT LEGAL ADVICE
-
 # ozskr.ai Token Usage Terms
 
 **Effective Date:** [DATE — TO BE SET]
@@ -216,4 +214,3 @@ For questions about these Token Usage Terms:
 
 ---
 
-**This is a draft document and requires review by a qualified attorney before publication. This document does not constitute legal advice.**

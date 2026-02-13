@@ -1,5 +1,3 @@
-# DRAFT — REQUIRES ATTORNEY REVIEW — NOT LEGAL ADVICE
-
 # ozskr.ai AI Content Disclosure Policy
 
 **Effective Date:** [DATE — TO BE SET]
@@ -208,4 +206,3 @@ Continued use of the Platform constitutes acceptance of the updated policy.
 
 ---
 
-**This is a draft document and requires review by a qualified attorney before publication. This document does not constitute legal advice.**

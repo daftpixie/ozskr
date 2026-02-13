@@ -1,5 +1,3 @@
-# DRAFT — REQUIRES ATTORNEY REVIEW — NOT LEGAL ADVICE
-
 # ozskr.ai Content Moderation Policy
 
 **Effective Date:** [DATE — TO BE SET]
@@ -493,4 +491,3 @@ For urgent safety concerns involving imminent harm or illegal activity, please a
 
 ---
 
-**This is a draft document and requires review by a qualified attorney before publication. This document does not constitute legal advice.**

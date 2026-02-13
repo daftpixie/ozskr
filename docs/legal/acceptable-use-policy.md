@@ -1,5 +1,3 @@
-# DRAFT — REQUIRES ATTORNEY REVIEW — NOT LEGAL ADVICE
-
 # ozskr.ai Acceptable Use Policy
 
 **Effective Date:** [DATE — TO BE SET]
@@ -356,4 +354,3 @@ For questions or concerns about this Acceptable Use Policy, contact us at:
 
 ---
 
-**This is a draft document and requires review by a qualified attorney before publication. This document does not constitute legal advice.**

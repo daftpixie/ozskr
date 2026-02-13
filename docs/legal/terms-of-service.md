@@ -1,5 +1,3 @@
-# DRAFT — REQUIRES ATTORNEY REVIEW — NOT LEGAL ADVICE
-
 # ozskr.ai Terms of Service
 
 **Effective Date:** [DATE — TO BE SET]
@@ -407,4 +405,3 @@ If you have questions, concerns, or disputes regarding these Terms, please conta
 
 ---
 
-**This is a draft document and requires review by a qualified attorney before publication. This document does not constitute legal advice.**
