@@ -50,7 +50,7 @@ src/
 - **Content Storage:** Cloudflare R2 (bucket: ozskr-content)
 - **Domain:** ozskr.vercel.app (production)
 - **Network:** devnet (current) — toggle via SOLANA_NETWORK env var
-- **Tests:** 503 passing across 52 files
+- **Tests:** 547 passing across 54 files
 
 Railway deferred — Hono runs inside Next.js, not as standalone server.
 Infisical deferred — secrets direct in Vercel/Trigger.dev for now.
@@ -287,4 +287,4 @@ All agents MUST follow this language guide when generating content mentioning $H
 | 6.13 | Monitoring + alerting | Complete |
 | 6.14 | GitHub discoverability | Manual (pending) |
 
-Phase 6 engineering complete. 503 tests across 52 files. Remaining items are manual: GitHub Topics, repo public toggle, Discord creation, Product Hunt account.
+Phase 6 engineering complete. 547 tests across 54 files (includes Phase 7 Sprint 1 additions). Remaining items are manual: GitHub Topics, repo public toggle, Discord creation, Product Hunt account.

@@ -68,7 +68,7 @@ describe('TwitterAdapter', () => {
 
       expect(mockGetAccessToken).toHaveBeenCalledWith('social-account-id-1');
       expect(mockPostTweet).toHaveBeenCalledWith(
-        'Hello from ozskr',
+        'Hello from ozskr #AIGenerated',
         'valid-access-token',
         undefined
       );
@@ -102,7 +102,7 @@ describe('TwitterAdapter', () => {
         'valid-access-token'
       );
       expect(mockPostTweet).toHaveBeenCalledWith(
-        'Image tweet',
+        'Image tweet #AIGenerated',
         'valid-access-token',
         ['media-id-1']
       );

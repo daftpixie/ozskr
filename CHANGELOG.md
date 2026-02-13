@@ -5,7 +5,38 @@ All notable changes to ozskr.ai will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - Phase 6: Launch Operations
+## [Unreleased] - Phase 7: Go-to-Market
+
+### Added
+- AI compliance infrastructure:
+  - Auto-AI-disclosure injection in SocialPublisher adapters (`#AIGenerated` tag)
+  - Twitter adapter enforces 280-char limit with disclosure (truncates text, never drops tag)
+  - Ayrshare adapter injects disclosure with no character limit
+  - Endorsement content guardrails in moderation pipeline:
+    - Investment language detection for $HOPE (SEC compliance, 9 regex patterns)
+    - Endorsement disclosure enforcement (FTC 16 CFR §255)
+    - Runs before OpenAI moderation (synchronous, fast)
+  - 44 new tests (18 ai-disclosure + 26 endorsement-guardrails)
+- New agent definitions:
+  - `glinda-cmo`: Marketing strategy, community growth, social campaigns, KOL outreach
+  - `toto-funding`: Grant applications, funding strategy, pitch materials
+- Funding materials:
+  - Solana Foundation grant application ($35K, 3 milestones over 6 months)
+  - One-page project pitch document for partners/ecosystem funds
+  - `.github/FUNDING.yml` for GitHub Sponsors integration
+
+### Changed
+- CLAUDE.md updated for Phase 7:
+  - Phase 6 marked complete with detailed completion record
+  - Phase 7 Go-to-Market sub-phases defined (7.1–7.8)
+  - AI Compliance section (FTC, SEC, NY S.B. S6524-A)
+  - $HOPE Token Reference language guide
+  - Go-to-Market escalation rules
+  - 2 new agents in ownership map
+  - Key References table
+- Test count: 547 passing across 54 files (up from 503/52)
+
+## [0.6.0] - 2026-02-13 - Phase 6: Launch Operations
 
 ### Changed
 - Brand realignment across entire frontend:

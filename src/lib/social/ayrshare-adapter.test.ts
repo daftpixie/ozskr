@@ -58,7 +58,7 @@ describe('AyrshareAdapter', () => {
       });
 
       expect(mockPublishPost).toHaveBeenCalledWith({
-        post: 'Hello world',
+        post: 'Hello world #AIGenerated',
         platforms: [SocialPlatform.TWITTER],
         mediaUrls: undefined,
         profileKey: 'pk-1',
