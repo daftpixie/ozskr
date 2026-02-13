@@ -183,7 +183,7 @@ export default function AchievementsPage() {
       </div>
 
       {/* Category Tabs */}
-      <Tabs value={activeCategory} onValueChange={(v) => setActiveCategory(v as FilterCategory)}>
+      <Tabs value={activeCategory} onValueChange={(v: string) => setActiveCategory(v as FilterCategory)}>
         <TabsList className="w-full justify-start">
           {Object.entries(categoryLabels).map(([key, label]) => (
             <TabsTrigger key={key} value={key}>

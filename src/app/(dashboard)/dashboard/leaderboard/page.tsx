@@ -136,7 +136,7 @@ export default function LeaderboardPage() {
       </div>
 
       {/* Period Selector */}
-      <Tabs value={period} onValueChange={(v) => setPeriod(v as LeaderboardPeriod)}>
+      <Tabs value={period} onValueChange={(v: string) => setPeriod(v as LeaderboardPeriod)}>
         <TabsList>
           {Object.entries(periodLabels).map(([key, label]) => (
             <TabsTrigger key={key} value={key}>
