@@ -26,7 +26,7 @@ const SurveySchema = z.object({
   ]),
   response: z.string().min(1).max(500),
   rating: z.number().int().min(1).max(5).optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 const feedback = new Hono();
