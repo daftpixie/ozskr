@@ -3,6 +3,7 @@
 /**
  * Waitlist Form
  * Email signup with optional wallet address auto-inclusion
+ * Shows remaining spots out of 500
  */
 
 import { useState, useEffect } from 'react';
@@ -11,18 +12,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Mail, Check, AlertCircle } from 'lucide-react';
 
-type FormState = 'idle' | 'submitting' | 'success' | 'duplicate' | 'error';
+type FormState = 'idle' | 'submitting' | 'success' | 'duplicate' | 'full' | 'error';
+
+interface WaitlistCount {
+  count: number;
+  total: number;
+  remaining: number;
+}
 
 export function WaitlistForm() {
   const { publicKey } = useWallet();
   const [email, setEmail] = useState('');
   const [state, setState] = useState<FormState>('idle');
-  const [count, setCount] = useState<number | null>(null);
+  const [waitlistData, setWaitlistData] = useState<WaitlistCount | null>(null);
 
   useEffect(() => {
     fetch('/api/waitlist/count')
       .then((r) => r.json())
-      .then((data: { count: number }) => setCount(data.count))
+      .then((data: WaitlistCount) => setWaitlistData(data))
       .catch(() => {/* ignore */});
   }, []);
 
@@ -44,13 +51,17 @@ export function WaitlistForm() {
         }),
       });
 
-      const data: { message?: string; error?: string } = await res.json();
+      const data: { message?: string; error?: string; remaining?: number } = await res.json();
 
       if (res.status === 201) {
         setState('success');
-        setCount((prev) => (prev !== null ? prev + 1 : prev));
+        setWaitlistData((prev) =>
+          prev ? { ...prev, count: prev.count + 1, remaining: prev.remaining - 1 } : prev
+        );
       } else if (res.ok && data.message === 'Already on the waitlist') {
         setState('duplicate');
+      } else if (res.ok && data.message === 'Waitlist is full') {
+        setState('full');
       } else {
         setState('error');
       }
@@ -82,6 +93,20 @@ export function WaitlistForm() {
         <p className="text-lg font-medium text-white">Already signed up!</p>
         <p className="text-sm text-muted-foreground">
           You&apos;re already on the waitlist. We&apos;ll be in touch.
+        </p>
+      </div>
+    );
+  }
+
+  if (state === 'full') {
+    return (
+      <div className="flex flex-col items-center gap-3 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/20">
+          <AlertCircle className="h-6 w-6 text-red-400" />
+        </div>
+        <p className="text-lg font-medium text-white">Waitlist is full</p>
+        <p className="text-sm text-muted-foreground">
+          All 500 spots have been claimed. Follow us for future openings.
         </p>
       </div>
     );
@@ -123,10 +148,17 @@ export function WaitlistForm() {
         </div>
       )}
 
-      {count !== null && count > 0 && (
+      {waitlistData && (
         <p className="text-sm text-muted-foreground">
-          <span className="font-medium text-white">{count.toLocaleString()}</span>{' '}
-          {count === 1 ? 'person has' : 'people have'} joined
+          <span className="font-medium text-white">{waitlistData.remaining.toLocaleString()}</span>{' '}
+          of {waitlistData.total.toLocaleString()} spots remaining
+          {waitlistData.count > 0 && (
+            <span>
+              {' '}&middot;{' '}
+              <span className="font-medium text-white">{waitlistData.count.toLocaleString()}</span>{' '}
+              {waitlistData.count === 1 ? 'person has' : 'people have'} joined
+            </span>
+          )}
         </p>
       )}
     </form>
