@@ -191,7 +191,7 @@ const pk = new PublicKey('...');
 - Dark mode default: Void Black `#0A0A0B` background
 - Fonts: Satoshi (display), Inter (body), JetBrains Mono (code)
 - See `ozskr-design-system.css` for production-ready design tokens
-- See `ozskr_brand_style_guide.md` for complete brand identity
+- See `docs/ozskr_brand_style_guide.md` for complete brand identity
 
 ## Phase Status
 
