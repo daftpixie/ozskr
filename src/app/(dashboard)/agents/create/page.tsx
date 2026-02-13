@@ -128,7 +128,7 @@ export default function CreateAgentPage() {
       <div>
         <h1 className="text-3xl font-bold text-white">Create Agent</h1>
         <p className="mt-2 text-muted-foreground">
-          Design and deploy your autonomous AI agent
+          Bring a new character to life
         </p>
       </div>
 
@@ -151,14 +151,14 @@ export default function CreateAgentPage() {
       {currentStep === 1 && (
         <Card>
           <CardHeader>
-            <CardTitle>Step 1: Identity</CardTitle>
+            <CardTitle>Step 1: Who Are They?</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Character Name *</Label>
               <Input
                 id="name"
-                placeholder="e.g., CryptoWizard"
+                placeholder="e.g., SolanaScribe, CryptoOracle, PixelWitch"
                 value={name}
                 onChange={(e) => setField('name', e.target.value)}
                 maxLength={100}
@@ -172,7 +172,7 @@ export default function CreateAgentPage() {
               <Label htmlFor="persona">Persona *</Label>
               <Textarea
                 id="persona"
-                placeholder="Describe the character's personality, background, and communication style..."
+                placeholder="Give your character a story. Who are they? What drives them?"
                 value={persona}
                 onChange={(e) => setField('persona', e.target.value)}
                 maxLength={2000}
@@ -201,7 +201,7 @@ export default function CreateAgentPage() {
       {currentStep === 2 && (
         <Card>
           <CardHeader>
-            <CardTitle>Step 2: Visual Style</CardTitle>
+            <CardTitle>Step 2: How Do They Look?</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -294,7 +294,7 @@ export default function CreateAgentPage() {
       {currentStep === 3 && (
         <Card>
           <CardHeader>
-            <CardTitle>Step 3: Voice & Behavior</CardTitle>
+            <CardTitle>Step 3: How Do They Speak?</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -402,7 +402,7 @@ export default function CreateAgentPage() {
       {currentStep === 4 && (
         <Card>
           <CardHeader>
-            <CardTitle>Step 4: Review & Create</CardTitle>
+            <CardTitle>Step 4: Ready to Bring Them to Life?</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Identity Summary */}
@@ -503,11 +503,11 @@ export default function CreateAgentPage() {
                 className="bg-gradient-to-r from-solana-purple to-solana-green hover:opacity-90"
               >
                 {isPending ? (
-                  <>Creating...</>
+                  <>The wizard is working...</>
                 ) : (
                   <>
                     <Check className="mr-2 h-4 w-4" />
-                    Create Agent
+                    Bring Them to Life
                   </>
                 )}
               </Button>

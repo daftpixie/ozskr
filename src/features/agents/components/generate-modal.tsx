@@ -49,11 +49,11 @@ const STAGE_ORDER: GenerationStage[] = [
 ];
 
 const STAGE_LABELS: Record<GenerationStage, string> = {
-  loading_character: 'Loading character DNA...',
-  enhancing_prompt: 'Enhancing prompt...',
-  generating_content: 'Generating content...',
-  quality_check: 'Quality check...',
-  moderation: 'Moderation...',
+  loading_character: 'Summoning character DNA...',
+  enhancing_prompt: 'Weaving the prompt...',
+  generating_content: 'The wizard is working...',
+  quality_check: 'Polishing the emeralds...',
+  moderation: 'Final curtain check...',
   complete: 'Complete',
   error: 'Error',
 };
@@ -165,8 +165,8 @@ export function GenerateModal({
                 id="prompt"
                 placeholder={
                   contentType === GenerationType.TEXT
-                    ? 'What would you like to write about?'
-                    : 'Describe the image you want to generate...'
+                    ? 'What story should your agent tell?'
+                    : 'Paint a picture. What should the world see?'
                 }
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
@@ -190,7 +190,7 @@ export function GenerateModal({
                   Starting...
                 </>
               ) : (
-                <>Generate</>
+                <>Create Magic</>
               )}
             </Button>
           </div>
@@ -280,7 +280,7 @@ export function GenerateModal({
                 <Check className="h-5 w-5 text-solana-green" />
                 <div className="flex-1">
                   <h3 className="font-medium text-solana-green">
-                    Generation Complete
+                    Your creation is ready
                   </h3>
                 </div>
               </div>
@@ -333,7 +333,7 @@ export function GenerateModal({
                 className="flex-1"
               >
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Generate Again
+                Create More
               </Button>
               <Button variant="outline" size="icon">
                 <Share2 className="h-4 w-4" />
