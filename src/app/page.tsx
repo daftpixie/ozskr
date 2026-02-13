@@ -5,7 +5,7 @@
  * Public marketing page with hero, features, how it works, and waitlist
  */
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
@@ -82,6 +82,14 @@ const STEPS = [
 const TECH_STACK = ['Claude AI', 'Solana', 'Next.js', 'TypeScript', 'Supabase', 'Jupiter'] as const;
 
 export default function Home() {
+  return (
+    <Suspense>
+      <HomeContent />
+    </Suspense>
+  );
+}
+
+function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { connected } = useWallet();
