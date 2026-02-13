@@ -23,6 +23,7 @@ import {
 } from './types';
 import { getAccessToken } from './twitter/token-store';
 import { postTweet, uploadMedia, deleteTweet, getTweetMetrics } from './twitter/client';
+import { injectTwitterAiDisclosure } from './ai-disclosure';
 
 /**
  * Direct Twitter API costs $0 for posting (API access is free tier / Basic)
@@ -63,8 +64,11 @@ export class TwitterAdapter implements SocialPublisher {
         }
       }
 
+      // Inject AI disclosure (NY S.B. S6524-A compliance)
+      const disclosedText = injectTwitterAiDisclosure(post.text);
+
       // Post tweet
-      const result = await postTweet(post.text, accessToken, mediaIds);
+      const result = await postTweet(disclosedText, accessToken, mediaIds);
 
       logger.info('Twitter direct publish succeeded', {
         tweetId: result.tweetId,

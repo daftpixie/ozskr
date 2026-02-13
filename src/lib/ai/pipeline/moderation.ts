@@ -6,6 +6,7 @@
 import OpenAI from 'openai';
 import type { ProgressCallback } from './types';
 import { ModerationStatus } from '@/types/database';
+import { runEndorsementGuardrails } from './endorsement-guardrails';
 
 /**
  * Error thrown during moderation
@@ -187,6 +188,24 @@ export const moderateContent = async (
   });
 
   try {
+    // Run endorsement guardrails first (synchronous, fast)
+    if (output.text) {
+      onProgress({
+        stage: 'moderating',
+        message: 'Checking endorsement and compliance guardrails',
+      });
+
+      const guardrailResult = runEndorsementGuardrails(output.text);
+      if (guardrailResult) {
+        onProgress({
+          stage: 'moderating',
+          message: `Endorsement guardrail triggered: ${guardrailResult.status}`,
+          metadata: guardrailResult.details,
+        });
+        return guardrailResult;
+      }
+    }
+
     let result: ModerationResult;
 
     if (output.text) {

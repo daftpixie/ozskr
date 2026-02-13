@@ -253,3 +253,4 @@ export type { QualityResult, ContentOutput } from './quality';
 export { moderateContent, ModerationError } from './moderation';
 export type { ModerationResult } from './moderation';
 export { storeAndNotify, StorageError } from './store';
+export { runEndorsementGuardrails, checkInvestmentLanguage, checkEndorsementDisclosure } from './endorsement-guardrails';

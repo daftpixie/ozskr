@@ -13,6 +13,7 @@ import {
   type PublishResult,
   type PostAnalytics,
 } from './types';
+import { injectAiDisclosure } from './ai-disclosure';
 
 /**
  * Estimated cost per platform publish via Ayrshare
@@ -31,8 +32,11 @@ export class AyrshareAdapter implements SocialPublisher {
 
   async publish(post: SocialPost): Promise<PublishResult> {
     try {
+      // Inject AI disclosure (NY S.B. S6524-A compliance)
+      const disclosedText = injectAiDisclosure(post.text);
+
       const response = await publishPost({
-        post: post.text,
+        post: disclosedText,
         platforms: post.platforms,
         mediaUrls: post.mediaUrls,
         profileKey: post.profileKey,
