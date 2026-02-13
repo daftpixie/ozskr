@@ -11,6 +11,7 @@ import { Sidebar } from '@/components/features/sidebar';
 import { TopBar } from '@/components/features/top-bar';
 import { CommandBar } from '@/components/features/command-bar';
 import { AchievementToastProvider } from '@/features/gamification/components/achievement-toast';
+import { FeedbackWidget } from '@/features/feedback/feedback-widget';
 
 export default function DashboardLayout({
   children,
@@ -39,6 +40,9 @@ export default function DashboardLayout({
 
           {/* Command Bar */}
           <CommandBar open={commandBarOpen} onOpenChange={setCommandBarOpen} />
+
+          {/* Feedback Widget */}
+          <FeedbackWidget />
         </div>
       </AchievementToastProvider>
     </AuthGuard>
