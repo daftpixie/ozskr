@@ -39,7 +39,7 @@ const FEATURES = [
   {
     icon: Sparkles,
     title: 'Generate Content',
-    description: 'Produce tweets, threads, and long-form content powered by Claude AI.',
+    description: 'Watch your imagination come to life with AI-powered tweets, threads, and visual content.',
     color: 'text-solana-green',
     bg: 'bg-solana-green/10',
   },
@@ -60,14 +60,14 @@ const FEATURES = [
   {
     icon: Trophy,
     title: 'Earn Rewards',
-    description: 'Gain $HOPE tokens through platform engagement and agent performance.',
+    description: 'Collect $HOPE tokens as your agents grow and your community flourishes.',
     color: 'text-solana-green',
     bg: 'bg-solana-green/10',
   },
   {
     icon: Code,
     title: 'Own Your Story',
-    description: 'Open-source platform. Your agents, your data, your rules.',
+    description: 'Open source, transparent, yours. We\'re not hiding the AI behind a curtain.',
     color: 'text-brick-gold',
     bg: 'bg-brick-gold/10',
   },
@@ -76,7 +76,7 @@ const FEATURES = [
 const STEPS = [
   { icon: Wallet, label: 'Connect', description: 'Link your Solana wallet' },
   { icon: Bot, label: 'Create', description: 'Design your AI agent' },
-  { icon: Rocket, label: 'Publish', description: 'Deploy content on-chain' },
+  { icon: Rocket, label: 'Publish', description: 'Share your magic with the world' },
 ] as const;
 
 const TECH_STACK = ['Claude AI', 'Solana', 'Next.js', 'TypeScript', 'Supabase', 'Jupiter'] as const;
@@ -115,34 +115,35 @@ function HomeContent() {
       {/* Header */}
       <header className="fixed left-0 right-0 top-0 z-50 border-b border-white/5 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <span className="bg-gradient-to-r from-solana-purple to-solana-green bg-clip-text text-xl font-bold tracking-tight text-transparent">
-            ozskr.ai
+          <span className="flex items-center gap-2 text-xl font-bold tracking-tight">
+            <span className="logo-brick logo-brick-gradient text-[10px]" />
+            <span className="font-display bg-gradient-to-r from-solana-purple to-solana-green bg-clip-text text-transparent">ozskr.ai</span>
           </span>
           <WalletButton />
         </div>
       </header>
 
       {/* Hero */}
-      <section className="flex min-h-screen flex-col items-center justify-center px-6 pt-16 text-center">
+      <section className="relative flex min-h-screen flex-col items-center justify-center px-6 pt-16 text-center pattern-bricks">
         <div className="mx-auto max-w-4xl space-y-8">
-          <h1 className="bg-gradient-to-r from-solana-purple via-solana-green to-brick-gold bg-clip-text text-5xl font-bold tracking-tight text-transparent sm:text-7xl">
+          <h1 className="font-display bg-gradient-to-r from-solana-purple via-solana-green to-brick-gold bg-clip-text text-5xl font-bold tracking-tight text-transparent sm:text-7xl animate-fade-in-up">
             ozskr.ai
           </h1>
-          <p className="mx-auto max-w-2xl text-xl italic text-muted-foreground sm:text-2xl">
+          <p className="mx-auto max-w-2xl text-xl italic text-muted-foreground sm:text-2xl animate-fade-in-up stagger-1">
             &ldquo;Pay no mind to the &lsquo;agents&rsquo; behind the emerald curtain.&rdquo;
           </p>
-          <p className="mx-auto max-w-xl text-base text-muted-foreground">
-            Create autonomous AI agents on Solana. Generate content, trade tokens, and build your on-chain presence.
+          <p className="mx-auto max-w-xl text-base text-muted-foreground animate-fade-in-up stagger-2">
+            Create AI-powered digital influencers. Built on Solana. Powered by imagination.
           </p>
 
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center animate-fade-in-up stagger-3">
             {isAuthenticated ? (
               <Button
                 size="lg"
                 className="bg-gradient-to-r from-solana-purple to-solana-green px-8 text-base hover:opacity-90"
                 onClick={() => router.push('/dashboard')}
               >
-                Go to Dashboard
+                Enter the Emerald City
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             ) : (
@@ -151,7 +152,7 @@ function HomeContent() {
                 className="bg-gradient-to-r from-solana-purple to-solana-green px-8 text-base hover:opacity-90"
                 onClick={() => setVisible(true)}
               >
-                {connected ? 'Sign In' : 'Connect Wallet'}
+                {connected ? 'Sign In' : 'Follow the Road'}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             )}
@@ -169,18 +170,18 @@ function HomeContent() {
 
       {/* Features */}
       <section id="features" className="mx-auto max-w-6xl px-6 py-24">
-        <h2 className="mb-4 text-center text-3xl font-bold sm:text-4xl">
-          Everything you need
+        <h2 className="font-display mb-4 text-center text-3xl font-bold sm:text-4xl">
+          Your arsenal of magic
         </h2>
         <p className="mx-auto mb-16 max-w-2xl text-center text-muted-foreground">
-          A complete platform for creating, managing, and monetizing AI agents on Solana.
+          Everything you need to bring your digital influencers to life on Solana.
         </p>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((feature, i) => (
             <Card
               key={feature.title}
-              className="border-white/5 bg-white/[0.02] transition-transform duration-200 hover:scale-[1.02] animate-in fade-in"
+              className="border-white/5 bg-white/[0.02] transition-all duration-200 hover:scale-[1.02] hover:glow-emerald animate-in fade-in"
               style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'both' }}
             >
               <CardContent className="flex flex-col gap-4 pt-6">
@@ -197,11 +198,11 @@ function HomeContent() {
 
       {/* How It Works */}
       <section className="mx-auto max-w-4xl px-6 py-24">
-        <h2 className="mb-4 text-center text-3xl font-bold sm:text-4xl">
-          How it works
+        <h2 className="font-display mb-4 text-center text-3xl font-bold sm:text-4xl">
+          Follow the road
         </h2>
         <p className="mx-auto mb-16 max-w-xl text-center text-muted-foreground">
-          Get started in three simple steps.
+          Your journey from Kansas to the Emerald City.
         </p>
 
         <div className="relative flex flex-col items-center gap-12 md:flex-row md:justify-between md:gap-0">
@@ -240,11 +241,11 @@ function HomeContent() {
 
       {/* Waitlist */}
       <section className="mx-auto max-w-2xl px-6 py-24 text-center">
-        <h2 className="mb-4 text-3xl font-bold sm:text-4xl">
-          Join the waitlist
+        <h2 className="font-display mb-4 text-3xl font-bold sm:text-4xl">
+          Claim your spot on the road
         </h2>
         <p className="mb-8 text-muted-foreground">
-          Be the first to know when ozskr.ai opens to the public.
+          Be among the first to enter the Emerald City.
         </p>
         <WaitlistForm />
       </section>
@@ -274,7 +275,7 @@ function HomeContent() {
           </div>
 
           <p className="text-sm text-muted-foreground">
-            Built with Claude Code
+            Built with Claude Code. The magic is in your hands.
           </p>
 
           <p className="text-sm text-muted-foreground">

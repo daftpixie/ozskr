@@ -76,9 +76,9 @@ export function WaitlistForm() {
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-solana-green/20">
           <Check className="h-6 w-6 text-solana-green" />
         </div>
-        <p className="text-lg font-medium text-white">You&apos;re on the list!</p>
+        <p className="text-lg font-medium text-white">You&apos;re on the road!</p>
         <p className="text-sm text-muted-foreground">
-          We&apos;ll notify you when ozskr.ai launches.
+          We&apos;ll let you know when the Emerald City opens its gates.
         </p>
       </div>
     );
@@ -90,7 +90,7 @@ export function WaitlistForm() {
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brick-gold/20">
           <Check className="h-6 w-6 text-brick-gold" />
         </div>
-        <p className="text-lg font-medium text-white">Already signed up!</p>
+        <p className="text-lg font-medium text-white">You&apos;re already on the road!</p>
         <p className="text-sm text-muted-foreground">
           You&apos;re already on the waitlist. We&apos;ll be in touch.
         </p>
@@ -131,7 +131,7 @@ export function WaitlistForm() {
           disabled={state === 'submitting' || (!email && !publicKey)}
           className="h-11 bg-gradient-to-r from-solana-purple to-solana-green px-6 hover:opacity-90"
         >
-          {state === 'submitting' ? 'Joining...' : 'Join Waitlist'}
+          {state === 'submitting' ? 'Joining...' : 'Claim Your Spot'}
         </Button>
       </div>
 
