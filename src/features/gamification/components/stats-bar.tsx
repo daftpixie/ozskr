@@ -38,7 +38,7 @@ export function StatsBar() {
           {/* Total Points */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Total Points:</span>
-            <span className="text-lg font-bold text-white">
+            <span className="text-lg font-bold font-display text-white">
               {stats.totalPoints.toLocaleString()}
             </span>
             <TierBadge
@@ -51,7 +51,7 @@ export function StatsBar() {
           {/* Current Streak */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Streak:</span>
-            <span className="text-lg font-bold text-brick-gold">
+            <span className="text-lg font-bold font-display text-brick-gold">
               🔥 {stats.currentStreakDays}
             </span>
             <span className="text-sm text-muted-foreground">
@@ -62,7 +62,7 @@ export function StatsBar() {
           {/* Longest Streak */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Best Streak:</span>
-            <span className="text-lg font-bold text-solana-green">
+            <span className="text-lg font-bold font-display text-solana-green">
               {stats.longestStreakDays}
             </span>
             <span className="text-sm text-muted-foreground">

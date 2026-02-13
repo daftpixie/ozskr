@@ -18,7 +18,8 @@ export function TopBar({ onCommandBarOpen }: TopBarProps) {
     <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-border bg-background/80 px-6 backdrop-blur-sm">
       {/* Logo */}
       <div className="flex items-center gap-2">
-        <span className="bg-gradient-to-r from-solana-purple to-solana-green bg-clip-text text-xl font-bold text-transparent">
+        <span className="logo-brick logo-brick-gradient text-[8px]" />
+        <span className="font-display bg-gradient-to-r from-solana-purple to-solana-green bg-clip-text text-xl font-bold text-transparent">
           ozskr.ai
         </span>
       </div>
