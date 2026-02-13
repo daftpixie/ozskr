@@ -50,7 +50,7 @@ src/
 - **Content Storage:** Cloudflare R2 (bucket: ozskr-content)
 - **Domain:** ozskr.vercel.app (production)
 - **Network:** devnet (current) — toggle via SOLANA_NETWORK env var
-- **Tests:** 587 passing across 58 files
+- **Tests:** 629 passing across 62 files
 
 Railway deferred — Hono runs inside Next.js, not as standalone server.
 Infisical deferred — secrets direct in Vercel/Trigger.dev for now.
@@ -262,10 +262,16 @@ All agents MUST follow this language guide when generating content mentioning $H
   - [x] 7.4: Alpha infrastructure (access tiers, whitelist, admin dashboard, micro-surveys, E2E tests)
   - [x] 7.5: Content activation (2-week calendar, publish-ready blog + thread)
   - [x] 7.6: Business development (revenue model, 3 partnership outreach templates)
-  - [ ] 7.7: Community launch (Discord setup, Zealy activation, KOL outreach)
-  - [ ] 7.8: Product Hunt launch execution
-  - [ ] 7.9: Mainnet preparation (network switch, final security audit)
-  - [ ] 7.10: Post-launch monitoring and iteration
+  - [x] 7.7: Alpha bug triage (admin issues API, auto-create from surveys, admin tracker UI)
+  - [x] 7.8: Batch whitelist + waitlist conversion pipeline
+  - [x] 7.9: Alpha metrics report generator (JSON + markdown export)
+  - [x] 7.10: Multi-user load validation (50 concurrent sessions, rate limit stress)
+  - [x] 7.11: Blog integration (/blog with SEO, static generation, 2 launch posts)
+  - [x] 7.12: Community launch (Discord playbook, KOL outreach package, Show HN draft)
+  - [x] 7.13: Investor materials (12-slide deck, Superteam microgrant application)
+  - [ ] 7.14: Product Hunt launch execution
+  - [ ] 7.15: Mainnet preparation (network switch, final security audit)
+  - [ ] 7.16: Post-launch monitoring and iteration
 - [ ] Deferred: Auto-Stake Smart Contract (pending security audit budget $15-30K)
 
 ### Phase 6 Completion Record
@@ -289,4 +295,4 @@ All agents MUST follow this language guide when generating content mentioning $H
 | 6.13 | Monitoring + alerting | Complete |
 | 6.14 | GitHub discoverability | Manual (pending) |
 
-Phase 6 engineering complete. Phase 7 Sprint 1 (compliance + funding) and Sprint 2 (alpha readiness + content activation) complete. 587 tests across 58 files. Remaining items: community launch, Product Hunt, mainnet prep.
+Phase 6 engineering complete. Phase 7 Sprints 1-3 complete. Sprint 3 delivered: bug triage system, batch whitelist, report generator, load tests, blog routes, Discord playbook, KOL outreach package, investor deck, Superteam microgrant. 629 tests across 62 files. Remaining: Product Hunt launch, mainnet prep.

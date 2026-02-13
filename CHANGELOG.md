@@ -36,6 +36,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Key References table
 - Test count: 587 passing across 58 files (up from 503/52)
 
+### Sprint 3: Closed Alpha Transition + Community Launch
+
+#### Added — Track A: Engineering
+- Alpha bug triage system:
+  - `alpha_issues` Supabase table with severity/status tracking, RLS (service role only)
+  - Admin CRUD API: GET/POST/PATCH at `/api/admin-issues` + `/api/admin-issues/stats`
+  - Auto-create issues from low-rated micro-surveys (rating ≤ 2, fire-and-forget)
+  - Admin issue tracker UI at `/admin/issues` with severity/status filters and quick actions
+  - 16 tests covering CRUD, filters, stats, auto-create, error handling
+- Batch whitelist + waitlist conversion pipeline:
+  - POST `/api/admin-whitelist/batch` — upsert up to 100 wallets at once
+  - POST `/api/admin-whitelist/convert` — convert waitlist entries to alpha whitelist
+  - Waitlist status migration: extended `(pending, approved, rejected)` → `(pending, approved, rejected, invited, converted)` with `invited_at`/`converted_at` columns
+  - 6 new tests for batch/convert endpoints
+- Alpha metrics report generator:
+  - GET `/api/admin-report` — JSON report with users, content, issues, costs, feedback aggregations
+  - GET `/api/admin-report/markdown` — downloadable Markdown report with tables
+  - Admin report UI at `/admin/report` with stats cards and export button
+  - 5 tests covering admin gating, JSON/markdown output, null handling
+- Multi-user load validation tests:
+  - 50 concurrent health checks, auth-gated requests, mixed endpoints, 404s
+  - Response quality metrics (p50/p99 latency)
+  - Rate limit stress tests (100 sequential, 20-burst waitlist signups)
+  - 7 load tests in `src/lib/api/concurrent-sessions.test.ts`
+- Blog integration route:
+  - `/blog` listing page with SEO metadata and date-sorted cards
+  - `/blog/[slug]` post page with `generateStaticParams()` + `generateMetadata()` (OpenGraph, Twitter cards)
+  - Typed `BlogPost` registry with 2 posts (6-min + 8-min reads)
+  - Simple markdown-to-JSX renderer (headings, lists, bold, italic, paragraphs)
+  - 8 tests covering data validation, sorting, slug lookup
+
+#### Added — Track B: Community
+- Discord activation playbook:
+  - Channel configuration, moderation rules, bot setup guide
+  - Welcome message templates and launch week schedule
+- KOL outreach execution package:
+  - 20 target KOL profiles with engagement data
+  - DM templates for cold outreach, warm follow-up, and collaboration
+  - Alpha onboarding flow for KOL partners
+- Show HN draft + content calendar weeks 3-4:
+  - Publish-ready Show HN post with technical details
+  - 2 additional publish-ready Twitter threads
+  - 2-week content calendar with daily posting schedule
+
+#### Added — Track C: Investor Materials
+- 12-slide investor deck (problem → solution → market → traction → ask)
+- Superteam microgrant application ($10K, 3 deliverables over 8 weeks)
+
+#### Changed
+- Test count: 629 passing across 62 files (up from 587/58)
+- CLAUDE.md updated with Sprint 3 sub-phases (7.7–7.13)
+
 ### Sprint 2: Alpha Readiness + Content Activation
 
 #### Added — Track A: Alpha Infrastructure
