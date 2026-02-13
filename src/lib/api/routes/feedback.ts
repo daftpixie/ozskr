@@ -16,6 +16,19 @@ const FeedbackSchema = z.object({
   pageUrl: z.string().max(200).optional(),
 });
 
+const SurveySchema = z.object({
+  triggerPoint: z.enum([
+    'first_generation',
+    'first_publish',
+    'third_agent',
+    'first_schedule',
+    'weekly_checkin',
+  ]),
+  response: z.string().min(1).max(500),
+  rating: z.number().int().min(1).max(5).optional(),
+  metadata: z.record(z.unknown()).optional(),
+});
+
 const feedback = new Hono();
 
 // All feedback routes require authentication
@@ -46,6 +59,38 @@ feedback.post('/', zValidator('json', FeedbackSchema), async (c) => {
     return c.json({ message: 'Feedback submitted' }, 201);
   } catch (err) {
     logger.error('Feedback error', {
+      error: err instanceof Error ? err.message : 'Unknown error',
+    });
+    return c.json({ error: 'Internal server error' }, 500);
+  }
+});
+
+/**
+ * POST /survey — Submit a micro-survey response
+ */
+feedback.post('/survey', zValidator('json', SurveySchema), async (c) => {
+  const walletAddress = (c as unknown as { get: (key: string) => unknown }).get('walletAddress') as string;
+  const { triggerPoint, response, rating, metadata } = c.req.valid('json');
+
+  try {
+    const supabase = createSupabaseClient();
+
+    const { error } = await supabase.from('feedback_surveys').insert({
+      wallet_address: walletAddress,
+      trigger_point: triggerPoint,
+      response,
+      rating: rating || null,
+      metadata: metadata || {},
+    });
+
+    if (error) {
+      logger.error('Survey insert error', { error: error.message });
+      return c.json({ error: 'Failed to submit survey' }, 500);
+    }
+
+    return c.json({ message: 'Survey submitted' }, 201);
+  } catch (err) {
+    logger.error('Survey error', {
       error: err instanceof Error ? err.message : 'Unknown error',
     });
     return c.json({ error: 'Internal server error' }, 500);
