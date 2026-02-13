@@ -34,6 +34,8 @@ src/
 │   ├── solana/             # RPC clients, transaction builders (@solana/kit)
 │   ├── ai/                 # Claude integration, Mastra agents, Mem0 memory
 │   ├── api/                # Hono service layer, Zod schemas
+│   ├── social/             # SocialPublisher adapters (Twitter, Ayrshare)
+│   ├── monitoring/         # Error tracking, cost tracking, admin metrics
 │   └── utils/              # Shared helpers (formatters, constants)
 ├── hooks/                  # React hooks (useWallet, useAgent, etc.)
 └── types/                  # Shared TypeScript types
@@ -81,6 +83,8 @@ When implementing features, the orchestrator (Opus) should:
 | Infrastructure, CI/CD, secrets, deploy, monitoring | `devops-infra` | §14, Launch Ops |
 | Legal docs, marketing, open-source docs, community | `content-writer` | Launch Ops |
 | Social API migration, Twitter direct, SocialPublisher | `social-integration-dev` | §7, Launch Ops |
+| Marketing strategy, community growth, social campaigns | `glinda-cmo` | Phase 7 GTM |
+| Grant applications, funding strategy, pitch materials | `toto-funding` | Phase 7 GTM |
 
 ### Agent Interaction Rules
 
@@ -112,6 +116,20 @@ Mandatory escalation:
 - Mainnet config changes → mandatory `devops-infra` + `security-auditor` dual approval
 - Payment wallet address changes → escalate to Matt directly
 - Open-source changes exposing internal patterns → `security-auditor` gate
+
+### Go-to-Market Escalation Rules (Phase 7)
+
+Hard rejections:
+- Any content implying $HOPE is a security/investment → REJECT (SEC risk)
+- Any endorsement deal without `#ad` / `#sponsored` disclosure → REJECT (FTC 16 CFR §255)
+- Any AI-generated content published without disclosure → REJECT (NY S.B. S6524-A)
+- Any claim about token price, yield, or financial returns → REJECT
+
+Mandatory escalation:
+- Partnership or sponsorship terms → escalate to Matt
+- Grant application submissions → escalate to Matt for final review
+- Community moderation policy changes → escalate to orchestrator
+- Any paid promotion campaign → requires `glinda-cmo` + `security-auditor` dual review
 
 ### Agent Teams Parallelism (Phase 1 Example)
 
@@ -166,6 +184,30 @@ const pk = new PublicKey('...');
 - Content moderation pipeline MUST run before any content is stored or published
 - Rate limits enforced per-wallet at the edge layer (Cloudflare Workers + Upstash)
 
+## AI Compliance — CRITICAL
+
+All AI-generated content published via ozskr.ai MUST comply with:
+
+- **FTC 16 CFR §255**: Endorsement content must include `#ad` or `#sponsored` disclosure
+- **NY S.B. S6524-A**: AI-generated content must be labeled as such
+- **Platform TOS**: Twitter/X, Instagram, etc. require AI content disclosure
+- Auto-disclosure injection is enforced at the SocialPublisher adapter layer
+- Endorsement guardrails are enforced at the moderation pipeline layer
+- Content mentioning $HOPE must use utility-only framing (never investment language)
+
+## $HOPE Token Reference
+
+$HOPE is a **utility token** for the ozskr.ai ecosystem. It is NOT a security, NOT an investment, and has NO guaranteed value.
+
+| Allowed | Prohibited |
+|---------|-----------|
+| "$HOPE unlocks premium features" | "$HOPE will increase in value" |
+| "Earn $HOPE through platform activity" | "$HOPE is an investment opportunity" |
+| "Utility token for the ozskr ecosystem" | "$HOPE provides returns" |
+| "Hold $HOPE to access tier benefits" | "Buy $HOPE before the price goes up" |
+
+All agents MUST follow this language guide when generating content mentioning $HOPE.
+
 ## Testing
 
 - Run individual test files for speed: `pnpm test src/lib/solana/rpc.test.ts`
@@ -193,6 +235,18 @@ const pk = new PublicKey('...');
 - See `ozskr-design-system.css` for production-ready design tokens
 - See `docs/ozskr_brand_style_guide.md` for complete brand identity
 
+## Key References
+
+| Document | Path |
+|----------|------|
+| Brand Style Guide | `docs/ozskr_brand_style_guide.md` |
+| Security Audit | `docs/security-audit-pre-alpha.md` |
+| Legal Policies (11) | `docs/legal/*.md` |
+| Marketing Content | `docs/marketing/*.md` |
+| Community Docs | `docs/community/*.md` |
+| Funding Materials | `docs/funding/*.md` |
+| Changelog | `CHANGELOG.md` |
+
 ## Phase Status
 
 - [x] Phase 1: Foundation (SIWS auth, dashboard shell, Supabase schema + RLS, Hono API)
@@ -200,23 +254,37 @@ const pk = new PublicKey('...');
 - [x] Phase 3: Trading (Jupiter Ultra, position management, DeFi security pipeline)
 - [x] Phase 4: Hardening (rate limiting, monitoring, test coverage)
 - [x] Phase 5: Polish (multi-agent orchestration, performance, gamification)
-- [ ] Phase 6: Launch Operations ← CURRENT
-  - [x] 6.1: Agent team expansion (devops-infra, content-writer, social-integration-dev)
-  - [x] 6.2: CI/CD + GitHub infrastructure (ci.yml, security.yml, CODEOWNERS, templates, dependabot)
-  - [x] 6.3: SocialPublisher abstraction + Twitter direct API (OAuth PKCE, posting, rate limiting — 79 tests)
-  - [x] 6.4: Vercel production deployment (live at ozskr.vercel.app, auth working)
-  - [x] 6.5: Public landing page + auth gate (brand-aligned, Wizard of Oz theming)
-  - [x] 6.6: Security re-audit — ALPHA GATE PASSED (0 critical, see docs/security-audit-pre-alpha.md)
-  - [x] 6.7: Legal policies — 11/11 complete, attorney reviewed (privacy, ToS, AUP, AI disclosure, token usage terms, cookie, data retention, DMCA, content moderation, wallet terms)
-  - [x] 6.8: Open-source docs (README, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, CHANGELOG, LICENSE)
-  - [x] 6.9: Remaining 5 legal policies (DMCA, Cookie, Wallet Terms, Data Retention, Content Moderation)
-  - [x] 6.10: Marketing content (25 tweets, 3 build-in-public threads, 2 blog posts, Product Hunt listing)
-  - [x] 6.11: Community infrastructure (Discord structure, Zealy quests, KOL briefing)
-  - [x] 6.12: Beta infrastructure (waitlist 500-spot cap, feature flag hardening with server-side verification, feedback widget)
-  - [x] 6.12b: Brand realignment — fonts (Satoshi/Inter/JetBrains Mono), design tokens, Oz-themed copy across all 20+ pages
-  - [x] 6.12c: Beta onboarding wizard (4-step flow with waitlist gating)
-  - [x] 6.13: Monitoring + alerting (error tracking, cost tracking, admin metrics API, >5% error rate + >2x cost spike alerts)
-  - [ ] 6.14: GitHub discoverability (20 Topics, repo public) ← MANUAL
+- [x] Phase 6: Launch Operations — COMPLETE
+- [ ] Phase 7: Go-to-Market ← CURRENT
+  - [ ] 7.1: CLAUDE.md Phase 7 update + new agent definitions
+  - [ ] 7.2: AI compliance infrastructure (auto-disclosure, endorsement guardrails)
+  - [ ] 7.3: Funding materials (Solana Foundation grant, one-pager, FUNDING.yml)
+  - [ ] 7.4: Community launch (Discord setup, Zealy activation, KOL outreach)
+  - [ ] 7.5: Product Hunt launch execution
+  - [ ] 7.6: Mainnet preparation (network switch, final security audit)
+  - [ ] 7.7: Token launch preparation ($HOPE deployment, liquidity)
+  - [ ] 7.8: Post-launch monitoring and iteration
 - [ ] Deferred: Auto-Stake Smart Contract (pending security audit budget $15-30K)
 
-Phase 6 engineering complete. Remaining items are manual: GitHub Topics, repo public toggle, Discord creation, Product Hunt account.
+### Phase 6 Completion Record
+
+| Sub-phase | Description | Status |
+|-----------|-------------|--------|
+| 6.1 | Agent team expansion | Complete |
+| 6.2 | CI/CD + GitHub infrastructure | Complete |
+| 6.3 | SocialPublisher + Twitter direct API | Complete (79 tests) |
+| 6.4 | Vercel production deployment | Complete (ozskr.vercel.app) |
+| 6.5 | Public landing page + auth gate | Complete |
+| 6.6 | Security re-audit — ALPHA GATE | Complete (0 critical) |
+| 6.7 | Legal policies (11/11 attorney reviewed) | Complete |
+| 6.8 | Open-source docs | Complete |
+| 6.9 | Remaining legal policies | Complete |
+| 6.10 | Marketing content | Complete |
+| 6.11 | Community infrastructure | Complete |
+| 6.12 | Beta infrastructure | Complete |
+| 6.12b | Brand realignment | Complete |
+| 6.12c | Beta onboarding wizard | Complete |
+| 6.13 | Monitoring + alerting | Complete |
+| 6.14 | GitHub discoverability | Manual (pending) |
+
+Phase 6 engineering complete. 503 tests across 52 files. Remaining items are manual: GitHub Topics, repo public toggle, Discord creation, Product Hunt account.
