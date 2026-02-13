@@ -107,9 +107,9 @@ export default function CalendarPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Content Calendar</h1>
+          <h1 className="font-display text-3xl font-bold text-white">Content Calendar</h1>
           <p className="mt-2 text-muted-foreground">
-            Scheduled content generation events
+            Plan your journey along the yellow brick road
           </p>
         </div>
         <Button

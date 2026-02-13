@@ -141,7 +141,7 @@ function TradePageContent() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Trade</h1>
+        <h1 className="font-display text-3xl font-bold text-white">Trade</h1>
         <p className="mt-2 text-muted-foreground">
           Swap tokens on Solana with Jupiter
         </p>
