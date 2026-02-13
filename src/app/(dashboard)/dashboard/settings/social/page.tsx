@@ -69,9 +69,9 @@ export default function SocialAccountsPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Social Accounts</h1>
+        <h1 className="font-display text-3xl font-bold text-white">Social Accounts</h1>
         <p className="mt-2 text-muted-foreground">
-          Connect and manage your social media platforms
+          Connect your channels and share the magic
         </p>
       </div>
 

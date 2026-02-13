@@ -87,7 +87,7 @@ export function FeedbackWidget() {
         <DialogHeader>
           <DialogTitle>Send Feedback</DialogTitle>
           <DialogDescription>
-            Help us improve ozskr.ai. Your feedback is anonymous.
+            Help us make the Emerald City shine
           </DialogDescription>
         </DialogHeader>
 

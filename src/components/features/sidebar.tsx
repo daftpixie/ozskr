@@ -54,8 +54,8 @@ export function Sidebar() {
       {/* Brand */}
       <div className="flex h-16 items-center border-b border-border px-6">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-solana-purple to-solana-green" />
-          <span className="bg-gradient-to-r from-solana-purple to-solana-green bg-clip-text text-xl font-bold text-transparent">
+          <span className="logo-brick logo-brick-gradient text-[10px]" />
+          <span className="font-display bg-gradient-to-r from-solana-purple to-solana-green bg-clip-text text-xl font-bold text-transparent">
             ozskr.ai
           </span>
         </Link>
@@ -112,8 +112,8 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="border-t border-border p-4">
-        <p className="text-xs text-muted-foreground">
-          Phase 5: Polish
+        <p className="text-xs italic text-muted-foreground">
+          &ldquo;You&apos;ve always had the power.&rdquo;
         </p>
       </div>
     </aside>

@@ -174,7 +174,7 @@ export default function AgentDetailPage({ params }: AgentDetailPageProps) {
             className="bg-gradient-to-r from-solana-purple to-solana-green hover:opacity-90"
           >
             <Sparkles className="mr-2 h-4 w-4" />
-            Generate Content
+            Create Something New
           </Button>
         </CardContent>
       </Card>
@@ -381,7 +381,7 @@ export default function AgentDetailPage({ params }: AgentDetailPageProps) {
             <div className="flex flex-col items-center justify-center py-8">
               <Calendar className="h-10 w-10 text-muted-foreground" />
               <p className="mt-3 text-sm text-muted-foreground">
-                No schedules configured
+                No schedules yet. Set the pace for this agent.
               </p>
               <Button
                 size="sm"
@@ -422,7 +422,7 @@ export default function AgentDetailPage({ params }: AgentDetailPageProps) {
             <div className="flex flex-col items-center justify-center py-8">
               <Bot className="h-10 w-10 text-muted-foreground" />
               <p className="mt-3 text-sm text-muted-foreground">
-                No generations yet
+                No creations yet. The canvas is blank.
               </p>
             </div>
           )}

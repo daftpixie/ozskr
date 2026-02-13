@@ -85,14 +85,14 @@ export function CommandBar({ open, onOpenChange }: CommandBarProps) {
             <Command.Input
               value={search}
               onValueChange={setSearch}
-              placeholder="Search agents, commands..."
+              placeholder="Where would you like to go?"
               className="flex h-12 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
             />
           </div>
 
           <Command.List className="max-h-[400px] overflow-y-auto p-2">
             <Command.Empty className="py-6 text-center text-sm text-muted-foreground">
-              No results found.
+              Nothing found. Try another path.
             </Command.Empty>
 
             {/* Navigation Group */}

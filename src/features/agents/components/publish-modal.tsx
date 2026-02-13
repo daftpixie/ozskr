@@ -131,7 +131,7 @@ export function PublishModal({
         <DialogHeader>
           <DialogTitle>Publish Content</DialogTitle>
           <DialogDescription>
-            Share your generated content to connected social platforms
+            Share your creation with the world
           </DialogDescription>
         </DialogHeader>
 
@@ -188,7 +188,7 @@ export function PublishModal({
               ) : connectedAccounts.length === 0 ? (
                 <Card className="border-border/50 bg-card p-6 text-center">
                   <p className="text-sm text-muted-foreground">
-                    No connected social accounts. Connect accounts in settings to publish.
+                    No social accounts connected yet. Link your accounts in settings to start sharing.
                   </p>
                 </Card>
               ) : (
@@ -269,10 +269,10 @@ export function PublishModal({
                 <Check className="h-5 w-5 text-solana-green" />
                 <div className="flex-1">
                   <h3 className="font-medium text-solana-green">
-                    Content Queued for Publishing
+                    Your content is on the road
                   </h3>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Your content has been queued and will be published shortly.
+                    Publishing is in progress. The Emerald City awaits your creation.
                   </p>
                 </div>
               </div>

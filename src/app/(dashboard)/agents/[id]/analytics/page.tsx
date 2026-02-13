@@ -135,7 +135,7 @@ export default function AgentAnalyticsPage({ params }: AgentAnalyticsPageProps) 
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
-            <h1 className="text-3xl font-bold text-white">Analytics</h1>
+            <h1 className="font-display text-3xl font-bold text-white">Analytics</h1>
           </div>
           <p className="mt-2 text-muted-foreground">
             Performance metrics for {character.name}

@@ -94,11 +94,11 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Welcome Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">
+        <h1 className="text-3xl font-display font-bold text-white">
           Welcome{truncatedAddress ? `, ${truncatedAddress}` : ''}
         </h1>
         <p className="mt-2 text-muted-foreground">
-          Your AI agent command center
+          The Emerald City is yours to explore
         </p>
       </div>
 
@@ -228,12 +228,12 @@ export default function DashboardPage() {
               <div className="flex flex-col items-center justify-center py-8">
                 <Clock className="h-10 w-10 text-muted-foreground" />
                 <p className="mt-3 text-center text-sm text-muted-foreground">
-                  No scheduled runs yet
+                  The road ahead is clear
                 </p>
                 <Link href="/dashboard/calendar">
                   <Button variant="outline" size="sm" className="mt-4">
                     <Plus className="mr-2 h-4 w-4" />
-                    Create Schedule
+                    Set the Pace
                   </Button>
                 </Link>
               </div>
@@ -285,7 +285,7 @@ export default function DashboardPage() {
               <div className="flex flex-col items-center justify-center py-8">
                 <Activity className="h-10 w-10 text-muted-foreground" />
                 <p className="mt-3 text-center text-sm text-muted-foreground">
-                  No activity yet
+                  Your story is just beginning
                 </p>
               </div>
             )}
@@ -301,12 +301,11 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <h3 className="font-medium text-white">
-                Create Your First AI Agent
+              <h3 className="font-display font-medium text-white">
+                Bring Your First Agent to Life
               </h3>
               <p className="text-sm text-muted-foreground">
-                Get started by creating your first autonomous AI agent. Define its
-                personality, goals, and let it generate content on Solana.
+                Every great journey starts with a single step. Create your first agent and watch the magic unfold.
               </p>
               <Link href="/agents/create">
                 <Button
@@ -314,7 +313,7 @@ export default function DashboardPage() {
                   className="mt-2 border-solana-purple/30 hover:border-solana-purple"
                 >
                   <Plus className="mr-2 h-4 w-4" />
-                  Create Agent
+                  Start Creating
                 </Button>
               </Link>
             </div>
@@ -333,7 +332,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="font-medium text-white">Create Agent</p>
-                  <p className="text-xs text-muted-foreground">New AI character</p>
+                  <p className="text-xs text-muted-foreground">Bring a new character to life</p>
                 </div>
               </CardContent>
             </Card>
@@ -347,7 +346,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="font-medium text-white">View Calendar</p>
-                  <p className="text-xs text-muted-foreground">Scheduled content</p>
+                  <p className="text-xs text-muted-foreground">Plan your journey ahead</p>
                 </div>
               </CardContent>
             </Card>
@@ -361,7 +360,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="font-medium text-white">View Analytics</p>
-                  <p className="text-xs text-muted-foreground">Performance data</p>
+                  <p className="text-xs text-muted-foreground">See how your agents perform</p>
                 </div>
               </CardContent>
             </Card>

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - Phase 6: Launch Operations
 
+### Changed
+- Brand realignment across entire frontend:
+  - Replaced Geist fonts with brand stack: Satoshi (display), Inter (body), JetBrains Mono (code) via `next/font`
+  - Added full design token system: Emerald City palette, brick palette, extended neutrals, brand shadows, glows, transitions
+  - Added utility classes: `.font-display`, `.text-gradient-solana`, `.glow-emerald`, `.pattern-bricks`, `.logo-brick`, `.animate-fade-in-up`, stagger delays
+  - Added brand keyframes: `curtain-reveal`, `fade-in-up`, `pulse-glow` with reduced-motion support
+  - Updated landing page with Oz-themed copy, brick pattern background, entrance animations
+  - Updated dashboard shell: logo-brick in sidebar/topbar, Oz-themed sidebar footer quote
+  - Updated agent UI: brand-aligned copy for create wizard, generate modal, publish modal
+  - Updated 11 remaining pages with `font-display` headings and thematic copy
+  - Updated command bar, feedback widget with brand voice
+
 ### Added
 - SocialPublisher abstraction layer with adapter pattern:
   - Unified `SocialPublisher` interface for multi-provider publishing

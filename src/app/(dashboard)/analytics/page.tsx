@@ -84,9 +84,9 @@ export default function AnalyticsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Platform Analytics</h1>
+        <h1 className="font-display text-3xl font-bold text-white">Platform Analytics</h1>
         <p className="mt-2 text-muted-foreground">
-          Performance insights across all your AI agents
+          See the full picture of your creative empire
         </p>
       </div>
 

@@ -213,6 +213,7 @@ const pk = new PublicKey('...');
   - [x] 6.10: Marketing content (25 tweets, 3 build-in-public threads, 2 blog posts, Product Hunt listing)
   - [x] 6.11: Community infrastructure (Discord structure, Zealy quests, KOL briefing)
   - [x] 6.12: Beta infrastructure (waitlist 500-spot cap, feature flag hardening with server-side verification, feedback widget)
+  - [x] 6.12b: Brand realignment — fonts (Satoshi/Inter/JetBrains Mono), design tokens, Oz-themed copy across all 20+ pages
   - [ ] 6.13: Monitoring + alerting (>5% error rate, cost spike alerts)
   - [ ] 6.14: GitHub discoverability (20 Topics, repo public)
 - [ ] Deferred: Auto-Stake Smart Contract (pending security audit budget $15-30K)

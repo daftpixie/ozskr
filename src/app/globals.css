@@ -7,8 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-display: var(--font-satoshi);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -51,6 +52,26 @@
   --color-solana-green: #14F195;
   --color-brick-gold: #F59E0B;
   --color-void-black: #0A0A0B;
+
+  /* Emerald City palette */
+  --color-emerald-deep: #064E3B;
+  --color-emerald-core: #065F46;
+  --color-emerald-bright: #047857;
+  --color-emerald-light: #10B981;
+  --color-emerald-pale: #D1FAE5;
+
+  /* Extended brick palette */
+  --color-brick-warm: #FBBF24;
+  --color-brick-light: #FDE68A;
+  --color-brick-deep: #D97706;
+  --color-brick-shadow: #92400E;
+
+  /* Extended neutrals */
+  --color-deep-gray: #18181B;
+  --color-mid-gray: #27272A;
+  --color-soft-gray: #71717A;
+  --color-light-gray: #A1A1AA;
+  --color-cloud-white: #FAFAFA;
 }
 
 :root {
@@ -86,6 +107,42 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.705 0.015 286.067);
+
+  /* Brand shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+  --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.15);
+
+  /* Brand glow effects */
+  --shadow-emerald-glow: 0 0 40px rgba(20, 241, 149, 0.15);
+  --shadow-purple-glow: 0 0 40px rgba(153, 69, 255, 0.2);
+  --shadow-gold-glow: 0 0 30px rgba(245, 158, 11, 0.2);
+
+  /* Transition durations */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 350ms;
+  --duration-slower: 500ms;
+
+  /* Easing functions */
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Component tokens */
+  --btn-height-sm: 2rem;
+  --btn-height-md: 2.5rem;
+  --btn-height-lg: 3rem;
+  --card-padding: 1.5rem;
+  --card-radius: calc(var(--radius) + 4px);
+  --input-height: 2.75rem;
+
+  /* Gradient vars */
+  --gradient-solana: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
+  --gradient-solana-hover: linear-gradient(135deg, #A855F7 0%, #34D399 100%);
 }
 
 .dark {
@@ -120,6 +177,13 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.552 0.016 285.938);
+
+  /* Dark mode shadow overrides (higher opacity) */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.3);
+  --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.4);
 }
 
 @layer base {
@@ -128,5 +192,131 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-satoshi), ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer utilities {
+  /* Font utility classes */
+  .font-display {
+    font-family: var(--font-satoshi), ui-sans-serif, system-ui, sans-serif;
+  }
+  .font-body {
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  }
+  .font-mono {
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  }
+
+  /* Gradient text */
+  .text-gradient-solana {
+    background: var(--gradient-solana);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glow effects */
+  .glow-emerald { box-shadow: var(--shadow-emerald-glow); }
+  .glow-purple { box-shadow: var(--shadow-purple-glow); }
+  .glow-gold { box-shadow: var(--shadow-gold-glow); }
+
+  /* Yellow brick road pattern */
+  .pattern-bricks {
+    background-image:
+      repeating-linear-gradient(
+        90deg,
+        transparent 0px,
+        transparent 58px,
+        rgba(245, 158, 11, 0.08) 58px,
+        rgba(245, 158, 11, 0.08) 60px
+      ),
+      repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 28px,
+        rgba(245, 158, 11, 0.08) 28px,
+        rgba(245, 158, 11, 0.08) 30px
+      );
+  }
+
+  /* Logo brick (2.5:1 ratio) */
+  .logo-brick {
+    display: inline-block;
+    width: 2.5em;
+    height: 1em;
+    background: #F59E0B;
+    border-radius: 4px;
+  }
+  .logo-brick-gradient {
+    background: var(--gradient-solana);
+  }
+
+  /* Animation stagger delays */
+  .stagger-1 { animation-delay: 100ms; }
+  .stagger-2 { animation-delay: 200ms; }
+  .stagger-3 { animation-delay: 300ms; }
+  .stagger-4 { animation-delay: 400ms; }
+  .stagger-5 { animation-delay: 500ms; }
+}
+
+/* Brand keyframes */
+@keyframes curtain-reveal {
+  0% {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: var(--shadow-emerald-glow);
+  }
+  50% {
+    box-shadow: 0 0 60px rgba(20, 241, 149, 0.25);
+  }
+}
+
+.animate-fade-in-up {
+  opacity: 0;
+  animation: fade-in-up var(--duration-slower, 500ms) cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+.animate-curtain-reveal {
+  animation: curtain-reveal var(--duration-slow, 350ms) cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Accessibility: respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .animate-fade-in-up {
+    opacity: 1;
   }
 }

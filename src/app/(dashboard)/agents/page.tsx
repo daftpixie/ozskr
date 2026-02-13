@@ -35,7 +35,7 @@ export default function AgentsPage() {
           <div>
             <h1 className="text-3xl font-bold text-white">My Agents</h1>
             <p className="mt-2 text-muted-foreground">
-              Manage your autonomous AI agents
+              Your gallery of AI characters
             </p>
           </div>
           <Link href="/agents/create">
@@ -64,7 +64,7 @@ export default function AgentsPage() {
           <div>
             <h1 className="text-3xl font-bold text-white">My Agents</h1>
             <p className="mt-2 text-muted-foreground">
-              Manage your autonomous AI agents
+              Your gallery of AI characters
             </p>
           </div>
         </div>
@@ -87,7 +87,7 @@ export default function AgentsPage() {
           <div>
             <h1 className="text-3xl font-bold text-white">My Agents</h1>
             <p className="mt-2 text-muted-foreground">
-              Manage your autonomous AI agents
+              Your gallery of AI characters
             </p>
           </div>
           <Link href="/agents/create">
@@ -100,23 +100,22 @@ export default function AgentsPage() {
 
         <Card className="border-border bg-card">
           <CardHeader>
-            <CardTitle>No Agents Yet</CardTitle>
+            <CardTitle>Your Gallery Awaits</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-solana-purple/10">
               <Bot className="h-10 w-10 text-solana-purple" />
             </div>
             <h3 className="mt-6 text-lg font-medium text-white">
-              Create Your First Agent
+              Bring Your First Character to Life
             </h3>
             <p className="mt-2 max-w-md text-center text-sm text-muted-foreground">
-              AI agents are autonomous entities that can generate content,
-              interact on-chain, and build their own following.
+              Your gallery is waiting for its first masterpiece. Create a character and bring them to life.
             </p>
             <Link href="/agents/create">
               <Button className="mt-6 bg-gradient-to-r from-solana-purple to-solana-green hover:opacity-90">
                 <Plus className="mr-2 h-4 w-4" />
-                Create Your First Agent
+                Start Creating
               </Button>
             </Link>
           </CardContent>
