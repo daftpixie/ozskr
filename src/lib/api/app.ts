@@ -19,6 +19,7 @@ import { schedules } from './routes/schedules';
 import { social } from './routes/social';
 import { twitterOAuth } from './routes/twitter-oauth';
 import { gamification } from './routes/gamification';
+import { waitlist } from './routes/waitlist';
 
 // App context variables type
 type AppVariables = {
@@ -87,6 +88,7 @@ app.route('/analytics', analytics);
 app.route('/social', social);
 app.route('/social/twitter', twitterOAuth);
 app.route('/gamification', gamification);
+app.route('/waitlist', waitlist);
 
 // Global error handler with AppError support
 app.onError((err, c) => {

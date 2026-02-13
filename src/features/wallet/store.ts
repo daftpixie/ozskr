@@ -36,9 +36,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
 
   setAuth: (token, user) => {
-    // Persist token to localStorage
+    // Persist token to localStorage + set session cookie for middleware
     if (typeof window !== 'undefined') {
       localStorage.setItem(AUTH_STORAGE_KEY, token);
+      document.cookie = 'ozskr_session=1; path=/; max-age=2592000; SameSite=Lax';
     }
 
     set({
@@ -49,9 +50,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   clearAuth: () => {
-    // Clear token from localStorage
+    // Clear token from localStorage + remove session cookie
     if (typeof window !== 'undefined') {
       localStorage.removeItem(AUTH_STORAGE_KEY);
+      document.cookie = 'ozskr_session=; path=/; max-age=0; SameSite=Lax';
     }
 
     set({
