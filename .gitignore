@@ -26,6 +26,7 @@ supabase/.temp/
 !tsconfig.*.json
 !components.json
 !turbo.json
+!vercel.json
 !.vscode/*.json
 ~/.config/solana/
 

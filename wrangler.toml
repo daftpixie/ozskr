@@ -1,15 +1,20 @@
 # Cloudflare Workers Configuration
 # Edge rate limiter for API protection
-# Actual implementation deferred to Sprint 2
 
 name = "ozskr-rate-limiter"
 main = "workers/rate-limiter/index.ts"
-compatibility_date = "2025-01-01"
+compatibility_date = "2026-01-01"
 
 [vars]
 ENVIRONMENT = "production"
 
-# Upstash Redis binding (configured in Cloudflare dashboard)
-# [[kv_namespaces]]
-# binding = "RATE_LIMIT_KV"
-# id = "to-be-configured"
+# R2 bucket for content assets (AI-generated images)
+# Uncomment after creating bucket in Cloudflare dashboard:
+#   wrangler r2 bucket create ozskr-content
+# [[r2_buckets]]
+# binding = "CONTENT_BUCKET"
+# bucket_name = "ozskr-content"
+
+# Upstash Redis binding (set in Cloudflare dashboard > Workers > Settings > Variables)
+# UPSTASH_REDIS_REST_URL = "https://..."
+# UPSTASH_REDIS_REST_TOKEN = "..."
