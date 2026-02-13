@@ -39,6 +39,20 @@ src/
 └── types/                  # Shared TypeScript types
 ```
 
+## Deployment
+
+- **Frontend + API:** Vercel (Next.js + Hono catch-all at /api/[[...route]])
+- **Background Jobs:** Trigger.dev Cloud (isolated containers)
+- **Database:** Supabase (PostgreSQL 16 + pgvector + RLS + Realtime)
+- **Cache / Rate Limiting:** Upstash Redis
+- **Content Storage:** Cloudflare R2 (bucket: ozskr-content)
+- **Domain:** ozskr.vercel.app (production)
+- **Network:** devnet (current) — toggle via SOLANA_NETWORK env var
+- **Tests:** 452 passing across 45 files
+
+Railway deferred — Hono runs inside Next.js, not as standalone server.
+Infisical deferred — secrets direct in Vercel/Trigger.dev for now.
+
 ## Agent Orchestration (Opus 4.6)
 
 This project uses Claude Code's subagent system with Opus 4.6 as the strategic orchestrator. The orchestrator does NOT implement features directly — it plans, delegates, reviews, and synthesizes.
@@ -181,10 +195,24 @@ const pk = new PublicKey('...');
 
 ## Phase Status
 
-- [x] Phase 1: Foundation (wallet, UI, auth, Hono API, Supabase schema)
-- [x] Phase 2: Agent Core (Mastra agents, Mem0, content pipeline, Claude integration)
-- [x] Phase 3: Trading (Jupiter Ultra swaps, positions, analytics)
-- [x] Phase 4: Scale (multi-agent orchestration, performance optimization)
-- [x] Phase 5: Polish (gamification, E2E tests, production hardening, security gate)
-- [ ] Phase 6: Launch Operations (CI/CD, legal, marketing, social API migration) ← CURRENT
-- [ ] Deferred: Auto-Stake Smart Contract (pending security audit budget)
+- [x] Phase 1: Foundation (SIWS auth, dashboard shell, Supabase schema + RLS, Hono API)
+- [x] Phase 2: Agent Core (Mastra, Mem0, character DNA, content pipeline, Claude + fal.ai)
+- [x] Phase 3: Trading (Jupiter Ultra, position management, DeFi security pipeline)
+- [x] Phase 4: Hardening (rate limiting, monitoring, test coverage)
+- [x] Phase 5: Polish (multi-agent orchestration, performance, gamification)
+- [ ] Phase 6: Launch Operations ← CURRENT
+  - [x] 6.1: Agent team expansion (devops-infra, content-writer, social-integration-dev)
+  - [x] 6.2: CI/CD + GitHub infrastructure (ci.yml, security.yml, CODEOWNERS, templates, dependabot)
+  - [x] 6.3: SocialPublisher abstraction + Twitter direct API (OAuth PKCE, posting, rate limiting — 79 tests)
+  - [x] 6.4: Vercel production deployment (live at ozskr.vercel.app, auth working)
+  - [x] 6.5: Public landing page + auth gate (brand-aligned, Wizard of Oz theming)
+  - [x] 6.6: Security re-audit — ALPHA GATE PASSED (0 critical, see docs/security-audit-pre-alpha.md)
+  - [x] 6.7: Legal policy drafts — 5/10 complete (privacy, ToS, AUP, AI disclosure, token usage terms)
+  - [x] 6.8: Open-source docs (README, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, CHANGELOG, LICENSE)
+  - [ ] 6.9: Remaining 5 legal drafts (DMCA, Cookie, Wallet Terms, Data Retention, Content Moderation)
+  - [ ] 6.10: Marketing content (20+ tweets, 3 build-in-public threads, 2 blog posts, Product Hunt)
+  - [ ] 6.11: Community infrastructure (Discord structure, Zealy quests, KOL briefing)
+  - [ ] 6.12: Beta infrastructure (waitlist Supabase table, feature flag hardening, onboarding flow, feedback widget)
+  - [ ] 6.13: Monitoring + alerting (>5% error rate, cost spike alerts)
+  - [ ] 6.14: GitHub discoverability (20 Topics, repo public)
+- [ ] Deferred: Auto-Stake Smart Contract (pending security audit budget $15-30K)
