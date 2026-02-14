@@ -17,13 +17,22 @@
     "LICENSE",
     "README.md"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/daftpixie/ozskr.git",
+    "directory": "packages/agent-wallet-sdk"
+  },
   "keywords": [
     "solana",
     "ai-agent",
     "wallet",
     "delegation",
     "spl-token",
-    "non-custodial"
+    "non-custodial",
+    "mcp",
+    "x402",
+    "keypair",
+    "encryption"
   ],
   "engines": {
     "node": ">=20"

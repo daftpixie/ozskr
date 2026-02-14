@@ -1,0 +1,20 @@
+# Source (published via dist/)
+src/
+tests/
+
+# Config
+tsconfig.json
+vitest.config.ts
+.eslintrc*
+
+# Dev files
+*.test.ts
+*.spec.ts
+.gitignore
+ARCHITECTURE.md
+
+# Sensitive
+*.env
+*.pem
+*.json.enc
+agent-keypair*.json

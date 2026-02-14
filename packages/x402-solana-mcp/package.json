@@ -20,6 +20,11 @@
     "LICENSE",
     "README.md"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/daftpixie/ozskr.git",
+    "directory": "packages/x402-solana-mcp"
+  },
   "keywords": [
     "mcp",
     "x402",
@@ -27,7 +32,10 @@
     "ai-agent",
     "delegation",
     "payments",
-    "claude-code"
+    "claude-code",
+    "cursor",
+    "model-context-protocol",
+    "spl-token"
   ],
   "engines": {
     "node": ">=20"
