@@ -1,7 +1,7 @@
 # Day 0 Metrics Baseline — MCP Packages Publication
 
 **Date**: 2026-02-14
-**Packages**: `@ozskr/agent-wallet-sdk@0.1.0-beta`, `@ozskr/x402-solana-mcp@0.1.0-beta`
+**Packages**: `@ozskr/agent-wallet-sdk@0.1.0-beta`, `@ozskr/x402-solana-mcp@0.1.1-beta`
 
 ## npm Metrics
 

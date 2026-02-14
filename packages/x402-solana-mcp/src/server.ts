@@ -82,7 +82,7 @@ function successResult(data: Record<string, unknown>) {
 export function createServer(config: Config): McpServer {
   const server = new McpServer({
     name: 'x402-solana-mcp',
-    version: '0.1.0-beta',
+    version: '0.1.1-beta',
   });
 
   // Closure-scoped state persists across tool calls within a session

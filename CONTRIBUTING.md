@@ -93,6 +93,27 @@ pnpm --filter @ozskr/* build
 - All Solana addresses validated with `assertIsAddress()` before use
 - Transaction simulation required before any on-chain submission
 
+### Publishing to npm
+
+**Always use `pnpm publish` from the package directory.** Never use `npm publish`.
+
+pnpm resolves `workspace:*` dependencies to actual version numbers before packing. npm does not -- it publishes `workspace:*` literally, which breaks install for every consumer using npm or yarn.
+
+```bash
+# Correct -- pnpm resolves workspace:* before publishing
+cd packages/x402-solana-mcp && pnpm publish --access public --tag beta
+
+# WRONG -- publishes broken package with workspace:* in dependencies
+cd packages/x402-solana-mcp && npm publish
+
+# Or use the root convenience scripts:
+pnpm run publish:mcp    # publishes x402-solana-mcp
+pnpm run publish:sdk    # publishes agent-wallet-sdk
+pnpm run publish:all    # publishes both
+```
+
+A `prepublishOnly` guard in each package will block `npm publish` with a clear error if `workspace:` is detected in the dependencies.
+
 ## Code Standards
 
 - **TypeScript strict** â€” no `any`, use `unknown` + type narrowing

@@ -35,7 +35,7 @@ async function main(): Promise<void> {
 
   if (config.logLevel === 'debug' || config.logLevel === 'info') {
     process.stderr.write(
-      `x402-solana-mcp v0.1.0-beta started (network: ${config.solanaNetwork})\n`,
+      `x402-solana-mcp v0.1.1-beta started (network: ${config.solanaNetwork})\n`,
     );
   }
 }
