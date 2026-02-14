@@ -25,6 +25,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Open-source packages have their own lint config
+    "packages/**",
   ]),
 ]);
 
