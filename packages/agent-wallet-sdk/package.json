@@ -1,6 +1,6 @@
 {
   "name": "@ozskr/agent-wallet-sdk",
-  "version": "0.1.0-beta",
+  "version": "0.1.1-beta",
   "description": "Non-custodial AI agent wallets on Solana with SPL delegation and budget enforcement",
   "license": "MIT",
   "author": {
