@@ -172,14 +172,15 @@ describe('BudgetTracker.checkBudget', () => {
     // Start first check (will be in progress)
     const firstCheck = tracker.checkBudget(VALID_ADDRESS, mockRpcConfig);
 
-    // Second concurrent check should throw
-    await expect(
-      tracker.checkBudget(VALID_ADDRESS, mockRpcConfig),
-    ).rejects.toThrow(/already in progress/);
+    // Second concurrent check should queue (mutex) and resolve after first
+    const secondCheck = tracker.checkBudget(VALID_ADDRESS, mockRpcConfig);
 
-    // First check should complete normally
+    // Both checks should complete successfully (serialized by mutex)
     const result = await firstCheck;
     expect(result.available).toBe(10_000_000n);
+
+    const result2 = await secondCheck;
+    expect(result2.available).toBe(10_000_000n);
   });
 
   it('should allow sequential budget checks', async () => {
