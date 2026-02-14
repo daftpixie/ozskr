@@ -39,6 +39,9 @@ src/
 │   └── utils/              # Shared helpers (formatters, constants)
 ├── hooks/                  # React hooks (useWallet, useAgent, etc.)
 └── types/                  # Shared TypeScript types
+packages/                       # Open-source packages (MIT license)
+├── agent-wallet-sdk/           # SPL delegation primitives
+└── x402-solana-mcp/            # MCP server for x402 payments
 ```
 
 ## Deployment
@@ -50,7 +53,7 @@ src/
 - **Content Storage:** Cloudflare R2 (bucket: ozskr-content)
 - **Domain:** ozskr.vercel.app (production)
 - **Network:** devnet (current) — toggle via SOLANA_NETWORK env var
-- **Tests:** 629 passing across 62 files
+- **Tests:** 659 passing across 63 files
 
 Railway deferred — Hono runs inside Next.js, not as standalone server.
 Infisical deferred — secrets direct in Vercel/Trigger.dev for now.
@@ -85,6 +88,9 @@ When implementing features, the orchestrator (Opus) should:
 | Social API migration, Twitter direct, SocialPublisher | `social-integration-dev` | §7, Launch Ops |
 | Marketing strategy, community growth, social campaigns | `glinda-cmo` | Phase 7 GTM |
 | Grant applications, funding strategy, pitch materials | `toto-funding` | Phase 7 GTM |
+| SPL delegation, agent keypair, x402 tx | `solana-dev` | PRD §16 |
+| MCP server, tool definitions, x402 HTTP | `mcp-dev` | PRD §16 |
+| MCP server test coverage | `test-writer` | PRD §16 |
 
 ### Agent Interaction Rules
 
@@ -183,6 +189,10 @@ const pk = new PublicKey('...');
 - Mem0 namespaces MUST be isolated per character with server-side enforcement
 - Content moderation pipeline MUST run before any content is stored or published
 - Rate limits enforced per-wallet at the edge layer (Cloudflare Workers + Upstash)
+- Agent keypairs: 0600 file permissions, encrypted at rest via scrypt/AES-256-GCM
+- SPL delegation: spending caps enforced both on-chain (approveChecked amount) and client-side (budget.ts)
+- x402 payments: transaction simulation required before every payment submission
+- npm packages: zero secrets, zero hardcoded endpoints, full dependency audit before publication
 
 ## AI Compliance — CRITICAL
 
@@ -245,17 +255,14 @@ All agents MUST follow this language guide when generating content mentioning $H
 | Marketing Content | `docs/marketing/*.md` |
 | Community Docs | `docs/community/*.md` |
 | Funding Materials | `docs/funding/*.md` |
+| PRD v2.3 Amendment | `docs/prd_v2_3_amendment.md` |
+| Master Plan v3.2 | `docs/master_plan_v3_2_amendment.md` |
 | Changelog | `CHANGELOG.md` |
 
 ## Phase Status
 
-- [x] Phase 1: Foundation (SIWS auth, dashboard shell, Supabase schema + RLS, Hono API)
-- [x] Phase 2: Agent Core (Mastra, Mem0, character DNA, content pipeline, Claude + fal.ai)
-- [x] Phase 3: Trading (Jupiter Ultra, position management, DeFi security pipeline)
-- [x] Phase 4: Hardening (rate limiting, monitoring, test coverage)
-- [x] Phase 5: Polish (multi-agent orchestration, performance, gamification)
-- [x] Phase 6: Launch Operations — COMPLETE
-- [ ] Phase 7: Go-to-Market ← CURRENT
+- [x] Phases 1–6: COMPLETED (Foundation → Agent Core → Trading → Hardening → Polish → Launch Ops)
+- [ ] Phase 7: Go-to-Market ← CURRENT (platform launch track)
   - [x] 7.1: CLAUDE.md Phase 7 update + new agent definitions (glinda-cmo, toto-funding)
   - [x] 7.2: AI compliance infrastructure (auto-disclosure, endorsement guardrails)
   - [x] 7.3: Funding materials (Solana Foundation grant, one-pager, FUNDING.yml)
@@ -272,27 +279,14 @@ All agents MUST follow this language guide when generating content mentioning $H
   - [ ] 7.14: Product Hunt launch execution
   - [ ] 7.15: Mainnet preparation (network switch, final security audit)
   - [ ] 7.16: Post-launch monitoring and iteration
+- [ ] Phase 7.M: MCP Server Build ← CURRENT (parallel open-source track)
+  - [ ] 7.M.1: Workspace initialization + agent specs
+  - [ ] 7.M.2: @ozskr/agent-wallet-sdk (SPL delegation, budget, keypair)
+  - [ ] 7.M.3: @ozskr/x402-solana-mcp (8 MCP tools, x402 payment flow)
+  - [ ] 7.M.4: Documentation, testing, npm publication
+  - [ ] 7.M.5: MCP directory submissions, ecosystem announcements
+- [ ] Phase 8: Agentic Commerce Layer (activation-gated: 100+ users, attorney sign-off, x402 recovery)
+- [ ] Phase 9: Agent Marketplace (activation-gated: Phase 8 stable 3+ months, 500+ agents)
 - [ ] Deferred: Auto-Stake Smart Contract (pending security audit budget $15-30K)
 
-### Phase 6 Completion Record
-
-| Sub-phase | Description | Status |
-|-----------|-------------|--------|
-| 6.1 | Agent team expansion | Complete |
-| 6.2 | CI/CD + GitHub infrastructure | Complete |
-| 6.3 | SocialPublisher + Twitter direct API | Complete (79 tests) |
-| 6.4 | Vercel production deployment | Complete (ozskr.vercel.app) |
-| 6.5 | Public landing page + auth gate | Complete |
-| 6.6 | Security re-audit — ALPHA GATE | Complete (0 critical) |
-| 6.7 | Legal policies (11/11 attorney reviewed) | Complete |
-| 6.8 | Open-source docs | Complete |
-| 6.9 | Remaining legal policies | Complete |
-| 6.10 | Marketing content | Complete |
-| 6.11 | Community infrastructure | Complete |
-| 6.12 | Beta infrastructure | Complete |
-| 6.12b | Brand realignment | Complete |
-| 6.12c | Beta onboarding wizard | Complete |
-| 6.13 | Monitoring + alerting | Complete |
-| 6.14 | GitHub discoverability | Manual (pending) |
-
-Phase 6 engineering complete. Phase 7 Sprints 1-3 complete. Sprint 3 delivered: bug triage system, batch whitelist, report generator, load tests, blog routes, Discord playbook, KOL outreach package, investor deck, Superteam microgrant. 629 tests across 62 files. Remaining: Product Hunt launch, mainnet prep.
+Phase 6 engineering complete. Phase 7 Sprints 1-3 complete. 659 tests across 63 files. Remaining: Product Hunt launch, mainnet prep, Phase 7.M MCP server build.

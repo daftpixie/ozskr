@@ -1,0 +1,51 @@
+{
+  "name": "@ozskr/x402-solana-mcp",
+  "version": "0.1.0-beta",
+  "description": "First MCP server for AI agent x402 payments on Solana with SPL delegation",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "x402-solana-mcp": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "keywords": [
+    "mcp",
+    "x402",
+    "solana",
+    "ai-agent",
+    "delegation",
+    "payments",
+    "claude-code"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@solana/kit": "^2.1.0",
+    "@x402/svm": "^2.3.0",
+    "@x402/core": "^2.3.0",
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "@ozskr/agent-wallet-sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}
