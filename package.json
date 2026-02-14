@@ -15,7 +15,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.42",
+    "@ai-sdk/anthropic": "^3.0.44",
     "@fal-ai/serverless-client": "^0.15.0",
     "@hono/zod-validator": "^0.7.6",
     "@infisical/sdk": "^4.0.6",
@@ -40,7 +40,7 @@
     "@trigger.dev/sdk": "^4.3.3",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.36.2",
-    "ai": "^6.0.81",
+    "ai": "^6.0.86",
     "bs58": "^6.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -51,7 +51,7 @@
     "lucide-react": "^0.563.0",
     "mem0ai": "^2.2.2",
     "next": "16.1.6",
-    "openai": "^6.21.0",
+    "openai": "^6.22.0",
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
