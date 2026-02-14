@@ -5,7 +5,7 @@ import {
   assertIsAddress,
   pipe,
   createTransactionMessage,
-  setTransactionMessageFeePayer,
+  setTransactionMessageFeePayerSigner,
   setTransactionMessageLifetimeUsingBlockhash,
   appendTransactionMessageInstruction,
   createSolanaRpc,
@@ -144,7 +144,7 @@ export async function createDelegation(
 
   const transactionMessage = pipe(
     createTransactionMessage({ version: 0 }),
-    (tx) => setTransactionMessageFeePayer(config.ownerSigner.address, tx),
+    (tx) => setTransactionMessageFeePayerSigner(config.ownerSigner, tx),
     (tx) => setTransactionMessageLifetimeUsingBlockhash(blockhash, tx),
     (tx) => appendTransactionMessageInstruction(approveInstruction, tx),
   );
@@ -290,7 +290,7 @@ export async function transferAsDelegate(
 
   const transactionMessage = pipe(
     createTransactionMessage({ version: 0 }),
-    (tx) => setTransactionMessageFeePayer(params.feePayer.address, tx),
+    (tx) => setTransactionMessageFeePayerSigner(params.feePayer, tx),
     (tx) => setTransactionMessageLifetimeUsingBlockhash(blockhash, tx),
     (tx) => appendTransactionMessageInstruction(transferInstruction, tx),
   );
@@ -373,7 +373,7 @@ export async function revokeDelegation(
 
   const transactionMessage = pipe(
     createTransactionMessage({ version: 0 }),
-    (tx) => setTransactionMessageFeePayer(params.ownerSigner.address, tx),
+    (tx) => setTransactionMessageFeePayerSigner(params.ownerSigner, tx),
     (tx) => setTransactionMessageLifetimeUsingBlockhash(blockhash, tx),
     (tx) => appendTransactionMessageInstruction(revokeInstruction, tx),
   );
