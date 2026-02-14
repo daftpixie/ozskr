@@ -54,6 +54,45 @@ Assisted-by: Claude Code
 - `src/features/wallet/` â€” wallet connection, signing
 - `src/app/api/` â€” server-side API routes
 
+## MCP Packages (`packages/`)
+
+The `packages/` directory contains open-source npm packages published under the `@ozskr` scope:
+
+- **`@ozskr/agent-wallet-sdk`** -- SPL delegation primitives for AI agent wallets
+- **`@ozskr/x402-solana-mcp`** -- MCP server for x402 payments on Solana
+
+### Package Development
+
+```bash
+# Typecheck both packages
+pnpm --filter @ozskr/* typecheck
+
+# Run all package tests
+pnpm --filter @ozskr/* test
+
+# Run tests for a single package
+pnpm --filter @ozskr/agent-wallet-sdk test
+
+# Build for publication
+pnpm --filter @ozskr/* build
+```
+
+### Adding a New MCP Tool
+
+1. Add the tool definition in `packages/x402-solana-mcp/src/server.ts` using `server.tool()`
+2. Define the Zod input schema inline (all inputs must be validated)
+3. Return results via `successResult()` or `errorResult()` helpers
+4. Add tests in `packages/x402-solana-mcp/tests/server.test.ts`
+5. Update the README tool reference table
+
+### Package Security Requirements
+
+- Agent keypairs must be encrypted at rest (scrypt + AES-256-GCM)
+- File permissions must be 0600 for keypair files
+- No secrets or hardcoded endpoints in published packages
+- All Solana addresses validated with `assertIsAddress()` before use
+- Transaction simulation required before any on-chain submission
+
 ## Code Standards
 
 - **TypeScript strict** â€” no `any`, use `unknown` + type narrowing

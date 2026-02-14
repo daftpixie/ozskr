@@ -1,0 +1,74 @@
+name: MCP Packages Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to publish'
+        required: true
+        type: choice
+        options:
+          - agent-wallet-sdk
+          - x402-solana-mcp
+          - both
+      dry_run:
+        description: 'Dry run (no actual publish)'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm --filter @ozskr/* typecheck
+
+      - name: Test
+        run: pnpm --filter @ozskr/* test
+
+      - name: Build agent-wallet-sdk
+        if: inputs.package == 'agent-wallet-sdk' || inputs.package == 'both'
+        run: pnpm --filter @ozskr/agent-wallet-sdk build
+
+      - name: Build x402-solana-mcp
+        if: inputs.package == 'x402-solana-mcp' || inputs.package == 'both'
+        run: pnpm --filter @ozskr/x402-solana-mcp build
+
+      - name: Publish agent-wallet-sdk
+        if: inputs.package == 'agent-wallet-sdk' || inputs.package == 'both'
+        run: |
+          cd packages/agent-wallet-sdk
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            npm publish --access public --tag beta --dry-run
+          else
+            npm publish --access public --tag beta --provenance
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish x402-solana-mcp
+        if: inputs.package == 'x402-solana-mcp' || inputs.package == 'both'
+        run: |
+          cd packages/x402-solana-mcp
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            npm publish --access public --tag beta --dry-run
+          else
+            npm publish --access public --tag beta --provenance
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
