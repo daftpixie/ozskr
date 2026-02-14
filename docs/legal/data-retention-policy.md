@@ -380,7 +380,7 @@ You can export your data in machine-readable formats:
 - **Transaction History:** CSV export with on-chain references
 - **Mem0 Memory:** Not directly exportable (controlled by Mem0)
 
-To request a full data export, contact privacy@ozskr.ai.
+To request a full data export, contact matthew@vt-infinite.com.
 
 ### 7.3 Right to Delete Your Data
 
@@ -403,7 +403,7 @@ We support the right to be forgotten (GDPR Article 17) with the following limita
 - **On-chain data:** Cannot be deleted (blockchain is immutable)
 - **Legal retention:** Data required for legal compliance or security investigations may be retained in access-restricted storage
 
-To exercise your right to be forgotten, initiate account deletion via dashboard settings or contact privacy@ozskr.ai.
+To exercise your right to be forgotten, initiate account deletion via dashboard settings or contact matthew@vt-infinite.com.
 
 ---
 
@@ -423,7 +423,7 @@ Your continued use of the Platform after changes become effective constitutes ac
 
 If you have questions, concerns, or requests regarding this Data Retention Policy or our data practices, please contact us at:
 
-**Email:** privacy@ozskr.ai
+**Email:** matthew@vt-infinite.com
 
 **Address:** [TO BE SET]
 

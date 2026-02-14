@@ -129,7 +129,7 @@ export default function LegalIndexPage() {
           <p className="text-sm text-muted-foreground">
             Questions about our legal docs?{' '}
             <a
-              href="mailto:legal@ozskr.ai"
+              href="mailto:matthew@vt-infinite.com"
               className="text-solana-purple underline transition-colors hover:text-solana-green"
             >
               Contact us

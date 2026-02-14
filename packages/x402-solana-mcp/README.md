@@ -596,7 +596,7 @@ Yes. Set `SOLANA_NETWORK=mainnet-beta` and use a mainnet RPC URL. Ensure you've 
 
 MIT License. See [LICENSE](./LICENSE) for details.
 
-Built with Claude Code. Part of the ozskr.ai ecosystem.
+Built with Claude Code. Part of the ozskr.ai ecosystem. Developed and maintained by VT Infinite, Inc.
 
 **Repository**: https://github.com/daftpixie/ozskr
 **Package**: https://www.npmjs.com/package/@ozskr/x402-solana-mcp

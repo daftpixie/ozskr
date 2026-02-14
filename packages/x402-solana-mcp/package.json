@@ -3,6 +3,15 @@
   "version": "0.1.0-beta",
   "description": "First MCP server for AI agent x402 payments on Solana with SPL delegation",
   "license": "MIT",
+  "author": {
+    "name": "VT Infinite, Inc",
+    "email": "matthew@vt-infinite.com",
+    "url": "https://ozskr.ai"
+  },
+  "bugs": {
+    "url": "https://github.com/daftpixie/ozskr/issues",
+    "email": "matthew@vt-infinite.com"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

@@ -1,5 +1,7 @@
 # ozskr.ai Privacy Policy
 
+*ozskr.ai is a product developed and operated by VT Infinite, Inc.*
+
 **Effective Date:** [DATE — TO BE SET]
 
 **Last Updated:** February 12, 2026
@@ -8,7 +10,7 @@
 
 ## 1. Introduction
 
-Welcome to ozskr.ai ("Platform," "we," "us," or "our"). This Privacy Policy describes how we collect, use, store, and protect information when you use our Web3 AI Influencer Platform built on the Solana blockchain.
+Welcome to ozskr.ai ("Platform," "Service," "we," "us," or "our"), a product of VT Infinite, Inc. This Privacy Policy describes how we collect, use, store, and protect information when you use our Web3 AI Influencer Platform built on the Solana blockchain.
 
 By connecting your wallet and using the Platform, you acknowledge that you have read and understood this Privacy Policy.
 
@@ -155,7 +157,7 @@ If you are a California resident, you have the following rights:
 - **Right to Opt-Out:** Opt out of the sale of personal information (note: we do not sell personal information)
 - **Right to Non-Discrimination:** You will not be discriminated against for exercising your privacy rights
 
-To exercise these rights, contact us at privacy@ozskr.ai.
+To exercise these rights, contact us at matthew@vt-infinite.com.
 
 ### 7.2 European Residents (GDPR)
 
@@ -170,7 +172,7 @@ If you are a resident of the European Economic Area (EEA), you have the followin
 - **Right to Withdraw Consent:** Withdraw consent at any time (where processing is based on consent)
 - **Right to Lodge a Complaint:** File a complaint with your local data protection authority
 
-To exercise these rights, contact us at privacy@ozskr.ai.
+To exercise these rights, contact us at matthew@vt-infinite.com.
 
 ### 7.3 Limitations on Data Deletion
 
@@ -247,7 +249,7 @@ By using the Platform, you consent to the transfer of your information to countr
 
 If you have questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us at:
 
-**Email:** privacy@ozskr.ai
+**Email:** matthew@vt-infinite.com
 
 **Address:** [TO BE SET]
 

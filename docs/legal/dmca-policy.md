@@ -27,7 +27,7 @@ Our designated agent for receiving DMCA takedown notices and counter-notificatio
 
 **DMCA Agent**
 ozskr.ai
-Email: dmca@ozskr.ai
+Email: matthew@vt-infinite.com
 Address: [TO BE SET]
 
 All DMCA notices and counter-notifications must be sent to the address above. Notices sent to other addresses or contacts may not receive a timely response.
@@ -70,7 +70,7 @@ If you believe that content on the Platform infringes your copyright, you may su
 ### 3.2 Example DMCA Notice Format
 
 ```
-To: dmca@ozskr.ai
+To: matthew@vt-infinite.com
 Subject: DMCA Takedown Notice
 
 I, [Your Full Name], am the copyright owner (or authorized agent) of the work(s) described below.
@@ -147,7 +147,7 @@ Upon receipt of a valid counter-notification:
 ### 4.3 Example Counter-Notification Format
 
 ```
-To: dmca@ozskr.ai
+To: matthew@vt-infinite.com
 Subject: DMCA Counter-Notification
 
 I, [Your Full Name], am the user whose content was removed from ozskr.ai.
@@ -212,7 +212,7 @@ We track both valid DMCA takedown notices and instances where users do not file 
 
 ### 5.3 Appeals
 
-Users who believe they have been incorrectly identified as repeat infringers may appeal by contacting dmca@ozskr.ai with:
+Users who believe they have been incorrectly identified as repeat infringers may appeal by contacting matthew@vt-infinite.com with:
 
 - Wallet address
 - Details of each alleged infringement
@@ -356,16 +356,16 @@ Changes become effective immediately upon posting. Your continued use of the Pla
 
 **DMCA Agent**
 ozskr.ai
-Email: dmca@ozskr.ai
+Email: matthew@vt-infinite.com
 Address: [TO BE SET]
 
 ### For General Copyright Questions
 
-Email: legal@ozskr.ai
+Email: matthew@vt-infinite.com
 
 ### For Platform Support
 
-Email: support@ozskr.ai
+Email: matthew@vt-infinite.com
 
 ---
 

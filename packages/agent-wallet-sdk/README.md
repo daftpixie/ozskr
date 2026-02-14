@@ -508,4 +508,6 @@ const loadedSigner = await loadEncryptedKeypair(
 
 ## License
 
-MIT
+MIT -- Copyright (c) 2026 VT Infinite, Inc
+
+ozskr.ai is developed and maintained by VT Infinite, Inc.

@@ -113,7 +113,7 @@ pnpm --filter @ozskr/* build
 
 ## Security
 
-If you discover a security vulnerability, **do NOT open a public issue**. Email security@ozskr.ai with details. We'll respond within 48 hours.
+If you discover a security vulnerability, **do NOT open a public issue**. Email matthew@vt-infinite.com with details. We'll respond within 48 hours.
 
 ## License
 

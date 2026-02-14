@@ -179,11 +179,11 @@ Repeated violations may result in account suspension or termination per the Acce
 
 To report AI-generated content from ozskr.ai being used deceptively:
 
-**Email:** abuse@ozskr.ai
+**Email:** matthew@vt-infinite.com
 
 To appeal content removal or flagging:
 
-**Email:** appeals@ozskr.ai
+**Email:** matthew@vt-infinite.com
 
 ---
 
@@ -200,9 +200,9 @@ Continued use of the Platform constitutes acceptance of the updated policy.
 
 ## 11. Contact
 
-**Email:** legal@ozskr.ai
+**Email:** matthew@vt-infinite.com
 
-**Compliance inquiries:** compliance@ozskr.ai
+**Compliance inquiries:** matthew@vt-infinite.com
 
 ---
 

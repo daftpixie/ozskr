@@ -200,7 +200,7 @@ Users have the right to appeal moderation decisions.
 ### 6.1 Filing an Appeal
 
 - Appeals must be submitted within **14 days** of the moderation action
-- Appeals can be submitted via the Platform interface or by emailing moderation@ozskr.ai
+- Appeals can be submitted via the Platform interface or by emailing matthew@vt-infinite.com
 - Appeals must include:
   - Content ID or generation ID
   - Explanation of why the decision should be reconsidered
@@ -368,7 +368,7 @@ Violations of this Content Moderation Policy may result in the following enforce
 ### 10.2 Educational and Research Content
 
 - Content created for educational or research purposes may be granted exceptions
-- Users conducting research must contact moderation@ozskr.ai in advance
+- Users conducting research must contact matthew@vt-infinite.com in advance
 - Approved researchers may generate content that would otherwise be flagged, subject to strict safeguards
 - Research exceptions are granted on a case-by-case basis
 
@@ -457,11 +457,11 @@ We will notify you of material changes by:
 
 If you have questions, concerns, or appeals regarding this Content Moderation Policy, please contact us at:
 
-**Email:** moderation@ozskr.ai
+**Email:** matthew@vt-infinite.com
 
-**Privacy Inquiries:** privacy@ozskr.ai
+**Privacy Inquiries:** matthew@vt-infinite.com
 
-**Legal Inquiries:** legal@ozskr.ai
+**Legal Inquiries:** matthew@vt-infinite.com
 
 **Address:** [TO BE SET]
 
