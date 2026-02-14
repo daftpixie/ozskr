@@ -178,3 +178,66 @@ Escalate to the orchestrator when:
 - New DeFi protocols or token standards need integration
 - Security-critical signing patterns need review
 - Gas/priority fee strategy changes affect platform economics
+
+## Phase 7.M: SPL Delegation for Agent Wallets (PRD §16)
+
+### SPL Delegation Patterns
+
+```typescript
+// approveChecked — user delegates spending authority to agent
+import {
+  getApproveCheckedInstruction,
+  getTransferCheckedInstruction,
+  getRevokeInstruction,
+} from '@solana-program/token';
+
+// Approve: user signs, grants agent keypair delegate authority
+const approveIx = getApproveCheckedInstruction({
+  account: ownerTokenAccount,
+  delegate: agentPublicKey,
+  owner: userWalletAddress,
+  amount: maxSpendingCap,     // BigInt, base units
+  decimals: tokenDecimals,    // 6 for USDC
+  mint: tokenMint,
+});
+
+// TransferChecked as delegate — agent keypair signs
+const transferIx = getTransferCheckedInstruction({
+  source: ownerTokenAccount,
+  mint: tokenMint,
+  destination: recipientTokenAccount,
+  authority: agentPublicKey,  // delegate authority
+  amount: paymentAmount,
+  decimals: tokenDecimals,
+});
+
+// Revoke — user signs, removes all delegate authority
+const revokeIx = getRevokeInstruction({
+  account: ownerTokenAccount,
+  owner: userWalletAddress,
+});
+```
+
+### Agent Keypair vs. Wallet Adapter
+
+- **Wallet adapter**: User's browser wallet (Phantom, Solflare). Signs approval/revocation.
+- **Agent keypair**: Locally generated Ed25519 keypair stored on the user's machine. Signs payment transactions as delegate. This is NOT a wallet — it can only spend tokens explicitly delegated to it.
+- Agent keypairs are generated via `@solana/kit`'s `generateKeyPair()` (Web Crypto API)
+- Agent keypairs are stored encrypted on disk — never in browser storage, never on server
+
+### Security Requirements
+
+- Agent keypair files: 0600 permissions (owner read/write only)
+- Encryption at rest: scrypt KDF (N=2^20, r=8, p=1) → AES-256-GCM
+- Passphrase handling: prompt at runtime, never stored, zeroed after use
+- Keypair path: `~/.config/ozskr/agent-keypair.json` (encrypted)
+- On deletion: secure overwrite (crypto.randomFill) before unlink
+
+### Phase 7.M Escalation Rules
+
+Escalate to the orchestrator when:
+- SPL Token Program behavior differs from expected on devnet
+- Delegation state management requires new patterns beyond approve/transfer/revoke
+- Agent keypair encryption scheme needs changes (cryptographic decisions)
+- Cross-package API between agent-wallet-sdk and x402-solana-mcp needs modification
+- Any transaction pattern that could be construed as custodial

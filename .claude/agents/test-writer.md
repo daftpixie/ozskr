@@ -262,3 +262,96 @@ Escalate to the orchestrator when:
 - Test infrastructure changes are needed (new Playwright config, CI pipeline updates)
 - Mock patterns need coordination with multiple agents (e.g., a new API contract)
 - Coverage gaps span multiple domains and need prioritization
+
+## Phase 7.M: MCP Server & Agent Wallet Testing
+
+### MCP Tool Mock Pattern
+
+```typescript
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+import { createServer } from '../src/server.js';
+
+// In-memory transport for unit testing MCP tools
+const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+const server = createServer();
+const client = new Client({ name: 'test-client', version: '1.0.0' });
+
+await server.connect(serverTransport);
+await client.connect(clientTransport);
+
+// Call MCP tools directly via client
+const result = await client.callTool({
+  name: 'x402_check_balance',
+  arguments: { tokenMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' },
+});
+expect(result.content[0].text).toContain('balance');
+```
+
+### x402 HTTP Mock Pattern
+
+```typescript
+// Mock fetch for x402 402 responses
+vi.stubGlobal('fetch', vi.fn()
+  .mockResolvedValueOnce(new Response(null, {
+    status: 402,
+    headers: {
+      'X-PAYMENT-AMOUNT': '1000000',
+      'X-PAYMENT-RECIPIENT': 'RecipientAddress111111111111111111111111111',
+      'X-PAYMENT-TOKEN': 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+      'X-PAYMENT-NETWORK': 'solana-mainnet',
+      'X-PAYMENT-FACILITATOR': 'https://x402.coinbase.com',
+    },
+  }))
+  .mockResolvedValueOnce(new Response(JSON.stringify({ data: 'paid content' }), {
+    status: 200,
+  }))
+);
+```
+
+### Devnet Integration Test Pattern
+
+```typescript
+// tests/integration/delegation-lifecycle.test.ts
+import { describe, it, expect } from 'vitest';
+import { createDelegation, checkDelegation, revokeDelegation } from '@ozskr/agent-wallet-sdk';
+
+describe('SPL Delegation Lifecycle (devnet)', () => {
+  it('should approve, check, and revoke delegation', async () => {
+    // 1. Approve delegation
+    const sig = await createDelegation({ /* config */ });
+    expect(sig).toBeTruthy();
+
+    // 2. Check delegation is active
+    const status = await checkDelegation(ownerTokenAccount);
+    expect(status.isActive).toBe(true);
+    expect(status.remainingAmount).toBe(maxAmount);
+
+    // 3. Revoke delegation
+    const revokeSig = await revokeDelegation(ownerKeypair, ownerTokenAccount);
+    expect(revokeSig).toBeTruthy();
+
+    // 4. Verify delegation is revoked
+    const revokedStatus = await checkDelegation(ownerTokenAccount);
+    expect(revokedStatus.isActive).toBe(false);
+  });
+});
+```
+
+### MCP Server Test Checklist
+
+- [ ] Each of 8 MCP tools has at least 1 unit test
+- [ ] x402_pay: successful payment flow (402 → pay → 200)
+- [ ] x402_pay: insufficient delegation balance → structured error
+- [ ] x402_pay: simulation failure → structured error (no submission)
+- [ ] x402_pay: facilitator timeout → structured error with retry guidance
+- [ ] x402_pay: non-402 response (200, 404, 500) → pass-through or error
+- [ ] x402_check_delegation: active delegation → correct remaining amount
+- [ ] x402_check_delegation: no delegation → isActive: false
+- [ ] x402_setup_agent: generates valid Ed25519 keypair
+- [ ] x402_revoke_delegation: successful revocation on devnet
+- [ ] x402_transaction_history: returns formatted transaction list
+- [ ] x402_discover_services: queries registry endpoint
+- [ ] x402_estimate_cost: returns estimated cost from 402 headers
+- [ ] Server starts and connects via stdio transport
+- [ ] Server starts and connects via HTTP transport

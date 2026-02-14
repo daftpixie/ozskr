@@ -137,3 +137,35 @@ Where `[CHECK]` is one of: `KEY_EXPOSURE`, `TX_SAFETY`, `SLIPPAGE`, `ADDRESS`, `
 ## Escalation
 
 Report all findings to the orchestrator. Critical findings (`❌ FAILURES`) MUST block the commit.
+
+## Phase 7.M: MCP Server & Agent Wallet Audit Checks
+
+### 16. Agent Keypair Security
+- Agent keypair file has 0600 permissions (not 0644, not 0755)
+- Keypair encrypted at rest with scrypt (N≥2^20) + AES-256-GCM
+- Passphrase never stored to disk, env var, or config file
+- Keypair material zeroed from memory after use (Uint8Array.fill(0))
+- No keypair bytes in logs, error messages, or MCP tool responses
+
+### 17. SPL Delegation Security
+- `approveChecked` used (not `approve`) — enforces mint and decimal validation
+- `transferChecked` used (not `transfer`) — enforces mint and decimal validation
+- Delegation amount enforced both on-chain (SPL program) and client-side (budget.ts)
+- Remaining delegation checked BEFORE constructing payment transaction
+- No path allows spending beyond the user-approved delegation cap
+
+### 18. x402 Payment Security
+- Transaction simulation required before EVERY payment submission
+- 402 response headers validated against Zod schema (no raw parsing)
+- Facilitator URL validated (HTTPS only, no localhost in production)
+- Payment amount cross-checked: 402 header amount ≤ remaining delegation
+- No retry loops that could cause double-spend (idempotency key or dedup)
+- Payment proof (tx signature) only sent after on-chain confirmation
+
+### 19. OSS Publication Safety
+- Zero secrets in any file under `packages/` (`git ls-files packages/`)
+- Zero hardcoded RPC endpoints, API keys, or wallet addresses
+- No `postinstall` scripts that fetch remote code
+- `npm audit` clean before publication
+- LICENSE file present (MIT) in both packages
+- `.npmignore` or `files` field excludes test fixtures, .env.example values
