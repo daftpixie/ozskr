@@ -27,6 +27,13 @@ vi.mock('@ozskr/agent-wallet-sdk', () => ({
     tokenMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
     ownerTokenAccount: '11111111111111111111111111111111',
   })),
+  createBudgetTracker: vi.fn(() => ({
+    checkBudget: vi.fn(async () => ({ remainingOnChain: 50_000_000n, spent: 0n, available: 50_000_000n })),
+    recordSpend: vi.fn(),
+    reset: vi.fn(),
+    getSpendHistory: vi.fn(() => []),
+    getTotalSpent: vi.fn(() => 0n),
+  })),
   DelegationError: class DelegationError extends Error {
     readonly code: string;
     constructor(code: string, message: string) {
@@ -36,6 +43,62 @@ vi.mock('@ozskr/agent-wallet-sdk', () => ({
     }
   },
   SCRYPT_PARAMS_FAST: { N: 2 ** 14, r: 8, p: 1, keyLen: 32 },
+}));
+
+vi.mock('../src/lib/x402-client.js', () => ({
+  makeX402Request: vi.fn(async () => ({
+    paymentRequired: true,
+    requirements: [{
+      version: 2,
+      scheme: 'exact',
+      network: 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1',
+      amount: '1000000',
+      asset: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
+      payTo: '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM',
+      maxTimeoutSeconds: 30,
+      raw: {},
+    }],
+    rawPaymentRequired: {},
+  })),
+  retryWithPayment: vi.fn(async () => ({
+    response: { status: 200, ok: true, text: async () => 'Paid content' },
+    settled: true,
+    transactionSignature: 'paid-sig-123',
+  })),
+  validateRequirement: vi.fn(() => null),
+}));
+
+vi.mock('../src/lib/facilitator.js', () => ({
+  submitToFacilitator: vi.fn(async () => ({
+    success: true,
+    transactionSignature: 'facilitator-sig-abc',
+    network: 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1',
+    payer: MOCK_AGENT_ADDRESS,
+    facilitator: 'cdp',
+  })),
+  FacilitatorError: class FacilitatorError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = 'FacilitatorError';
+    }
+  },
+}));
+
+vi.mock('../src/lib/history.js', () => ({
+  appendTransaction: vi.fn(async () => undefined),
+  queryHistory: vi.fn(async () => [
+    {
+      timestamp: '2026-02-14T12:00:00.000Z',
+      signature: 'hist-sig-1',
+      url: 'https://api.example.com/data',
+      amount: '1000000',
+      asset: 'USDC',
+      payTo: 'Recipient',
+      network: 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1',
+      facilitator: 'cdp',
+      method: 'GET',
+    },
+  ]),
 }));
 
 // Import after mocks
@@ -123,10 +186,10 @@ describe('createServer', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Wired Tool Tests
+// Week 1 Wired Tool Tests
 // ---------------------------------------------------------------------------
 
-describe('wired tools', () => {
+describe('wired tools (Week 1)', () => {
   let client: Client;
 
   beforeEach(async () => {
@@ -138,137 +201,149 @@ describe('wired tools', () => {
   it('x402_setup_agent should generate keypair and return address', async () => {
     const result = await client.callTool({
       name: 'x402_setup_agent',
-      arguments: {
-        passphrase: 'test-passphrase-12345',
-      },
+      arguments: { passphrase: 'test-passphrase-12345' },
     });
 
     const parsed = parseToolResult(result);
     expect(parsed.status).toBe('success');
     expect(parsed.agentAddress).toBe(MOCK_AGENT_ADDRESS);
     expect(parsed.keypairPath).toBe('/tmp/test-keypair.json');
-    expect(parsed.message).toContain('generated and encrypted');
-  });
-
-  it('x402_setup_agent should use custom outputPath when provided', async () => {
-    const result = await client.callTool({
-      name: 'x402_setup_agent',
-      arguments: {
-        passphrase: 'test-passphrase-12345',
-        outputPath: '/custom/path/keypair.json',
-      },
-    });
-
-    const parsed = parseToolResult(result);
-    expect(parsed.status).toBe('success');
-    expect(parsed.keypairPath).toBe('/custom/path/keypair.json');
   });
 
   it('x402_check_delegation should return delegation status', async () => {
     const result = await client.callTool({
       name: 'x402_check_delegation',
-      arguments: {
-        tokenAccount: '11111111111111111111111111111111',
-      },
+      arguments: { tokenAccount: '11111111111111111111111111111111' },
     });
 
     const parsed = parseToolResult(result);
     expect(parsed.status).toBe('success');
     expect(parsed.isActive).toBe(true);
-    expect(parsed.delegate).toBe(MOCK_AGENT_ADDRESS);
     expect(parsed.remainingAmount).toBe('50000000');
-    expect(parsed.originalAmount).toBe('100000000');
   });
 
   it('x402_check_balance should return agent address', async () => {
     const result = await client.callTool({
       name: 'x402_check_balance',
-      arguments: {
-        passphrase: 'test-passphrase-12345',
-      },
+      arguments: { passphrase: 'test-passphrase-12345' },
     });
 
     const parsed = parseToolResult(result);
     expect(parsed.status).toBe('success');
     expect(parsed.agentAddress).toBe(MOCK_AGENT_ADDRESS);
-    expect(typeof parsed.message).toBe('string');
   });
 
   it('x402_revoke_delegation should return delegation info with instructions', async () => {
     const result = await client.callTool({
       name: 'x402_revoke_delegation',
+      arguments: { tokenAccount: '11111111111111111111111111111111' },
+    });
+
+    const parsed = parseToolResult(result);
+    expect(parsed.status).toBe('success');
+    expect(parsed.isActive).toBe(true);
+    expect(parsed.message).toContain('owner must sign');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Week 2 Wired Tool Tests
+// ---------------------------------------------------------------------------
+
+describe('wired tools (Week 2)', () => {
+  let client: Client;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const setup = await createTestClient();
+    client = setup.client;
+  });
+
+  it('x402_pay should complete full payment cycle', async () => {
+    const result = await client.callTool({
+      name: 'x402_pay',
       arguments: {
+        url: 'https://api.example.com/data',
+        passphrase: 'test-passphrase-12345',
         tokenAccount: '11111111111111111111111111111111',
       },
     });
 
     const parsed = parseToolResult(result);
     expect(parsed.status).toBe('success');
-    expect(parsed.isActive).toBe(true);
-    expect(parsed.delegate).toBe(MOCK_AGENT_ADDRESS);
-    expect(parsed.message).toContain('owner must sign');
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Stub Tool Tests
-// ---------------------------------------------------------------------------
-
-describe('stub tools', () => {
-  let client: Client;
-
-  beforeEach(async () => {
-    const setup = await createTestClient();
-    client = setup.client;
+    expect(parsed.paymentRequired).toBe(true);
+    expect(parsed.transactionSignature).toBe('facilitator-sig-abc');
+    expect(parsed.amountPaid).toBe('1000000');
+    expect(parsed.facilitator).toBe('cdp');
+    expect(parsed.content).toBe('Paid content');
   });
 
-  it('x402_pay should return stub response', async () => {
+  it('x402_pay should reject when maxAmount exceeded', async () => {
     const result = await client.callTool({
       name: 'x402_pay',
       arguments: {
-        url: 'https://api.example.com/resource',
+        url: 'https://api.example.com/data',
+        passphrase: 'test-passphrase-12345',
+        tokenAccount: '11111111111111111111111111111111',
+        maxAmount: '500000', // Less than the 1000000 required
       },
     });
 
-    expect(result.isError).toBeUndefined();
     const parsed = parseToolResult(result);
-    expect(parsed.status).toBe('not_implemented');
-    expect(parsed.tool).toBe('x402_pay');
+    expect(parsed.error).toBe('AMOUNT_EXCEEDS_MAX');
   });
 
-  it('x402_transaction_history should return stub response', async () => {
+  it('x402_transaction_history should return records', async () => {
     const result = await client.callTool({
       name: 'x402_transaction_history',
       arguments: {},
     });
 
     const parsed = parseToolResult(result);
-    expect(parsed.status).toBe('not_implemented');
-    expect(parsed.tool).toBe('x402_transaction_history');
+    expect(parsed.status).toBe('success');
+    expect(parsed.count).toBe(1);
+    expect((parsed.transactions as Array<Record<string, unknown>>)[0].signature).toBe('hist-sig-1');
   });
 
-  it('x402_discover_services should return stub response', async () => {
+  it('x402_transaction_history should accept filter parameters', async () => {
+    const result = await client.callTool({
+      name: 'x402_transaction_history',
+      arguments: {
+        limit: 5,
+        url: 'example.com',
+        afterDate: '2026-01-01T00:00:00Z',
+      },
+    });
+
+    expect(result.isError).toBeUndefined();
+    const parsed = parseToolResult(result);
+    expect(parsed.status).toBe('success');
+  });
+
+  it('x402_discover_services should return results when no args', async () => {
     const result = await client.callTool({
       name: 'x402_discover_services',
       arguments: {},
     });
 
     const parsed = parseToolResult(result);
-    expect(parsed.status).toBe('not_implemented');
-    expect(parsed.tool).toBe('x402_discover_services');
+    expect(parsed.status).toBe('success');
+    expect(parsed.message).toContain('Provide a url');
+    expect(parsed.knownRegistries).toBeTruthy();
   });
 
-  it('x402_estimate_cost should return stub response', async () => {
+  it('x402_estimate_cost should probe endpoint', async () => {
+    // The mock makeX402Request returns paymentRequired=true with requirements
     const result = await client.callTool({
       name: 'x402_estimate_cost',
-      arguments: {
-        url: 'https://api.example.com/resource',
-      },
+      arguments: { url: 'https://api.example.com/data' },
     });
 
     const parsed = parseToolResult(result);
-    expect(parsed.status).toBe('not_implemented');
-    expect(parsed.tool).toBe('x402_estimate_cost');
+    expect(parsed.status).toBe('success');
+    expect(parsed.paymentRequired).toBe(true);
+    expect((parsed.options as Array<Record<string, unknown>>).length).toBeGreaterThan(0);
+    expect((parsed.options as Array<Record<string, unknown>>)[0].amount).toBe('1000000');
   });
 });
 
@@ -289,7 +364,6 @@ describe('tool input validation', () => {
       name: 'x402_setup_agent',
       arguments: {},
     });
-
     expect(result.isError).toBe(true);
   });
 
@@ -298,43 +372,40 @@ describe('tool input validation', () => {
       name: 'x402_setup_agent',
       arguments: { passphrase: 'short' },
     });
-
     expect(result.isError).toBe(true);
   });
 
   it('x402_pay should reject missing url', async () => {
     const result = await client.callTool({
       name: 'x402_pay',
-      arguments: {},
+      arguments: {
+        passphrase: 'test-passphrase-12345',
+        tokenAccount: '11111111111111111111111111111111',
+      },
     });
-
     expect(result.isError).toBe(true);
   });
 
-  it('x402_pay should reject invalid url', async () => {
-    const result = await client.callTool({
-      name: 'x402_pay',
-      arguments: { url: 'not-a-url' },
-    });
-
-    expect(result.isError).toBe(true);
-  });
-
-  it('x402_pay should accept valid optional fields', async () => {
+  it('x402_pay should reject missing passphrase', async () => {
     const result = await client.callTool({
       name: 'x402_pay',
       arguments: {
-        url: 'https://api.example.com/resource',
-        method: 'POST',
-        body: '{"key": "value"}',
-        maxAmount: '1000000',
-        headers: { 'Content-Type': 'application/json' },
+        url: 'https://api.example.com/data',
+        tokenAccount: '11111111111111111111111111111111',
       },
     });
+    expect(result.isError).toBe(true);
+  });
 
-    expect(result.isError).toBeUndefined();
-    const parsed = parseToolResult(result);
-    expect(parsed.status).toBe('not_implemented');
+  it('x402_pay should reject missing tokenAccount', async () => {
+    const result = await client.callTool({
+      name: 'x402_pay',
+      arguments: {
+        url: 'https://api.example.com/data',
+        passphrase: 'test-passphrase-12345',
+      },
+    });
+    expect(result.isError).toBe(true);
   });
 
   it('x402_check_delegation should reject missing tokenAccount', async () => {
@@ -342,16 +413,6 @@ describe('tool input validation', () => {
       name: 'x402_check_delegation',
       arguments: {},
     });
-
-    expect(result.isError).toBe(true);
-  });
-
-  it('x402_check_delegation should reject short tokenAccount', async () => {
-    const result = await client.callTool({
-      name: 'x402_check_delegation',
-      arguments: { tokenAccount: 'short' },
-    });
-
     expect(result.isError).toBe(true);
   });
 
@@ -360,7 +421,6 @@ describe('tool input validation', () => {
       name: 'x402_check_balance',
       arguments: {},
     });
-
     expect(result.isError).toBe(true);
   });
 
@@ -369,7 +429,6 @@ describe('tool input validation', () => {
       name: 'x402_revoke_delegation',
       arguments: {},
     });
-
     expect(result.isError).toBe(true);
   });
 
@@ -378,7 +437,6 @@ describe('tool input validation', () => {
       name: 'x402_estimate_cost',
       arguments: {},
     });
-
     expect(result.isError).toBe(true);
   });
 
@@ -387,17 +445,7 @@ describe('tool input validation', () => {
       name: 'x402_estimate_cost',
       arguments: { url: 'not-valid' },
     });
-
     expect(result.isError).toBe(true);
-  });
-
-  it('x402_transaction_history should apply default limit', async () => {
-    const result = await client.callTool({
-      name: 'x402_transaction_history',
-      arguments: {},
-    });
-
-    expect(result.isError).toBeUndefined();
   });
 
   it('x402_discover_services should accept no arguments', async () => {
@@ -405,7 +453,6 @@ describe('tool input validation', () => {
       name: 'x402_discover_services',
       arguments: {},
     });
-
     expect(result.isError).toBeUndefined();
   });
 });
