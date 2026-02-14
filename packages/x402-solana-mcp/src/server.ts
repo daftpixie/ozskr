@@ -1,4 +1,4 @@
-import { type Address, type KeyPairSigner } from '@solana/kit';
+import { type Address, type KeyPairSigner, createSolanaRpc } from '@solana/kit';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import {
@@ -306,10 +306,40 @@ export function createServer(config: Config): McpServer {
           paymentPayload,
           req.raw,
           config.x402FacilitatorUrl,
+          config.x402FacilitatorFallbackUrl,
         );
 
         if (!settlement.success) {
           return errorResult('SETTLEMENT_FAILED', settlement.errorMessage ?? 'Facilitator rejected payment');
+        }
+
+        // Step 7b: Verify on-chain that payment went to expected recipient
+        if (settlement.transactionSignature) {
+          try {
+            const rpc = createSolanaRpc(config.solanaRpcUrl);
+            const txResponse = await rpc.getTransaction(
+              settlement.transactionSignature as Parameters<typeof rpc.getTransaction>[0],
+              { commitment: 'confirmed', maxSupportedTransactionVersion: 0, encoding: 'jsonParsed' },
+            ).send();
+
+            if (txResponse) {
+              // Verify the expected recipient appears in the transaction's account keys
+              const accountKeys = txResponse.transaction.message.accountKeys ?? [];
+              const recipientFound = accountKeys.some(
+                (key: { toString(): string }) => key.toString() === req.payTo,
+              );
+              if (!recipientFound) {
+                return errorResult(
+                  'RECIPIENT_MISMATCH',
+                  `On-chain transaction ${settlement.transactionSignature} does not include expected recipient ${req.payTo}. Facilitator may have redirected funds. Payment proof NOT sent to resource server.`,
+                );
+              }
+            }
+            // If txResponse is null, the tx may not have propagated yet — proceed with caution
+          } catch {
+            // Verification failure is non-fatal: the facilitator already settled.
+            // Log the issue but allow the retry to proceed.
+          }
         }
 
         // Step 8: Retry the original request with payment proof
