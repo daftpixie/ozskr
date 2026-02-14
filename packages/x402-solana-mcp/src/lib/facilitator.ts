@@ -20,17 +20,11 @@ interface FacilitatorEndpoint {
   settlePath: string;
 }
 
-const CDP_FACILITATOR: FacilitatorEndpoint = {
-  name: 'cdp',
-  url: 'https://x402.org/facilitator',
-  settlePath: '/settle',
-};
+/** Default CDP facilitator URL — can be overridden via config. */
+const DEFAULT_CDP_URL = 'https://x402.org/facilitator';
 
-const PAYAI_FACILITATOR: FacilitatorEndpoint = {
-  name: 'payai',
-  url: 'https://facilitator.payai.network',
-  settlePath: '/settle',
-};
+/** Default PayAI facilitator URL — can be overridden via config. */
+const DEFAULT_PAYAI_URL = 'https://facilitator.payai.network';
 
 const DEFAULT_TIMEOUT_MS = 5_000;
 const MAX_RETRIES = 2;
@@ -38,38 +32,48 @@ const MAX_RETRIES = 2;
 /**
  * Submits a signed payment payload to a facilitator for settlement.
  *
- * Tries the CDP facilitator first. If it fails or times out, falls back to PayAI.
- * Each attempt has a 5s timeout and up to 2 retries per facilitator.
+ * Tries the primary facilitator first. If it fails or times out, falls back
+ * to the fallback facilitator. Each attempt has a 5s timeout and up to 2
+ * retries per facilitator.
+ *
+ * Facilitator URLs are configurable via the `primaryUrl` and `fallbackUrl`
+ * parameters (sourced from X402_FACILITATOR_URL and X402_FACILITATOR_FALLBACK_URL
+ * environment variables). Defaults to CDP primary + PayAI fallback.
  *
  * @param paymentPayload - The signed payment payload (x402 format)
  * @param paymentRequirements - The accepted payment requirements
- * @param facilitatorUrl - Optional override URL (uses CDP → PayAI fallback if not set)
+ * @param primaryUrl - Optional primary facilitator URL (defaults to CDP)
+ * @param fallbackUrl - Optional fallback facilitator URL (defaults to PayAI)
  * @returns Settlement result with transaction signature
  */
 export async function submitToFacilitator(
   paymentPayload: unknown,
   paymentRequirements: unknown,
-  facilitatorUrl?: string,
+  primaryUrl?: string,
+  fallbackUrl?: string,
 ): Promise<SettlementResult> {
-  // If a specific facilitator URL is provided, use only that
-  if (facilitatorUrl) {
-    return attemptSettle(
-      { name: 'custom', url: facilitatorUrl, settlePath: '/settle' },
-      paymentPayload,
-      paymentRequirements,
-    );
-  }
+  const primary: FacilitatorEndpoint = {
+    name: primaryUrl ? 'custom' : 'cdp',
+    url: primaryUrl ?? DEFAULT_CDP_URL,
+    settlePath: '/settle',
+  };
 
-  // Try CDP first, then PayAI fallback
+  const fallback: FacilitatorEndpoint = {
+    name: fallbackUrl ? 'custom-fallback' : 'payai',
+    url: fallbackUrl ?? DEFAULT_PAYAI_URL,
+    settlePath: '/settle',
+  };
+
+  // Try primary first, then fallback
   try {
-    return await attemptSettle(CDP_FACILITATOR, paymentPayload, paymentRequirements);
-  } catch (cdpError) {
+    return await attemptSettle(primary, paymentPayload, paymentRequirements);
+  } catch (primaryError) {
     try {
-      return await attemptSettle(PAYAI_FACILITATOR, paymentPayload, paymentRequirements);
-    } catch (payaiError) {
+      return await attemptSettle(fallback, paymentPayload, paymentRequirements);
+    } catch (fallbackError) {
       // Both facilitators failed — return the more informative error
       throw new FacilitatorError(
-        `All facilitators failed. CDP: ${cdpError instanceof Error ? cdpError.message : String(cdpError)}. PayAI: ${payaiError instanceof Error ? payaiError.message : String(payaiError)}`,
+        `All facilitators failed. ${primary.name}: ${primaryError instanceof Error ? primaryError.message : String(primaryError)}. ${fallback.name}: ${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`,
       );
     }
   }
