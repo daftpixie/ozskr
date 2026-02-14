@@ -42,7 +42,8 @@
     "@x402/svm": "^2.3.0",
     "@x402/core": "^2.3.0",
     "@modelcontextprotocol/sdk": "^1.26.0",
-    "@ozskr/agent-wallet-sdk": "workspace:*"
+    "@ozskr/agent-wallet-sdk": "workspace:*",
+    "zod": "^3.25.0"
   },
   "devDependencies": {
     "vitest": "^4.0.0",
