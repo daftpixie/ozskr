@@ -103,6 +103,8 @@ vi.mock('../src/lib/history.js', () => ({
 
 // Import after mocks
 const { createServer } = await import('../src/server.js');
+const { makeX402Request } = await import('../src/lib/x402-client.js');
+const { checkDelegation } = await import('@ozskr/agent-wallet-sdk');
 
 // ---------------------------------------------------------------------------
 // Test Config
@@ -454,5 +456,228 @@ describe('tool input validation', () => {
       arguments: {},
     });
     expect(result.isError).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Coverage: Uncovered Paths
+// ---------------------------------------------------------------------------
+
+describe('uncovered path coverage', () => {
+  let client: Client;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const setup = await createTestClient();
+    client = setup.client;
+  });
+
+  it('x402_discover_services with url should probe and find x402 endpoint', async () => {
+    const result = await client.callTool({
+      name: 'x402_discover_services',
+      arguments: { url: 'https://api.example.com/data' },
+    });
+
+    const parsed = parseToolResult(result);
+    expect(parsed.status).toBe('success');
+    const results = parsed.results as Array<Record<string, unknown>>;
+    expect(results).toHaveLength(1);
+    expect(results[0].x402Enabled).toBe(true);
+    expect(results[0].requirements).toBeDefined();
+  });
+
+  it('x402_discover_services with non-402 url should return x402Enabled=false', async () => {
+    vi.mocked(makeX402Request).mockResolvedValueOnce({
+      paymentRequired: false,
+      requirements: [],
+      rawPaymentRequired: {},
+      response: { status: 200, ok: true, text: async () => 'OK' } as unknown as Response,
+    });
+
+    const result = await client.callTool({
+      name: 'x402_discover_services',
+      arguments: { url: 'https://free.example.com/api' },
+    });
+
+    const parsed = parseToolResult(result);
+    expect(parsed.status).toBe('success');
+    const results = parsed.results as Array<Record<string, unknown>>;
+    expect(results[0].x402Enabled).toBe(false);
+    expect(results[0].httpStatus).toBe(200);
+  });
+
+  it('x402_estimate_cost with free endpoint should return paymentRequired=false', async () => {
+    vi.mocked(makeX402Request).mockResolvedValueOnce({
+      paymentRequired: false,
+      requirements: [],
+      rawPaymentRequired: {},
+      response: { status: 200, ok: true, text: async () => 'OK' } as unknown as Response,
+    });
+
+    const result = await client.callTool({
+      name: 'x402_estimate_cost',
+      arguments: { url: 'https://free.example.com/api' },
+    });
+
+    const parsed = parseToolResult(result);
+    expect(parsed.status).toBe('success');
+    expect(parsed.paymentRequired).toBe(false);
+  });
+
+  it('x402_estimate_cost with empty requirements should return error', async () => {
+    vi.mocked(makeX402Request).mockResolvedValueOnce({
+      paymentRequired: true,
+      requirements: [],
+      rawPaymentRequired: {},
+    } as ReturnType<typeof makeX402Request> extends Promise<infer T> ? T : never);
+
+    const result = await client.callTool({
+      name: 'x402_estimate_cost',
+      arguments: { url: 'https://api.example.com/data' },
+    });
+
+    const parsed = parseToolResult(result);
+    expect(parsed.error).toBe('NO_REQUIREMENTS');
+  });
+
+  it('x402_pay with free endpoint should return without payment', async () => {
+    vi.mocked(makeX402Request).mockResolvedValueOnce({
+      paymentRequired: false,
+      requirements: [],
+      rawPaymentRequired: {},
+      response: { status: 200, ok: true, text: async () => 'Free content' } as unknown as Response,
+    });
+
+    const result = await client.callTool({
+      name: 'x402_pay',
+      arguments: {
+        url: 'https://free.example.com/api',
+        passphrase: 'test-passphrase-12345',
+        tokenAccount: '11111111111111111111111111111111',
+      },
+    });
+
+    const parsed = parseToolResult(result);
+    expect(parsed.status).toBe('success');
+    expect(parsed.paymentRequired).toBe(false);
+    expect(parsed.content).toBe('Free content');
+  });
+
+  it('x402_pay with empty requirements should return error', async () => {
+    vi.mocked(makeX402Request).mockResolvedValueOnce({
+      paymentRequired: true,
+      requirements: [],
+      rawPaymentRequired: {},
+    } as ReturnType<typeof makeX402Request> extends Promise<infer T> ? T : never);
+
+    const result = await client.callTool({
+      name: 'x402_pay',
+      arguments: {
+        url: 'https://api.example.com/data',
+        passphrase: 'test-passphrase-12345',
+        tokenAccount: '11111111111111111111111111111111',
+      },
+    });
+
+    const parsed = parseToolResult(result);
+    expect(parsed.error).toBe('NO_REQUIREMENTS');
+  });
+
+  it('x402_revoke_delegation with inactive delegation should return nothing to revoke', async () => {
+    vi.mocked(checkDelegation).mockResolvedValueOnce({
+      isActive: false,
+      delegate: '',
+      remainingAmount: 0n,
+      originalAmount: 0n,
+      tokenMint: '',
+      ownerTokenAccount: '',
+    });
+
+    const result = await client.callTool({
+      name: 'x402_revoke_delegation',
+      arguments: { tokenAccount: '11111111111111111111111111111111' },
+    });
+
+    const parsed = parseToolResult(result);
+    expect(parsed.status).toBe('success');
+    expect(parsed.isActive).toBe(false);
+    expect(parsed.message).toContain('Nothing to revoke');
+  });
+
+  it('x402_discover_services with registry should query registry endpoint', async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn(async () => ({
+      status: 200,
+      ok: true,
+      headers: new Headers(),
+      json: async () => ({ services: [{ url: 'https://paid.example.com', price: '1 USDC' }] }),
+      text: async () => '{}',
+    })) as unknown as typeof fetch;
+
+    try {
+      const result = await client.callTool({
+        name: 'x402_discover_services',
+        arguments: { registry: 'https://registry.example.com/services' },
+      });
+
+      const parsed = parseToolResult(result);
+      expect(parsed.status).toBe('success');
+      const results = parsed.results as Array<Record<string, unknown>>;
+      expect(results).toHaveLength(1);
+      expect(results[0].registry).toBe('https://registry.example.com/services');
+      expect(results[0].services).toBeDefined();
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it('x402_discover_services with failing registry should return error info', async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn(async () => ({
+      status: 503,
+      ok: false,
+      headers: new Headers(),
+      json: async () => ({}),
+      text: async () => 'Service Unavailable',
+    })) as unknown as typeof fetch;
+
+    try {
+      const result = await client.callTool({
+        name: 'x402_discover_services',
+        arguments: { registry: 'https://registry.example.com/services' },
+      });
+
+      const parsed = parseToolResult(result);
+      expect(parsed.status).toBe('success');
+      const results = parsed.results as Array<Record<string, unknown>>;
+      expect(results[0].error).toContain('503');
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it('x402_pay with inactive delegation should skip budget tracker init', async () => {
+    vi.mocked(checkDelegation).mockResolvedValueOnce({
+      isActive: false,
+      delegate: '',
+      remainingAmount: 0n,
+      originalAmount: 0n,
+      tokenMint: '',
+      ownerTokenAccount: '',
+    });
+
+    const result = await client.callTool({
+      name: 'x402_pay',
+      arguments: {
+        url: 'https://api.example.com/data',
+        passphrase: 'test-passphrase-12345',
+        tokenAccount: '11111111111111111111111111111111',
+      },
+    });
+
+    // Payment should still proceed (just without budget tracking)
+    const parsed = parseToolResult(result);
+    expect(parsed.status).toBe('success');
+    expect(parsed.paymentRequired).toBe(true);
   });
 });

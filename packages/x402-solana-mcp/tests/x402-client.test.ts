@@ -207,6 +207,11 @@ describe('validateRequirement', () => {
     expect(error).toContain('missing');
   });
 
+  it('should reject invalid SVM address', () => {
+    const error = validateRequirement({ ...baseReq, payTo: 'not-a-valid-address!@#' }, '');
+    expect(error).toContain('Invalid recipient');
+  });
+
   it('should reject non-Solana network', () => {
     const error = validateRequirement({ ...baseReq, network: 'ethereum:1' }, '');
     expect(error).toContain('Unsupported network');
