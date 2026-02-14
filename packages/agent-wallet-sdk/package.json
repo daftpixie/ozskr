@@ -50,7 +50,7 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "prepublishOnly": "node -e \"const p=require('./package.json');const d=JSON.stringify(p.dependencies||{});if(d.includes('workspace:')){console.error('ERROR: workspace: protocol detected in dependencies. Use pnpm publish, not npm publish.');process.exit(1)}\" && pnpm run build && pnpm run test"
+    "prepublishOnly": "node -e \"const ua=process.env.npm_config_user_agent||'';if(!ua.includes('pnpm')){const p=require('./package.json');const d=JSON.stringify(p.dependencies||{});if(d.includes('workspace:')){console.error('ERROR: workspace: protocol in dependencies. Use pnpm publish, not npm publish.');process.exit(1)}}\" && pnpm run build && pnpm run test"
   },
   "dependencies": {
     "@solana/kit": "^2.1.0",
