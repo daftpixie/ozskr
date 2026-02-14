@@ -35,15 +35,14 @@ jobs:
           registry-url: https://registry.npmjs.org
       - run: pnpm install --frozen-lockfile
 
+      - name: Build agent-wallet-sdk (required by x402-solana-mcp)
+        run: pnpm --filter @ozskr/agent-wallet-sdk build
+
       - name: Typecheck
         run: pnpm --filter @ozskr/* typecheck
 
       - name: Test
         run: pnpm --filter @ozskr/* test
-
-      - name: Build agent-wallet-sdk
-        if: inputs.package == 'agent-wallet-sdk' || inputs.package == 'both'
-        run: pnpm --filter @ozskr/agent-wallet-sdk build
 
       - name: Build x402-solana-mcp
         if: inputs.package == 'x402-solana-mcp' || inputs.package == 'both'

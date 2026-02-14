@@ -29,6 +29,8 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Build agent-wallet-sdk (required by x402-solana-mcp)
+        run: pnpm --filter @ozskr/agent-wallet-sdk build
       - run: pnpm --filter @ozskr/* typecheck
 
   test:
@@ -43,6 +45,8 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Build agent-wallet-sdk (required by x402-solana-mcp)
+        run: pnpm --filter @ozskr/agent-wallet-sdk build
       - name: Run agent-wallet-sdk tests
         run: pnpm --filter @ozskr/agent-wallet-sdk test
       - name: Run x402-solana-mcp tests
