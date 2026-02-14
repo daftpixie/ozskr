@@ -50,7 +50,13 @@ export default function CreateAgentPage() {
     reset,
   } = useWizardStore();
 
-  const { mutate: createCharacter, isPending } = useCreateCharacter();
+  const {
+    mutate: createCharacter,
+    isPending,
+    isError,
+    error,
+    reset: resetMutation,
+  } = useCreateCharacter();
   const [tagInput, setTagInput] = useState('');
   const [guardrailInput, setGuardrailInput] = useState('');
 
@@ -93,6 +99,7 @@ export default function CreateAgentPage() {
 
   // Submit handler
   const handleSubmit = () => {
+    resetMutation();
     createCharacter(
       {
         name,
@@ -491,6 +498,25 @@ export default function CreateAgentPage() {
                 )}
               </div>
             </div>
+
+            {isError && (
+              <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+                <p className="text-sm font-medium text-destructive">
+                  Failed to create agent
+                </p>
+                <p className="mt-1 text-sm text-destructive/80">
+                  {error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.'}
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2 text-destructive hover:text-destructive"
+                  onClick={() => resetMutation()}
+                >
+                  Dismiss
+                </Button>
+              </div>
+            )}
 
             <div className="flex justify-between">
               <Button variant="outline" onClick={prevStep}>
