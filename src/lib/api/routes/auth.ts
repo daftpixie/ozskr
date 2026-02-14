@@ -120,13 +120,13 @@ auth.post('/verify', zValidator('json', SiwsVerifyRequestSchema), async (c) => {
     }
 
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30); // 30-day session
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7-day session
 
     const secret = new TextEncoder().encode(jwtSecret);
     const token = await new SignJWT({ wallet_address: walletAddress })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
-      .setExpirationTime('30d')
+      .setExpirationTime('7d')
       .sign(secret);
 
     // STEP 5: Store session in database (nonce stored for replay prevention)

@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, chmod } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
 // ---------------------------------------------------------------------------
@@ -52,7 +52,9 @@ export async function appendTransaction(
   const records = await loadHistory(historyPath);
   records.push(record);
   await mkdir(dirname(historyPath), { recursive: true });
-  await writeFile(historyPath, JSON.stringify(records, null, 2));
+  await writeFile(historyPath, JSON.stringify(records, null, 2), { mode: 0o600 });
+  // Ensure permissions on existing files (writeFile mode only applies on creation)
+  await chmod(historyPath, 0o600);
 }
 
 /**

@@ -89,23 +89,37 @@ export function createBudgetTracker(initialBudget: bigint): BudgetTracker {
 
   let spent = 0n;
   let spendHistory: SpendRecord[] = [];
-  let checkInProgress = false;
+
+  // Async mutex for budget check-and-spend atomicity.
+  // Prevents concurrent callers from reading the same budget state before
+  // either has recorded its spend, which could result in double-spending
+  // up to the delegation cap.
+  let locked = false;
+  const waitQueue: Array<() => void> = [];
+
+  function acquireLock(): Promise<void> {
+    if (!locked) {
+      locked = true;
+      return Promise.resolve();
+    }
+    return new Promise<void>((resolve) => waitQueue.push(resolve));
+  }
+
+  function releaseLock(): void {
+    const next = waitQueue.shift();
+    if (next) {
+      next(); // Transfer lock to next waiter
+    } else {
+      locked = false;
+    }
+  }
 
   return {
     async checkBudget(
       tokenAccount: Address,
       rpcConfig: RpcConfig,
     ): Promise<BudgetCheckResult> {
-      // Simple lock to prevent concurrent RPC queries from causing
-      // inconsistent state reads during rapid spend sequences
-      if (checkInProgress) {
-        throw new DelegationError(
-          DelegationErrorCode.BUDGET_EXCEEDED,
-          'A budget check is already in progress. Wait for it to complete before checking again.',
-        );
-      }
-
-      checkInProgress = true;
+      await acquireLock();
       try {
         const status = await checkDelegation(tokenAccount, rpcConfig);
         const remainingOnChain = status.remainingAmount;
@@ -123,7 +137,7 @@ export function createBudgetTracker(initialBudget: bigint): BudgetTracker {
           available: available > 0n ? available : 0n,
         };
       } finally {
-        checkInProgress = false;
+        releaseLock();
       }
     },
 

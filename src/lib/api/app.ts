@@ -70,6 +70,10 @@ app.use('*', async (c, next) => {
 });
 
 // CORS middleware
+// SECURITY: Restricted to a single origin matching the platform URL.
+// In production, NEXT_PUBLIC_APP_URL must be set to the exact deployed domain
+// (e.g., "https://ozskr.vercel.app"). The localhost fallback is for local
+// development only. Wildcard origins are never used.
 app.use(
   '*',
   cors({

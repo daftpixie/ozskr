@@ -34,7 +34,13 @@ export const ConfigSchema = z.object({
     .string()
     .url('X402_FACILITATOR_URL must be a valid URL')
     .optional()
-    .describe('x402 facilitator URL (auto-detected if omitted)'),
+    .describe('Primary x402 facilitator URL (defaults to CDP facilitator)'),
+
+  x402FacilitatorFallbackUrl: z
+    .string()
+    .url('X402_FACILITATOR_FALLBACK_URL must be a valid URL')
+    .optional()
+    .describe('Fallback x402 facilitator URL (defaults to PayAI facilitator)'),
 
   logLevel: z
     .enum(['debug', 'info', 'warn', 'error'])
@@ -60,6 +66,7 @@ export function loadConfigFromEnv(): Config {
     agentKeypairPath: process.env.AGENT_KEYPAIR_PATH,
     solanaNetwork: process.env.SOLANA_NETWORK || undefined,
     x402FacilitatorUrl: process.env.X402_FACILITATOR_URL || undefined,
+    x402FacilitatorFallbackUrl: process.env.X402_FACILITATOR_FALLBACK_URL || undefined,
     logLevel: process.env.LOG_LEVEL || undefined,
   });
 }
