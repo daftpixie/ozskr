@@ -87,9 +87,8 @@ export function createServer(config: Config): McpServer {
 
   // Closure-scoped state persists across tool calls within a session
   let cachedSigner: KeyPairSigner | null = null;
-  // Budget tracker is initialized when the first x402_pay call provides a tokenAccount
-  // eslint-disable-next-line prefer-const
-  let budgetTracker: BudgetTracker | null = null as BudgetTracker | null;
+  // Budget tracker is initialized on the first x402_pay call using the delegation's spending cap
+  let budgetTracker: BudgetTracker | null = null;
 
   const networkCaip2 = config.solanaNetwork === 'mainnet-beta'
     ? SOLANA_MAINNET_CAIP2
@@ -219,6 +218,17 @@ export function createServer(config: Config): McpServer {
         // Step 1: Ensure signer is loaded
         if (!cachedSigner) {
           cachedSigner = await loadEncryptedKeypair(config.agentKeypairPath, passphrase);
+        }
+
+        // Step 1b: Initialize budget tracker from delegation if not yet active
+        if (!budgetTracker) {
+          const delegation = await checkDelegation(
+            tokenAccount as Address,
+            { endpoint: config.solanaRpcUrl },
+          );
+          if (delegation.isActive && delegation.originalAmount > 0n) {
+            budgetTracker = createBudgetTracker(delegation.originalAmount);
+          }
         }
 
         // Step 2: Make initial HTTP request
