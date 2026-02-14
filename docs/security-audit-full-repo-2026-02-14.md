@@ -12,7 +12,7 @@
 
 **Overall Assessment: PASS WITH ADVISORY FINDINGS**
 
-The codebase demonstrates strong security posture across all critical domains. No CRITICAL findings were discovered. The published npm packages (`@ozskr/agent-wallet-sdk@0.1.0-beta`, `@ozskr/x402-solana-mcp@0.1.0-beta`) contain zero secrets and implement defense-in-depth correctly. The platform API uses proper authentication, authorization, input validation, and output sanitization.
+The codebase demonstrates strong security posture across all critical domains. No CRITICAL findings were discovered. The published npm packages (`@ozskr/agent-wallet-sdk@0.1.0-beta`, `@ozskr/x402-solana-mcp@0.1.1-beta`) contain zero secrets and implement defense-in-depth correctly. The platform API uses proper authentication, authorization, input validation, and output sanitization.
 
 | Severity | Count |
 |----------|-------|

@@ -382,7 +382,7 @@ The MCP server uses closure-scoped state in `createServer()`:
 
 ```typescript
 export function createServer(config: Config): McpServer {
-  const server = new McpServer({ name: 'x402-solana-mcp', version: '0.1.0-beta' });
+  const server = new McpServer({ name: 'x402-solana-mcp', version: '0.1.1-beta' });
 
   // Closure state persists across tool calls within a session:
   let cachedSigner: KeyPairSigner | null = null;

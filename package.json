@@ -17,7 +17,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "publish:sdk": "cd packages/agent-wallet-sdk && pnpm publish --access public --no-git-checks",
+    "publish:mcp": "cd packages/x402-solana-mcp && pnpm publish --access public --no-git-checks",
+    "publish:all": "pnpm run publish:sdk && pnpm run publish:mcp"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.44",

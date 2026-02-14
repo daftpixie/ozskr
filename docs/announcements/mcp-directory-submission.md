@@ -204,7 +204,7 @@ Built entirely with Claude Code. A hive of AI development agents orchestrated by
 
 ## Additional Notes
 
-- **Status:** Beta (v0.1.0-beta)
+- **Status:** Beta (v0.1.1-beta)
 - **Production-ready:** Yes (147 tests passing)
 - **Security audited:** Internal review complete, external audit pending
 - **Testnet support:** Devnet, testnet, mainnet-beta all supported
@@ -227,7 +227,7 @@ Built entirely with Claude Code. A hive of AI development agents orchestrated by
 
 ## Changelog Highlights
 
-**v0.1.0-beta (Initial Release)**
+**v0.1.1-beta (Initial Release)**
 - 8 MCP tools for x402 payment lifecycle
 - Non-custodial SPL delegation
 - 3-layer budget enforcement
