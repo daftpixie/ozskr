@@ -2,21 +2,29 @@
 
 ## Reporting a Vulnerability
 
+If you discover a security vulnerability in ozskr.ai, @ozskr/agent-wallet-sdk,
+or @ozskr/x402-solana-mcp, please report it responsibly.
+
 **Do NOT open a public issue for security vulnerabilities.**
 
-Email **security@ozskr.ai** with:
+**Email:** matthew@vt-infinite.com
+**Subject line:** [SECURITY] Brief description
+
+Please include:
 - Description of the vulnerability
 - Steps to reproduce
 - Potential impact assessment
+- Suggested fix (if any)
 
-We will respond within **48 hours** and provide a timeline for resolution.
+We will acknowledge receipt within **48 hours** and provide a detailed response
+within 7 days.
 
 ## Supported Versions
 
 | Version | Supported |
 |---------|-----------|
-| Latest main | ✅ |
-| Previous releases | ❌ |
+| Latest main | Yes |
+| Previous releases | No |
 
 ## Scope
 
@@ -27,6 +35,8 @@ We will respond within **48 hours** and provide a timeline for resolution.
 - Content moderation bypass
 - Unauthorized data access (RLS bypass)
 - Cross-character memory leakage (Mem0 isolation)
+- `@ozskr/agent-wallet-sdk` npm package
+- `@ozskr/x402-solana-mcp` npm package
 
 ### Out of Scope
 - Social engineering attacks

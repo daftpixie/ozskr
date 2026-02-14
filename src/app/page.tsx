@@ -282,7 +282,7 @@ function HomeContent() {
             </p>
 
             <p className="text-sm text-muted-foreground">
-              MIT License &copy; {new Date().getFullYear()} ozskr.ai
+              MIT License &copy; {new Date().getFullYear()} VT Infinite, Inc
             </p>
           </div>
 

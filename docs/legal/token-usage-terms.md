@@ -160,7 +160,7 @@ Service credits are applied to your account for future use and have no cash or t
 
 If you believe a token payment was processed in error:
 
-- Contact support@ozskr.ai within 7 days of the transaction
+- Contact matthew@vt-infinite.com within 7 days of the transaction
 - Include your wallet address and the transaction signature
 - The Platform will investigate and respond within 14 business days
 - Resolution is at the Platform's sole discretion
@@ -208,9 +208,9 @@ Your continued use of $HOPE tokens on the Platform after changes become effectiv
 
 For questions about these Token Usage Terms:
 
-**Email:** legal@ozskr.ai
+**Email:** matthew@vt-infinite.com
 
-**Support:** support@ozskr.ai
+**Support:** matthew@vt-infinite.com
 
 ---
 

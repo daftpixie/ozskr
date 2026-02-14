@@ -412,7 +412,7 @@ If any provision of this Token Disclaimer is found to be invalid or unenforceabl
 
 For questions about this Token Disclaimer or $HOPE tokens, contact:
 
-**Email:** legal@ozskr.ai
+**Email:** matthew@vt-infinite.com
 
 ---
 

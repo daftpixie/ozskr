@@ -1,5 +1,7 @@
 # ozskr.ai Terms of Service
 
+*ozskr.ai is a product developed and operated by VT Infinite, Inc.*
+
 **Effective Date:** [DATE — TO BE SET]
 
 **Last Updated:** February 12, 2026
@@ -8,7 +10,7 @@
 
 ## 1. Acceptance of Terms
 
-Welcome to ozskr.ai ("Platform," "Service," "we," "us," or "our"). These Terms of Service ("Terms") constitute a legally binding agreement between you ("User," "you," or "your") and ozskr.ai governing your access to and use of the Platform.
+Welcome to ozskr.ai ("Platform," "Service," "we," "us," or "our"), a product of VT Infinite, Inc. These Terms of Service ("Terms") constitute a legally binding agreement between you ("User," "you," or "your") and ozskr.ai governing your access to and use of the Platform.
 
 **By connecting your wallet and using the Platform, you agree to be bound by these Terms.** If you do not agree to these Terms, you may not access or use the Platform.
 
@@ -274,7 +276,7 @@ Some jurisdictions do not allow the exclusion or limitation of certain damages. 
 
 ## 11. Indemnification
 
-**You agree to indemnify, defend, and hold harmless ozskr.ai, its affiliates, and its officers, directors, employees, agents, and contractors from and against any and all claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys' fees) arising from or related to:**
+**You agree to indemnify, defend, and hold harmless VT Infinite, Inc (d/b/a ozskr.ai), its affiliates, and its officers, directors, employees, agents, and contractors from and against any and all claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys' fees) arising from or related to:**
 
 - Your use or misuse of the Platform
 - Your violation of these Terms or any applicable law or regulation
@@ -347,7 +349,7 @@ The following disputes are NOT subject to arbitration and may be brought in cour
 
 ### 13.5 Informal Dispute Resolution
 
-Before initiating arbitration, you agree to first attempt to resolve the dispute informally by contacting us at legal@ozskr.ai and providing a written description of the dispute. We will attempt to resolve the dispute within 60 days.
+Before initiating arbitration, you agree to first attempt to resolve the dispute informally by contacting us at matthew@vt-infinite.com and providing a written description of the dispute. We will attempt to resolve the dispute within 60 days.
 
 ---
 
@@ -399,7 +401,7 @@ You agree to comply with all applicable export and import control laws and regul
 
 If you have questions, concerns, or disputes regarding these Terms, please contact us at:
 
-**Email:** legal@ozskr.ai
+**Email:** matthew@vt-infinite.com
 
 **Address:** [TO BE SET]
 

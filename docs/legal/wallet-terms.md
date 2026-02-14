@@ -422,9 +422,9 @@ Your continued use of wallet-connected features after changes become effective c
 
 If you have questions, concerns, or disputes regarding these Wallet Terms or wallet-connected functionality, please contact us at:
 
-**Email:** legal@ozskr.ai
+**Email:** matthew@vt-infinite.com
 
-**For Security Issues:** security@ozskr.ai (see our Security Policy for vulnerability reporting)
+**For Security Issues:** matthew@vt-infinite.com (see our Security Policy for vulnerability reporting)
 
 For general support inquiries, please refer to our Terms of Service for contact information.
 

@@ -242,7 +242,7 @@ We reserve the right to take any of the following enforcement actions for AUP vi
 
 If you encounter content or conduct that violates this AUP, please report it to:
 
-**Email:** abuse@ozskr.ai
+**Email:** matthew@vt-infinite.com
 
 **Report Form:** [TO BE CREATED — web form on Platform]
 
@@ -279,7 +279,7 @@ If you encounter content or conduct that violates this AUP, please report it to:
 
 If you believe an enforcement action was taken in error, you may appeal by:
 
-**Email:** appeals@ozskr.ai
+**Email:** matthew@vt-infinite.com
 
 **Within:** 30 days of the enforcement action
 
@@ -348,9 +348,9 @@ We may update this Acceptable Use Policy from time to time. We will notify you o
 
 For questions or concerns about this Acceptable Use Policy, contact us at:
 
-**Email:** abuse@ozskr.ai
+**Email:** matthew@vt-infinite.com
 
-**Legal inquiries:** legal@ozskr.ai
+**Legal inquiries:** matthew@vt-infinite.com
 
 ---
 

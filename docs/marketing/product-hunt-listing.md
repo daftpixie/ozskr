@@ -320,7 +320,7 @@ Would love feedback on the agent creation flow and content quality. What persona
 - Fallback: Admin dashboard to delete content + ban users
 
 **Scenario: Security vulnerability reported publicly**
-- Pre-launch: Set up security@ozskr.ai email alias
+- Pre-launch: Set up security alias (matthew@vt-infinite.com)
 - Launch day: Monitor GitHub Security tab + Discord
 - Response plan: Acknowledge within 1 hour, fix within 24 hours, postmortem within 48 hours
 

@@ -219,7 +219,7 @@ If you are a California resident:
 
 **Right to Opt-Out:** You can opt out of non-essential cookies through your browser settings (see Section 6).
 
-**Right to Delete:** You can request deletion of data stored in cookies and Local Storage by contacting privacy@ozskr.ai. Note that deleting authentication cookies will log you out.
+**Right to Delete:** You can request deletion of data stored in cookies and Local Storage by contacting matthew@vt-infinite.com. Note that deleting authentication cookies will log you out.
 
 ### 7.3 No Consent Required for Essential Cookies
 
@@ -308,7 +308,7 @@ Your continued use of the Platform after changes become effective constitutes ac
 
 If you have questions, concerns, or requests regarding this Cookie & Local Storage Policy, please contact us at:
 
-**Email:** privacy@ozskr.ai
+**Email:** matthew@vt-infinite.com
 
 **Address:** [TO BE SET]
 
