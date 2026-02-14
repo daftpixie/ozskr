@@ -16,16 +16,27 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   let lineIndex = 0;
 
   const parseInlineMarkdown = (text: string): React.ReactNode => {
-    // Parse links: [text](url)
-    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-solana-purple hover:text-solana-green underline transition-colors">$1</a>');
-    // Parse bold: **text**
-    text = text.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
-    // Parse italic: *text*
-    text = text.replace(/\*([^*]+)\*/g, '<em class="italic">$1</em>');
-    // Parse inline code: `text`
-    text = text.replace(/`([^`]+)`/g, '<code class="rounded bg-white/5 px-1.5 py-0.5 font-mono text-sm text-solana-green">$1</code>');
+    // SECURITY: Escape angle brackets first to prevent script/tag injection.
+    // This must happen before markdown-to-HTML conversion so only our
+    // controlled tags (a, strong, em, code) appear in the output.
+    let safe = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-    return <span dangerouslySetInnerHTML={{ __html: text }} />;
+    // Parse links: [text](url) — validate URL protocol to block javascript: URIs
+    safe = safe.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, linkText: string, url: string) => {
+      const trimmedUrl = url.trim();
+      const safeUrl = /^https?:\/\//i.test(trimmedUrl) || trimmedUrl.startsWith('/') || trimmedUrl.startsWith('#')
+        ? trimmedUrl.replace(/"/g, '&quot;')
+        : '#';
+      return `<a href="${safeUrl}" class="text-solana-purple hover:text-solana-green underline transition-colors" rel="noopener noreferrer">${linkText}</a>`;
+    });
+    // Parse bold: **text**
+    safe = safe.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
+    // Parse italic: *text*
+    safe = safe.replace(/\*([^*]+)\*/g, '<em class="italic">$1</em>');
+    // Parse inline code: `text`
+    safe = safe.replace(/`([^`]+)`/g, '<code class="rounded bg-white/5 px-1.5 py-0.5 font-mono text-sm text-solana-green">$1</code>');
+
+    return <span dangerouslySetInnerHTML={{ __html: safe }} />;
   };
 
   while (lineIndex < lines.length) {
