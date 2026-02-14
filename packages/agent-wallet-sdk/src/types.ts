@@ -1,4 +1,4 @@
-import type { Address, TransactionSigner } from '@solana/kit';
+import type { Address, KeyPairSigner, TransactionSigner } from '@solana/kit';
 
 // ---------------------------------------------------------------------------
 // Delegation Configuration
@@ -132,6 +132,11 @@ export enum DelegationErrorCode {
   BUDGET_EXCEEDED = 'BUDGET_EXCEEDED',
   INVALID_AMOUNT = 'INVALID_AMOUNT',
   INVALID_DECIMALS = 'INVALID_DECIMALS',
+  KEYPAIR_EXISTS = 'KEYPAIR_EXISTS',
+  KEYPAIR_NOT_FOUND = 'KEYPAIR_NOT_FOUND',
+  DECRYPTION_FAILED = 'DECRYPTION_FAILED',
+  INVALID_PERMISSIONS = 'INVALID_PERMISSIONS',
+  INVALID_KEYPAIR_FORMAT = 'INVALID_KEYPAIR_FORMAT',
 }
 
 /** Structured error class for delegation operations. */
@@ -143,4 +148,58 @@ export class DelegationError extends Error {
     this.name = 'DelegationError';
     this.code = code;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Keypair Management
+// ---------------------------------------------------------------------------
+
+/** Parameters for scrypt key derivation. */
+export interface ScryptParams {
+  /** CPU/memory cost parameter. Must be a power of 2. */
+  N: number;
+  /** Block size parameter. */
+  r: number;
+  /** Parallelization parameter. */
+  p: number;
+  /** Derived key length in bytes. */
+  keyLen: number;
+}
+
+/** Production scrypt parameters (N=2^20, ~1s derivation). */
+export const SCRYPT_PARAMS_PRODUCTION: ScryptParams = {
+  N: 2 ** 20,
+  r: 8,
+  p: 1,
+  keyLen: 32,
+};
+
+/** Fast scrypt parameters for tests (N=2^14, ~64x faster). */
+export const SCRYPT_PARAMS_FAST: ScryptParams = {
+  N: 2 ** 14,
+  r: 8,
+  p: 1,
+  keyLen: 32,
+};
+
+/** JSON-serializable encrypted keypair file format. */
+export interface EncryptedKeypairFile {
+  /** File format version. */
+  version: 1;
+  /** Base64-encoded scrypt salt (32 bytes). */
+  salt: string;
+  /** Base64-encoded AES-GCM initialization vector (12 bytes). */
+  iv: string;
+  /** Base64-encoded encrypted keypair ciphertext. */
+  ciphertext: string;
+  /** Base64-encoded AES-GCM authentication tag (16 bytes). */
+  authTag: string;
+}
+
+/** Result of generating a new agent keypair. */
+export interface KeypairGenerationResult {
+  /** The KeyPairSigner for signing transactions. */
+  signer: KeyPairSigner;
+  /** Raw 64-byte keypair (32-byte secret + 32-byte public). Must be zeroed after use. */
+  keypairBytes: Uint8Array;
 }
