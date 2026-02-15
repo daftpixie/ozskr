@@ -40,9 +40,9 @@ src/
 ├── hooks/                  # React hooks (useWallet, useAgent, etc.)
 └── types/                  # Shared TypeScript types
 packages/                       # Open-source packages (MIT license)
-├── agent-wallet-sdk/           # SPL delegation primitives
-├── x402-solana-mcp/            # MCP server for x402 payments
-└── x402-facilitator/           # Governance-aware x402 payment settlement
+├── agent-wallet-sdk/           # SPL delegation, KeyManager interface, USDC validation
+├── x402-solana-mcp/            # MCP server for x402 payments (V1+V2 headers)
+└── x402-facilitator/           # Governance-aware settlement (OFAC, circuit breaker, delegation)
 ```
 
 ## Deployment
@@ -202,6 +202,9 @@ const pk = new PublicKey('...');
 - Facilitator: circuit breaker on consecutive settlement failures (5 failures → 60s cooldown)
 - Facilitator: delegation governance checks before every transfer (cap, expiry, revocation status)
 - Facilitator: audit log for every settlement attempt (success and failure, with tx signature)
+- Facilitator: ScreeningProvider interface for pluggable OFAC screening (static SDN baseline, Chainalysis for production)
+- Token validation: always use `validateTokenMint()` to prevent spoofed USDC mint attacks
+- KeyManager: production deployments MUST use a production-grade provider (Turnkey, Privy) — never use encrypted-json in production
 
 ## AI Compliance — CRITICAL
 
@@ -294,11 +297,12 @@ All agents MUST follow this language guide when generating content mentioning $H
   - [x] 7.M.3: @ozskr/x402-solana-mcp v0.2.0-beta (8 MCP tools, x402 payment flow)
   - [x] 7.M.4: Documentation, testing, npm publication
   - [ ] 7.M.5: MCP directory submissions, ecosystem announcements
-  - [ ] 7.M.6: @ozskr/x402-facilitator (governance-aware settlement service)
-  - [ ] 7.M.7: Facilitator devnet integration testing
-  - [ ] 7.M.8: Facilitator documentation + npm publication
+  - [x] 7.M.6: @ozskr/x402-facilitator v0.1.0-beta (governance-aware settlement, 128 tests)
+  - [x] 7.M.7: Facilitator devnet integration testing (9 devnet tests passing)
+  - [x] 7.M.8: Facilitator documentation + npm publication prep (npm token refresh needed)
+  - [x] 7.M.9: Mainnet readiness hardening (KeyManager, ScreeningProvider, V2 headers, USDC validation)
 - [ ] Phase 8: Agentic Commerce Layer (activation-gated: 100+ users, attorney sign-off, x402 recovery)
 - [ ] Phase 9: Agent Marketplace (activation-gated: Phase 8 stable 3+ months, 500+ agents)
 - [ ] Deferred: Auto-Stake Smart Contract (pending security audit budget $15-30K)
 
-Phase 6 engineering complete. Phase 7 Sprints 1-3 complete. 659 tests across 63 files. SDK v0.1.2-beta + MCP v0.2.0-beta published. Remaining: Product Hunt launch, mainnet prep, Phase 7.M facilitator build.
+Phase 6 engineering complete. Phase 7 Sprints 1-3 complete. 292 tests across 3 packages (76 SDK + 88 MCP + 128 facilitator) + 659 app tests. SDK v0.1.2-beta + MCP v0.2.0-beta published. Facilitator v0.1.0-beta ready (npm token refresh needed). Remaining: Product Hunt launch, mainnet prep, MCP directory submissions.
