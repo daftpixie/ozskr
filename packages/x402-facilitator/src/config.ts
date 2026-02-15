@@ -1,6 +1,38 @@
 import { z } from 'zod';
 
 // ---------------------------------------------------------------------------
+// Circuit Breaker Schema
+// ---------------------------------------------------------------------------
+
+export const CircuitBreakerSchema = z.object({
+  maxSettlementsPerHour: z
+    .number().int().positive().default(100)
+    .describe('Max settlements per agent per hour'),
+
+  maxSettlementsPerDay: z
+    .number().int().positive().default(500)
+    .describe('Max settlements per agent per day'),
+
+  maxValuePerHourBaseUnits: z
+    .string().default('10000000')
+    .describe('Max settled value per agent per hour in base units (default 10 USDC)'),
+
+  maxSameRecipientPerMinute: z
+    .number().int().positive().default(5)
+    .describe('Max settlements to same recipient per minute (prompt injection defense)'),
+
+  maxSameRecipientPerHour: z
+    .number().int().positive().default(20)
+    .describe('Max settlements to same recipient per hour'),
+
+  maxGlobalSettlementsPerMinute: z
+    .number().int().positive().default(30)
+    .describe('Max settlements globally per minute'),
+});
+
+export type CircuitBreakerConfig = z.infer<typeof CircuitBreakerSchema>;
+
+// ---------------------------------------------------------------------------
 // Governance Schema
 // ---------------------------------------------------------------------------
 
@@ -26,6 +58,64 @@ export const GovernanceSchema = z.object({
     .positive()
     .default(60)
     .describe('Maximum settlements per minute'),
+
+  // Day 5: On-chain governance feature flags
+  delegationCheckEnabled: z
+    .boolean()
+    .default(false)
+    .describe('Enable on-chain delegation validation'),
+
+  budgetEnforceEnabled: z
+    .boolean()
+    .default(false)
+    .describe('Enable cumulative budget enforcement'),
+
+  // Day 6: Compliance + adversarial defense
+  ofacEnabled: z
+    .boolean()
+    .default(false)
+    .describe('Enable OFAC SDN screening'),
+
+  ofacFailClosed: z
+    .boolean()
+    .default(true)
+    .describe('If OFAC service unavailable: true = block, false = allow with warning'),
+
+  ofacBlocklistPath: z
+    .string()
+    .optional()
+    .describe('Path to OFAC blocklist JSON file'),
+
+  circuitBreakerEnabled: z
+    .boolean()
+    .default(false)
+    .describe('Enable circuit breaker with velocity tracking'),
+
+  circuitBreaker: CircuitBreakerSchema.default({}),
+
+  blockhashValidationEnabled: z
+    .boolean()
+    .default(false)
+    .describe('Enable blockhash freshness validation before settlement'),
+
+  blockhashMaxAgeSeconds: z
+    .number()
+    .int()
+    .positive()
+    .default(60)
+    .describe('Max blockhash age in seconds'),
+
+  // Day 7: Settlement pipeline
+  simulateBeforeSubmit: z
+    .boolean()
+    .default(false)
+    .describe('Enable simulate-before-submit for settlements'),
+
+  gasAlertThresholdSol: z
+    .number()
+    .positive()
+    .default(0.1)
+    .describe('SOL balance threshold for gas alerts'),
 });
 
 export type GovernanceConfig = z.infer<typeof GovernanceSchema>;
@@ -107,6 +197,17 @@ export function loadConfigFromEnv(): Config {
         : undefined,
       rateLimitPerMinute: process.env.RATE_LIMIT_PER_MINUTE
         ? parseInt(process.env.RATE_LIMIT_PER_MINUTE, 10)
+        : undefined,
+      delegationCheckEnabled: process.env.DELEGATION_CHECK_ENABLED === 'true' || undefined,
+      budgetEnforceEnabled: process.env.BUDGET_ENFORCE_ENABLED === 'true' || undefined,
+      ofacEnabled: process.env.OFAC_ENABLED === 'true' || undefined,
+      ofacFailClosed: process.env.OFAC_FAIL_CLOSED !== 'false' || undefined,
+      ofacBlocklistPath: process.env.OFAC_BLOCKLIST_PATH || undefined,
+      circuitBreakerEnabled: process.env.CIRCUIT_BREAKER_ENABLED === 'true' || undefined,
+      blockhashValidationEnabled: process.env.BLOCKHASH_VALIDATION_ENABLED === 'true' || undefined,
+      simulateBeforeSubmit: process.env.SIMULATE_BEFORE_SUBMIT === 'true' || undefined,
+      gasAlertThresholdSol: process.env.GAS_ALERT_THRESHOLD_SOL
+        ? parseFloat(process.env.GAS_ALERT_THRESHOLD_SOL)
         : undefined,
     },
   });
