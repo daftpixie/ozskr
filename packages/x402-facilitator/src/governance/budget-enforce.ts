@@ -31,6 +31,12 @@ export interface BudgetEnforcer {
  * The on-chain delegatedAmount is the source of truth. If the on-chain amount
  * is lower than expected (someone transferred outside this facilitator), the
  * on-chain value takes precedence.
+ *
+ * RESTART BEHAVIOR: Cumulative spend tracking resets on process restart.
+ * This does NOT create a spending authority gap — the on-chain delegatedAmount
+ * is always checked before settlement. Worst case after restart: a payment
+ * that the local tracker would have blocked passes the facilitator check,
+ * but the on-chain delegation enforcement catches it at execution time.
  */
 export function createBudgetEnforcer(): BudgetEnforcer {
   const spentMap = new Map<string, bigint>();

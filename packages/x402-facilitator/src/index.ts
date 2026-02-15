@@ -30,3 +30,6 @@ export { validateBlockhashFreshness, type BlockhashValidationResult, type Blockh
 export { simulateAndVerify, parseTransferInstructions, type SimulationResult, type SimulationRequirements, type SimulationRpc } from './settlement/simulate.js';
 export { GasManager, type GasManagerStatus, type GasRpc } from './settlement/gas-manager.js';
 export { ConsoleAuditLogger, InMemoryAuditLogger, type AuditLogger, type AuditLogEntry } from './audit/logger.js';
+
+// Request schemas
+export { VerifyRequestSchema, SettleRequestSchema, type VerifyRequest, type SettleRequest } from './schemas.js';

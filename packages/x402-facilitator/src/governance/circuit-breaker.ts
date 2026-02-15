@@ -35,6 +35,12 @@ export interface CircuitBreaker {
  * 1. Per-agent settlement count and value per hour/day
  * 2. Per-recipient settlements per minute/hour (prompt injection defense)
  * 3. Global settlement rate per minute
+ *
+ * RESTART BEHAVIOR: All sliding window records reset on process restart.
+ * This temporarily allows bursts that would normally trip the breaker.
+ * Acceptable for single-instance: velocity limits recover within one
+ * window period (1 minute for per-minute, 1 hour for per-hour limits).
+ * For multi-instance, use Redis-backed counters.
  */
 export function createCircuitBreaker(config: CircuitBreakerConfig): CircuitBreaker {
   const records: SettlementRecord[] = [];

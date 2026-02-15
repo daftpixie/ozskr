@@ -22,7 +22,11 @@ export interface ReplayGuard {
  * Signatures are stored with an expiry timestamp. Periodic eviction
  * runs on a configurable interval (default 60s) to clean up expired entries.
  *
- * Note: State is lost on server restart. Document this for operators.
+ * RESTART BEHAVIOR: State resets on process restart. This creates a brief
+ * window where replays of recently-settled transactions could pass the guard.
+ * However, on-chain nonce/blockhash mismatch will still reject the replay at
+ * the RPC level, so no funds are at risk. For multi-instance deployments,
+ * replace with a Redis-backed implementation sharing the same key space.
  *
  * @param evictIntervalMs - Eviction interval in milliseconds (default 60000)
  */
