@@ -42,6 +42,15 @@ The facilitator enforces 8 governance hooks before co-signing any transaction:
 
 All hooks are configurable via environment variables (disabled by default for devnet).
 
+### OFAC Screening
+
+This package includes a baseline OFAC/SDN screening implementation using a static
+blocklist. Production operators SHOULD supplement this with a real-time blockchain
+analytics service (Chainalysis, Elliptic, or TRM Labs) by implementing the
+`ScreeningProvider` interface. The static list is refreshed weekly but may not
+reflect the most recent OFAC additions. OFAC operates under strict liability —
+consult legal counsel for your compliance obligations.
+
 ## Configuration
 
 Create a `.env` file in your facilitator directory:
@@ -356,6 +365,19 @@ Before deploying to mainnet:
 - [ ] Set up centralized logging for audit trail
 - [ ] Consider Redis upgrade for multi-instance deployment
 - [ ] Run security audit on facilitator deployment
+
+## Legal & Compliance
+
+This software is provided "as-is" without warranty. Operators are responsible for:
+
+- **OFAC compliance**: The included SDN screening uses a static blocklist that may not reflect the most recent OFAC additions. OFAC operates under strict liability — supplement with a real-time screening service (Chainalysis, Elliptic, or TRM Labs) for production use. Consult legal counsel for your specific compliance obligations.
+- **Money transmission**: Operating a payment facilitator may constitute money transmission depending on jurisdiction — consult legal counsel before deploying
+- **Settlement finality**: All transactions on Solana mainnet-beta are irreversible — enable all governance hooks before mainnet deployment
+- **Key management**: The facilitator keypair (fee payer) must be secured appropriately — use encrypted storage with strong passphrases, restrict file permissions to 0600, and never commit keypair files to version control
+- **Audit retention**: The built-in audit logger uses in-memory storage — implement persistent audit logging (Supabase, S3) for compliance retention requirements
+- **Data protection**: Transaction logs may contain personal data (addresses linked to identities) — comply with applicable data protection regulations
+
+This package does NOT provide legal, financial, or compliance advice. Consult qualified legal counsel before deploying in production.
 
 ## License
 

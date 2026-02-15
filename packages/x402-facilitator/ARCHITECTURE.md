@@ -68,7 +68,9 @@ Current implementation uses a hardcoded blocklist of sanctioned Solana addresses
 
 Screens both sender and recipient addresses. Returns `OFACScreeningResult` with list match details if blocked.
 
-Production upgrade path: Integrate Chainalysis API for real-time sanctions screening with regulatory compliance guarantees.
+**ScreeningProvider Interface:** The module exposes a `ScreeningProvider` interface that enables integration with third-party blockchain analytics services. Production operators can implement this interface to connect Chainalysis, Elliptic, or TRM Labs APIs for real-time sanctions screening with regulatory compliance guarantees. The default implementation (`StaticSdnScreener`) uses a local JSON blocklist and implements this interface, providing a baseline for devnet/testing while establishing the contract for production upgrades.
+
+Production upgrade path: Implement `ScreeningProvider` interface with a real-time API client (Chainalysis, Elliptic, or TRM Labs) for automatic OFAC list updates and risk scoring.
 
 ### governance/circuit-breaker.ts
 
