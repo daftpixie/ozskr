@@ -165,6 +165,13 @@ export interface Character {
   last_generated_at: string | null;
   created_at: string;
   updated_at: string;
+  agent_pubkey: string | null;
+  delegation_status: 'none' | 'pending' | 'active' | 'revoked';
+  delegation_amount: string | null;
+  delegation_remaining: string | null;
+  delegation_token_mint: string | null;
+  delegation_token_account: string | null;
+  delegation_tx_signature: string | null;
 }
 
 export interface AgentRun {
@@ -380,6 +387,19 @@ export interface TwitterToken {
   twitter_user_id: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface AgentTransaction {
+  id: string;
+  character_id: string;
+  tx_signature: string;
+  amount: string;
+  token_mint: string;
+  recipient: string;
+  url: string | null;
+  method: string;
+  status: string;
+  created_at: string;
 }
 
 // =============================================================================

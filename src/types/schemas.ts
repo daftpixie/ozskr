@@ -190,6 +190,13 @@ export const CharacterResponseSchema = z.object({
   lastGeneratedAt: TimestampSchema.nullable(),
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema,
+  agentPubkey: z.string().nullable(),
+  delegationStatus: z.enum(['none', 'pending', 'active', 'revoked']),
+  delegationAmount: z.string().nullable(),
+  delegationRemaining: z.string().nullable(),
+  delegationTokenMint: z.string().nullable(),
+  delegationTokenAccount: z.string().nullable(),
+  delegationTxSignature: z.string().nullable(),
 });
 
 export type CharacterResponse = z.infer<typeof CharacterResponseSchema>;

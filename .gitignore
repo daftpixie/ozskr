@@ -30,6 +30,9 @@ supabase/.temp/
 !.vscode/*.json
 ~/.config/solana/
 
+# Agent keypairs — NEVER commit these (encrypted at rest, server-side only)
+.agent-keys/
+
 # IDE
 .vscode/
 .idea/

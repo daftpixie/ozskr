@@ -48,7 +48,7 @@ health.get('/ready', async (c: Context) => {
     }
     const supabase = createSupabaseServerClient(serviceRoleKey);
     // Simple query to verify connectivity
-    const { error } = await supabase.from('users').select('id').limit(1);
+    const { error } = await supabase.from('users').select('wallet_address').limit(1);
     if (error) throw error;
     checks.supabase = {
       status: 'ok',
