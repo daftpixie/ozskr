@@ -84,8 +84,8 @@ export async function makeX402Request(
       return { paymentRequired: false, response };
     }
 
-    // Parse 402 response — try V2 header first, then V1 fallback
-    const requirements = parsePaymentRequiredResponse(response);
+    // Parse 402 response — try body first, then V2 header, then V1 header fallback
+    const requirements = await parsePaymentRequiredResponse(response);
     return {
       paymentRequired: true,
       requirements,
@@ -161,9 +161,24 @@ export async function retryWithPayment(
 
 /**
  * Parses payment requirements from a 402 response.
- * Tries V2 header first (X-Payment-Required), then V1 fallback (X-PAYMENT-* headers).
+ *
+ * Parsing order:
+ *   1. Response body JSON (standard x402 format — most servers use this)
+ *   2. V2 header (X-Payment-Required, base64 JSON)
+ *   3. V1 headers (individual X-Payment-* headers)
  */
-function parsePaymentRequiredResponse(response: Response): ParsedPaymentRequirement[] {
+async function parsePaymentRequiredResponse(response: Response): Promise<ParsedPaymentRequirement[]> {
+  // Try body first: standard x402 JSON body (most common format)
+  try {
+    const body = await response.json();
+    if (body && typeof body === 'object' && body.x402Version && body.accepts) {
+      const reqs = extractRequirements(body);
+      if (reqs.length > 0) return reqs;
+    }
+  } catch {
+    // Body not JSON — fall through to header parsing
+  }
+
   // Try V2: single base64-encoded JSON header
   const v2Header = response.headers.get('X-Payment-Required');
   if (v2Header) {
@@ -203,8 +218,6 @@ function parsePaymentRequiredResponse(response: Response): ParsedPaymentRequirem
     return [v1Requirement];
   }
 
-  // Try parsing the response body as JSON (some servers put requirements in the body)
-  // This is a best-effort attempt — we don't consume the body since it may be needed later
   return [];
 }
 

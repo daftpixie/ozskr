@@ -19,6 +19,7 @@ import {
   DelegationError,
   DelegationErrorCode,
   SCRYPT_PARAMS_PRODUCTION,
+  SCRYPT_PARAMS_FAST,
 } from './types.js';
 
 // ---------------------------------------------------------------------------
@@ -72,7 +73,7 @@ export async function generateAgentKeypair(): Promise<KeypairGenerationResult> {
 export function encryptKeypair(
   keypairBytes: Uint8Array,
   passphrase: string,
-  params: ScryptParams = SCRYPT_PARAMS_PRODUCTION,
+  params: ScryptParams = SCRYPT_PARAMS_FAST,
 ): EncryptedKeypairFile {
   if (keypairBytes.length !== 64) {
     throw new DelegationError(
@@ -109,11 +110,12 @@ export function encryptKeypair(
   derivedKey.fill(0);
 
   return {
-    version: 1,
+    version: 2,
     salt: salt.toString('base64'),
     iv: iv.toString('base64'),
     ciphertext: encrypted.toString('base64'),
     authTag: authTag.toString('base64'),
+    scryptParams: { N: params.N, r: params.r, p: params.p, keyLen: params.keyLen },
   };
 }
 
@@ -132,24 +134,27 @@ export function encryptKeypair(
 export function decryptKeypair(
   encrypted: EncryptedKeypairFile,
   passphrase: string,
-  params: ScryptParams = SCRYPT_PARAMS_PRODUCTION,
+  params?: ScryptParams,
 ): Uint8Array {
-  if (encrypted.version !== 1) {
+  if (encrypted.version !== 1 && encrypted.version !== 2) {
     throw new DelegationError(
       DelegationErrorCode.INVALID_KEYPAIR_FORMAT,
       `Unsupported encrypted keypair version: ${encrypted.version}`,
     );
   }
 
+  // Version 2 files embed scrypt params; version 1 requires caller to provide them
+  const effectiveParams = encrypted.scryptParams ?? params ?? SCRYPT_PARAMS_PRODUCTION;
+
   const salt = Buffer.from(encrypted.salt, 'base64');
   const iv = Buffer.from(encrypted.iv, 'base64');
   const ciphertext = Buffer.from(encrypted.ciphertext, 'base64');
   const authTag = Buffer.from(encrypted.authTag, 'base64');
 
-  const derivedKey = scryptSync(passphrase, salt, params.keyLen, {
-    N: params.N,
-    r: params.r,
-    p: params.p,
+  const derivedKey = scryptSync(passphrase, salt, effectiveParams.keyLen, {
+    N: effectiveParams.N,
+    r: effectiveParams.r,
+    p: effectiveParams.p,
   });
 
   try {
@@ -188,7 +193,7 @@ export async function storeEncryptedKeypair(
   passphrase: string,
   outputPath: string,
   force = false,
-  params: ScryptParams = SCRYPT_PARAMS_PRODUCTION,
+  params: ScryptParams = SCRYPT_PARAMS_FAST,
 ): Promise<void> {
   // Check if file already exists
   if (!force) {
@@ -224,7 +229,7 @@ export async function storeEncryptedKeypair(
 export async function loadEncryptedKeypair(
   filePath: string,
   passphrase: string,
-  params: ScryptParams = SCRYPT_PARAMS_PRODUCTION,
+  params?: ScryptParams,
 ): Promise<KeyPairSigner> {
   // Check file exists
   let fileStat;

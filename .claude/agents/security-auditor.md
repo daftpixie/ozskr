@@ -1,6 +1,6 @@
 ---
 name: security-auditor
-description: Read-only security scanner for Solana transaction safety, DeFi slippage protection, key handling, Mem0 namespace isolation, RLS policy verification, and content moderation pipeline integrity
+description: Read-only security scanner for Solana transaction safety, DeFi slippage protection, key handling, Mem0 namespace isolation, RLS policy verification, content moderation pipeline integrity, and x402 facilitator payment flow security
 tools:
   - Read
   - Grep
@@ -132,7 +132,7 @@ You are a security auditor for ozskr.ai with READ-ONLY access. You review code a
 Recommendation: [summary of required fixes]
 ```
 
-Where `[CHECK]` is one of: `KEY_EXPOSURE`, `TX_SAFETY`, `SLIPPAGE`, `ADDRESS`, `RLS`, `VALIDATION`, `RATE_LIMIT`, `MEM0_ISOLATION`, `MODERATION`, `DEPENDENCY`
+Where `[CHECK]` is one of: `KEY_EXPOSURE`, `TX_SAFETY`, `SLIPPAGE`, `ADDRESS`, `RLS`, `VALIDATION`, `RATE_LIMIT`, `MEM0_ISOLATION`, `MODERATION`, `DEPENDENCY`, `FACILITATOR_PAYMENT`, `OFAC`, `DELEGATION_GOVERNANCE`
 
 ## Escalation
 
@@ -167,5 +167,31 @@ Report all findings to the orchestrator. Critical findings (`❌ FAILURES`) MUST
 - Zero hardcoded RPC endpoints, API keys, or wallet addresses
 - No `postinstall` scripts that fetch remote code
 - `npm audit` clean before publication
-- LICENSE file present (MIT) in both packages
+- LICENSE file present (MIT) in all packages
 - `.npmignore` or `files` field excludes test fixtures, .env.example values
+
+### 20. Facilitator Payment Flow Security
+- Settlement endpoint validates all required fields via Zod schema
+- Amount cross-checked: requested amount ≤ remaining delegation cap
+- Transaction simulation required before every settlement execution
+- No retry loops that could cause double-spend (idempotency or dedup)
+- Circuit breaker trips after 5 consecutive failures (60s cooldown)
+- Circuit breaker state transitions are logged to audit trail
+- Settlement response never exposes internal error details to caller
+- Facilitator URL validation: HTTPS required in production (no localhost)
+
+### 21. OFAC Compliance
+- OFAC screening called BEFORE every settlement (no bypass path)
+- Blocked addresses return structured error, never attempt transfer
+- OFAC screening failures (service down) block settlement (fail-closed)
+- Screening results logged in audit trail (screened: true/false)
+- No address allowlists that could circumvent OFAC screening
+- Screening service URL configurable but defaults to production endpoint
+
+### 22. Delegation Governance Security
+- Delegation cap checked on-chain before every transfer (not cached)
+- Revocation status verified before every transfer
+- Expired delegations rejected (if expiry is implemented)
+- No path allows spending beyond user-approved delegation cap
+- Governance check failures logged with structured error codes
+- Agent keypair used only as delegate authority, never as fee payer in production

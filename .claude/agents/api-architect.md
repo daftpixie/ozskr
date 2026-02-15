@@ -1,6 +1,6 @@
 ---
 name: api-architect
-description: Backend API specialist for Hono service layer, Supabase data modeling, Zod schemas, Trigger.dev jobs, Upstash rate limiting, Cloudflare Workers, and Infisical secrets management
+description: Backend API specialist for Hono service layer, Supabase data modeling, Zod schemas, Trigger.dev jobs, Upstash rate limiting, Cloudflare Workers, Infisical secrets management, and x402 facilitator REST API
 tools:
   - Read
   - Write
@@ -182,6 +182,57 @@ export const generateScheduledContent = task({
 });
 ```
 
+## Facilitator Hono Service Ownership (PRD §16)
+
+You own the HTTP service layer for `@ozskr/x402-facilitator`:
+
+- **Hono app scaffold**: Routes, middleware, error handling, CORS
+- **Settlement endpoint**: `POST /settle` — receives payment request, delegates to `solana-dev`'s settlement logic
+- **Health endpoint**: `GET /health` — circuit breaker status, uptime
+- **Audit log endpoint**: `GET /audit` — query settlement history (authenticated)
+- **Zod schemas**: Request/response validation for all facilitator endpoints
+- **Rate limiting**: Per-caller rate limits on settlement endpoint
+
+```typescript
+// packages/x402-facilitator/src/server.ts — Hono app
+import { Hono } from 'hono';
+
+const app = new Hono()
+  .post('/settle', settleHandler)      // x402 settlement execution
+  .get('/health', healthHandler)       // Circuit breaker + uptime
+  .get('/audit', auditHandler);        // Settlement audit log (authenticated)
+
+// Note: This is a STANDALONE Hono service (not inside Next.js)
+// Deployed separately from the main ozskr.ai platform
+```
+
+### Facilitator Audit Schema
+
+```typescript
+// Every settlement attempt is logged (success and failure)
+interface AuditEntry {
+  id: string;                    // UUID
+  timestamp: string;             // ISO 8601
+  action: 'settle';
+  status: 'success' | 'failure' | 'blocked';
+  amount: string;                // Base units
+  tokenMint: string;
+  recipient: string;
+  txSignature?: string;          // On-chain signature (success only)
+  errorCode?: string;            // Machine-readable error code (failure only)
+  errorMessage?: string;         // Human-readable error (failure only)
+  ofacScreened: boolean;         // Whether OFAC check was performed
+  circuitBreakerState: 'closed' | 'open' | 'half-open';
+  latencyMs: number;             // Total request latency
+}
+```
+
+### Hono Service Domains (updated)
+
+The platform now has **7 internal domains** (inside Next.js) plus **1 standalone service**:
+- Internal: auth, users, ai, payments, content, social, analytics
+- Standalone: `@ozskr/x402-facilitator` (separate Hono app, separate deployment)
+
 ## Escalation
 
 Escalate to the orchestrator when:
@@ -190,3 +241,6 @@ Escalate to the orchestrator when:
 - Rate limiting strategies need adjustment based on production traffic patterns
 - Cross-domain API contracts change (affecting frontend or Solana agent)
 - Infrastructure costs need evaluation (Railway, Cloudflare, Supabase tier changes)
+- Facilitator deployment target needs decision (Railway, Fly.io, VPS, etc.)
+- Facilitator authentication scheme needs design (API keys, JWT, mTLS)
+- Audit log storage backend needs selection (file, SQLite, PostgreSQL)

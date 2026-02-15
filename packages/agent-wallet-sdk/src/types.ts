@@ -184,8 +184,8 @@ export const SCRYPT_PARAMS_FAST: ScryptParams = {
 
 /** JSON-serializable encrypted keypair file format. */
 export interface EncryptedKeypairFile {
-  /** File format version. */
-  version: 1;
+  /** File format version (1 = no stored params, 2 = params stored). */
+  version: 1 | 2;
   /** Base64-encoded scrypt salt (32 bytes). */
   salt: string;
   /** Base64-encoded AES-GCM initialization vector (12 bytes). */
@@ -194,6 +194,13 @@ export interface EncryptedKeypairFile {
   ciphertext: string;
   /** Base64-encoded AES-GCM authentication tag (16 bytes). */
   authTag: string;
+  /** Scrypt parameters used for key derivation (version 2+). */
+  scryptParams?: {
+    N: number;
+    r: number;
+    p: number;
+    keyLen: number;
+  };
 }
 
 /** Result of generating a new agent keypair. */

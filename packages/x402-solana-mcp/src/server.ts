@@ -8,7 +8,10 @@ import {
   checkDelegation,
   createBudgetTracker,
   DelegationError,
+  SCRYPT_PARAMS_FAST,
+  SCRYPT_PARAMS_PRODUCTION,
   type BudgetTracker,
+  type ScryptParams,
 } from '@ozskr/agent-wallet-sdk';
 import {
   SOLANA_DEVNET_CAIP2,
@@ -82,13 +85,18 @@ function successResult(data: Record<string, unknown>) {
 export function createServer(config: Config): McpServer {
   const server = new McpServer({
     name: 'x402-solana-mcp',
-    version: '0.1.1-beta',
+    version: '0.2.0-beta',
   });
 
   // Closure-scoped state persists across tool calls within a session
   let cachedSigner: KeyPairSigner | null = null;
   // Budget tracker is initialized on the first x402_pay call using the delegation's spending cap
   let budgetTracker: BudgetTracker | null = null;
+
+  // Scrypt params for keypair operations (used as fallback for v1 files; v2 files auto-detect)
+  const scryptParams: ScryptParams = config.scryptMode === 'production'
+    ? SCRYPT_PARAMS_PRODUCTION
+    : SCRYPT_PARAMS_FAST;
 
   const networkCaip2 = config.solanaNetwork === 'mainnet-beta'
     ? SOLANA_MAINNET_CAIP2
@@ -120,7 +128,7 @@ export function createServer(config: Config): McpServer {
         const savePath = outputPath ?? config.agentKeypairPath;
 
         try {
-          await storeEncryptedKeypair(keypairBytes, passphrase, savePath, force);
+          await storeEncryptedKeypair(keypairBytes, passphrase, savePath, force, scryptParams);
         } finally {
           keypairBytes.fill(0);
         }
@@ -217,7 +225,7 @@ export function createServer(config: Config): McpServer {
       try {
         // Step 1: Ensure signer is loaded
         if (!cachedSigner) {
-          cachedSigner = await loadEncryptedKeypair(config.agentKeypairPath, passphrase);
+          cachedSigner = await loadEncryptedKeypair(config.agentKeypairPath, passphrase, scryptParams);
         }
 
         // Step 1b: Initialize budget tracker from delegation if not yet active
@@ -285,14 +293,14 @@ export function createServer(config: Config): McpServer {
         // The facilitator handles transaction building, simulation, and submission
         const paymentPayload = {
           x402Version: req.version,
-          accepted: req.version === 2 ? {
+          accepted: {
             scheme: req.scheme,
             network: req.network,
             amount: req.amount,
             asset: req.asset,
             payTo: req.payTo,
             maxTimeoutSeconds: req.maxTimeoutSeconds,
-          } : undefined,
+          },
           payload: {
             // For the "exact" scheme, the facilitator expects the payer's address
             // The actual transaction is built and signed by the facilitator
@@ -313,7 +321,10 @@ export function createServer(config: Config): McpServer {
           return errorResult('SETTLEMENT_FAILED', settlement.errorMessage ?? 'Facilitator rejected payment');
         }
 
-        // Step 7b: Verify on-chain that payment went to expected recipient
+        // Step 7b: Post-settlement verification (non-fatal — funds are already committed)
+        // If verification fails, we still proceed with content fetch but include a warning.
+        // Blocking on verification failure would cause fund loss (paid but no content).
+        let verificationWarning: string | undefined;
         if (settlement.transactionSignature) {
           try {
             const rpc = createSolanaRpc(config.solanaRpcUrl);
@@ -324,25 +335,24 @@ export function createServer(config: Config): McpServer {
 
             if (txResponse) {
               // Verify the expected recipient appears in the transaction's account keys
+              // jsonParsed encoding returns objects with {pubkey, signer, ...}, not strings
               const accountKeys = txResponse.transaction.message.accountKeys ?? [];
               const recipientFound = accountKeys.some(
-                (key: { toString(): string }) => key.toString() === req.payTo,
+                (key: unknown) => {
+                  const pubkey = typeof key === 'string' ? key : (key as Record<string, unknown>)?.pubkey;
+                  return pubkey === req.payTo;
+                },
               );
               if (!recipientFound) {
-                return errorResult(
-                  'RECIPIENT_MISMATCH',
-                  `On-chain transaction ${settlement.transactionSignature} does not include expected recipient ${req.payTo}. Facilitator may have redirected funds. Payment proof NOT sent to resource server.`,
-                );
+                verificationWarning = `On-chain transaction ${settlement.transactionSignature} may not include expected recipient ${req.payTo}. Proceeding with content fetch — verify transaction on explorer.`;
               }
             }
-            // If txResponse is null, the tx may not have propagated yet — proceed with caution
           } catch {
-            // Verification failure is non-fatal: the facilitator already settled.
-            // Log the issue but allow the retry to proceed.
+            // Verification query failed — non-fatal, proceed with content fetch
           }
         }
 
-        // Step 8: Retry the original request with payment proof
+        // Step 8: Always retry with payment proof (funds are committed regardless)
         const paidResult = await retryWithPayment(url, paymentPayload, { method, headers, body });
         const responseContent = await paidResult.response.text();
 
@@ -372,6 +382,7 @@ export function createServer(config: Config): McpServer {
           network: req.network,
           facilitator: settlement.facilitator,
           httpStatus: paidResult.response.status,
+          ...(verificationWarning ? { warning: verificationWarning } : {}),
         });
       } catch (error) {
         if (error instanceof DelegationError) {
