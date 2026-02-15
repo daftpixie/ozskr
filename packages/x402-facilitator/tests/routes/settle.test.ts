@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import type { FacilitatorApp } from '../../src/server.js';
 
 const { mockSettle, mockX402Facilitator } = vi.hoisted(() => {
   const mockSettle = vi.fn();
@@ -31,6 +32,13 @@ vi.mock('@x402/svm', () => ({
 
 vi.mock('@x402/svm/exact/facilitator', () => ({
   registerExactSvmScheme: vi.fn(),
+}));
+
+vi.mock('@solana/kit', () => ({
+  createSolanaRpc: vi.fn().mockReturnValue({
+    getAccountInfo: vi.fn().mockReturnValue({ send: vi.fn().mockResolvedValue({ value: null }) }),
+    getBalance: vi.fn().mockReturnValue({ send: vi.fn().mockResolvedValue({ value: 1000000000n }) }),
+  }),
 }));
 
 import { createFacilitatorApp } from '../../src/server.js';
@@ -71,10 +79,11 @@ const validPayload = {
 };
 
 describe('POST /settle', () => {
-  let app: ReturnType<typeof createFacilitatorApp>;
+  let appResult: FacilitatorApp | undefined;
 
   afterEach(() => {
-    app?.destroy();
+    appResult?.destroy();
+    appResult = undefined;
     mockSettle.mockReset();
   });
 
@@ -85,9 +94,9 @@ describe('POST /settle', () => {
       transaction: 'tx_sig_123',
       network: 'solana:devnet',
     });
-    app = createFacilitatorApp(testConfig, mockSigner);
+    appResult = await createFacilitatorApp(testConfig, mockSigner);
 
-    const res = await app.app.request('/settle', {
+    const res = await appResult.app.request('/settle', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validPayload),
@@ -107,9 +116,9 @@ describe('POST /settle', () => {
       transaction: '',
       network: 'solana:devnet',
     });
-    app = createFacilitatorApp(testConfig, mockSigner);
+    appResult = await createFacilitatorApp(testConfig, mockSigner);
 
-    const res = await app.app.request('/settle', {
+    const res = await appResult.app.request('/settle', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validPayload),
@@ -121,9 +130,9 @@ describe('POST /settle', () => {
   });
 
   it('returns 400 when payload is missing', async () => {
-    app = createFacilitatorApp(testConfig, mockSigner);
+    appResult = await createFacilitatorApp(testConfig, mockSigner);
 
-    const res = await app.app.request('/settle', {
+    const res = await appResult.app.request('/settle', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
@@ -131,7 +140,9 @@ describe('POST /settle', () => {
 
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toBe('INVALID_REQUEST');
+    expect(body.error).toBe('VALIDATION_ERROR');
+    expect(body.issues).toBeDefined();
+    expect(body.issues.length).toBeGreaterThan(0);
   });
 
   it('handles SettleError from facilitator', async () => {
@@ -145,9 +156,9 @@ describe('POST /settle', () => {
         network: 'solana:devnet' as `${string}:${string}`,
       }),
     );
-    app = createFacilitatorApp(testConfig, mockSigner);
+    appResult = await createFacilitatorApp(testConfig, mockSigner);
 
-    const res = await app.app.request('/settle', {
+    const res = await appResult.app.request('/settle', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validPayload),
@@ -167,9 +178,9 @@ describe('POST /settle', () => {
       transaction: '',
       network: 'solana:devnet',
     });
-    app = createFacilitatorApp(testConfig, mockSigner);
+    appResult = await createFacilitatorApp(testConfig, mockSigner);
 
-    const res = await app.app.request('/settle', {
+    const res = await appResult.app.request('/settle', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validPayload),
@@ -187,14 +198,14 @@ describe('POST /settle', () => {
         success: true, payer: 'p2', transaction: 'tx_2', network: 'solana:devnet',
       });
 
-    app = createFacilitatorApp(testConfig, mockSigner);
+    appResult = await createFacilitatorApp(testConfig, mockSigner);
 
-    const res1 = await app.app.request('/settle', {
+    const res1 = await appResult.app.request('/settle', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validPayload),
     });
-    const res2 = await app.app.request('/settle', {
+    const res2 = await appResult.app.request('/settle', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validPayload),

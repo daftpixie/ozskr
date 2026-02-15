@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import type { FacilitatorApp } from '../../src/server.js';
 
 const { mockVerify, mockX402Facilitator } = vi.hoisted(() => {
   const mockVerify = vi.fn();
@@ -31,6 +32,13 @@ vi.mock('@x402/svm', () => ({
 
 vi.mock('@x402/svm/exact/facilitator', () => ({
   registerExactSvmScheme: vi.fn(),
+}));
+
+vi.mock('@solana/kit', () => ({
+  createSolanaRpc: vi.fn().mockReturnValue({
+    getAccountInfo: vi.fn().mockReturnValue({ send: vi.fn().mockResolvedValue({ value: null }) }),
+    getBalance: vi.fn().mockReturnValue({ send: vi.fn().mockResolvedValue({ value: 1000000000n }) }),
+  }),
 }));
 
 import { createFacilitatorApp } from '../../src/server.js';
@@ -71,18 +79,19 @@ const validPayload = {
 };
 
 describe('POST /verify', () => {
-  let app: ReturnType<typeof createFacilitatorApp>;
+  let appResult: FacilitatorApp | undefined;
 
   afterEach(() => {
-    app?.destroy();
+    appResult?.destroy();
+    appResult = undefined;
     mockVerify.mockReset();
   });
 
   it('returns 200 for valid verification', async () => {
     mockVerify.mockResolvedValueOnce({ isValid: true, payer: 'some-payer' });
-    app = createFacilitatorApp(testConfig, mockSigner);
+    appResult = await createFacilitatorApp(testConfig, mockSigner);
 
-    const res = await app.app.request('/verify', {
+    const res = await appResult.app.request('/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validPayload),
@@ -99,9 +108,9 @@ describe('POST /verify', () => {
       invalidReason: 'EXPIRED',
       invalidMessage: 'Payment has expired',
     });
-    app = createFacilitatorApp(testConfig, mockSigner);
+    appResult = await createFacilitatorApp(testConfig, mockSigner);
 
-    const res = await app.app.request('/verify', {
+    const res = await appResult.app.request('/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validPayload),
@@ -113,9 +122,9 @@ describe('POST /verify', () => {
   });
 
   it('returns 400 when payload is missing', async () => {
-    app = createFacilitatorApp(testConfig, mockSigner);
+    appResult = await createFacilitatorApp(testConfig, mockSigner);
 
-    const res = await app.app.request('/verify', {
+    const res = await appResult.app.request('/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
@@ -123,7 +132,9 @@ describe('POST /verify', () => {
 
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toBe('INVALID_REQUEST');
+    expect(body.error).toBe('VALIDATION_ERROR');
+    expect(body.issues).toBeDefined();
+    expect(body.issues.length).toBeGreaterThan(0);
   });
 
   it('returns 400 for governance denial via verify result', async () => {
@@ -132,9 +143,9 @@ describe('POST /verify', () => {
       invalidReason: 'GOVERNANCE_DENIED',
       invalidMessage: 'Token not allowed',
     });
-    app = createFacilitatorApp(testConfig, mockSigner);
+    appResult = await createFacilitatorApp(testConfig, mockSigner);
 
-    const res = await app.app.request('/verify', {
+    const res = await appResult.app.request('/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validPayload),
@@ -148,9 +159,9 @@ describe('POST /verify', () => {
     mockVerify.mockRejectedValueOnce(
       new VerifyError(422, { isValid: false, invalidReason: 'MALFORMED', invalidMessage: 'Bad tx' }),
     );
-    app = createFacilitatorApp(testConfig, mockSigner);
+    appResult = await createFacilitatorApp(testConfig, mockSigner);
 
-    const res = await app.app.request('/verify', {
+    const res = await appResult.app.request('/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validPayload),

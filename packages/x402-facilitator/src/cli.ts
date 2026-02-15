@@ -23,7 +23,7 @@ async function main() {
   );
   console.log(`[facilitator] Signer loaded: ${signer.address}`);
 
-  const { app, destroy } = createFacilitatorApp(config, signer);
+  const { app, destroy } = await createFacilitatorApp(config, signer);
 
   const server = serve({
     fetch: app.fetch,

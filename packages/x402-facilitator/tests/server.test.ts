@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import type { FacilitatorApp } from '../src/server.js';
 
 const {
   mockRegisterExactSvmScheme,
   mockToFacilitatorSvmSigner,
   mockX402Facilitator,
+  mockCreateSolanaRpc,
 } = vi.hoisted(() => {
   const mockRegisterExactSvmScheme = vi.fn().mockReturnValue(undefined);
   const mockToFacilitatorSvmSigner = vi.fn().mockReturnValue({
@@ -28,7 +30,16 @@ const {
     return this;
   });
 
-  return { mockRegisterExactSvmScheme, mockToFacilitatorSvmSigner, mockX402Facilitator };
+  const mockCreateSolanaRpc = vi.fn().mockReturnValue({
+    getAccountInfo: vi.fn().mockReturnValue({
+      send: vi.fn().mockResolvedValue({ value: null }),
+    }),
+    getBalance: vi.fn().mockReturnValue({
+      send: vi.fn().mockResolvedValue({ value: 1000000000n }),
+    }),
+  });
+
+  return { mockRegisterExactSvmScheme, mockToFacilitatorSvmSigner, mockX402Facilitator, mockCreateSolanaRpc };
 });
 
 vi.mock('@x402/core/facilitator', () => ({
@@ -44,6 +55,10 @@ vi.mock('@x402/svm', () => ({
 
 vi.mock('@x402/svm/exact/facilitator', () => ({
   registerExactSvmScheme: mockRegisterExactSvmScheme,
+}));
+
+vi.mock('@solana/kit', () => ({
+  createSolanaRpc: mockCreateSolanaRpc,
 }));
 
 import { createFacilitatorApp } from '../src/server.js';
@@ -71,22 +86,23 @@ const testConfig: Config = {
 };
 
 describe('createFacilitatorApp', () => {
-  let app: ReturnType<typeof createFacilitatorApp>;
+  let appResult: FacilitatorApp | undefined;
 
   afterEach(() => {
-    app?.destroy();
+    appResult?.destroy();
+    appResult = undefined;
   });
 
-  it('creates app successfully', () => {
-    app = createFacilitatorApp(testConfig, mockSigner);
-    expect(app.app).toBeDefined();
-    expect(app.facilitator).toBeDefined();
-    expect(app.destroy).toBeInstanceOf(Function);
+  it('creates app successfully', async () => {
+    appResult = await createFacilitatorApp(testConfig, mockSigner);
+    expect(appResult.app).toBeDefined();
+    expect(appResult.facilitator).toBeDefined();
+    expect(appResult.destroy).toBeInstanceOf(Function);
   });
 
   it('health endpoint returns 200', async () => {
-    app = createFacilitatorApp(testConfig, mockSigner);
-    const res = await app.app.request('/health');
+    appResult = await createFacilitatorApp(testConfig, mockSigner);
+    const res = await appResult.app.request('/health');
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.status).toBe('ok');
@@ -97,8 +113,8 @@ describe('createFacilitatorApp', () => {
   });
 
   it('supported endpoint returns facilitator capabilities', async () => {
-    app = createFacilitatorApp(testConfig, mockSigner);
-    const res = await app.app.request('/supported');
+    appResult = await createFacilitatorApp(testConfig, mockSigner);
+    const res = await appResult.app.request('/supported');
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toHaveProperty('kinds');
@@ -106,18 +122,18 @@ describe('createFacilitatorApp', () => {
   });
 
   it('unknown routes return 404', async () => {
-    app = createFacilitatorApp(testConfig, mockSigner);
-    const res = await app.app.request('/nonexistent');
+    appResult = await createFacilitatorApp(testConfig, mockSigner);
+    const res = await appResult.app.request('/nonexistent');
     expect(res.status).toBe(404);
   });
 
-  it('destroy cleans up resources', () => {
-    app = createFacilitatorApp(testConfig, mockSigner);
-    expect(() => app.destroy()).not.toThrow();
+  it('destroy cleans up resources', async () => {
+    appResult = await createFacilitatorApp(testConfig, mockSigner);
+    expect(() => appResult!.destroy()).not.toThrow();
   });
 
-  it('registers SVM scheme with correct network', () => {
-    app = createFacilitatorApp(testConfig, mockSigner);
+  it('registers SVM scheme with correct network', async () => {
+    appResult = await createFacilitatorApp(testConfig, mockSigner);
     expect(mockRegisterExactSvmScheme).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
