@@ -298,7 +298,121 @@ Securely deletes a file by overwriting with random data before unlinking. Does n
 
 ---
 
+### Key Management (Pluggable)
+
+#### `KeyManager` Interface
+
+Pluggable key management abstraction. Use `EncryptedJsonKeyManager` for development and implement the interface with Turnkey, Privy, or Fireblocks for production.
+
+```typescript
+interface KeyManager {
+  getPublicKey(): Promise<Address>;
+  signTransaction(transactionMessage: Uint8Array): Promise<Uint8Array>;
+  signMessage(message: Uint8Array): Promise<Uint8Array>;
+  healthCheck(): Promise<{ healthy: boolean; provider: string }>;
+}
+```
+
+---
+
+#### `createKeyManager(config)`
+
+Factory function that creates a `KeyManager` instance from configuration.
+
+**Parameters:**
+- `config: KeyManagerConfig`
+  - `provider: 'encrypted-json' | 'turnkey' | 'privy' | 'custom'` - Key management provider
+  - `options: Record<string, unknown>` - Provider-specific configuration
+
+**Returns:** `KeyManager` instance
+
+**Example:**
+
+```typescript
+import { createKeyManager, SCRYPT_PARAMS_FAST } from '@ozskr/agent-wallet-sdk';
+
+const keyManager = createKeyManager({
+  provider: 'encrypted-json',
+  options: {
+    filePath: './agent-keypair.json',
+    passphrase: 'my-secure-passphrase-123',
+    scryptParams: SCRYPT_PARAMS_FAST,
+  },
+});
+
+const address = await keyManager.getPublicKey();
+const health = await keyManager.healthCheck();
+```
+
+**Production providers**: Implement the `KeyManager` interface with your preferred key management service. The SDK ships with `encrypted-json` only — production integrations (Turnkey, Privy) are left to the consumer.
+
+---
+
+#### `EncryptedJsonKeyManager`
+
+Built-in `KeyManager` implementation that wraps the existing encrypted keypair storage (scrypt KDF + AES-256-GCM).
+
+```typescript
+import { EncryptedJsonKeyManager } from '@ozskr/agent-wallet-sdk';
+
+const km = new EncryptedJsonKeyManager(
+  './agent-keypair.json',
+  'my-secure-passphrase-123',
+);
+
+const pubkey = await km.getPublicKey();
+const sig = await km.signTransaction(txBytes);
+const health = await km.healthCheck(); // { healthy: true, provider: 'encrypted-json' }
+```
+
+---
+
+### Token Validation
+
+#### `validateTokenMint(actualMint, expectedMint)`
+
+Validates that a token mint address matches the expected mint. Prevents spoofed token attacks where a fake mint is substituted for the real one.
+
+**Parameters:**
+- `actualMint: Address` - The mint address from the payment/transaction
+- `expectedMint: Address` - The known-good mint address (e.g., `USDC_MINT_MAINNET`)
+
+**Throws:** `DelegationError(INVALID_ADDRESS)` if mints don't match
+
+**Example:**
+
+```typescript
+import { validateTokenMint, USDC_MINT_MAINNET } from '@ozskr/agent-wallet-sdk';
+
+// Throws if mintFromPayment !== USDC_MINT_MAINNET
+validateTokenMint(mintFromPayment, USDC_MINT_MAINNET);
+```
+
+---
+
 ### Constants
+
+#### `USDC_MINT_MAINNET`
+
+Official USDC mint address on Solana mainnet-beta (Token Program, NOT Token-2022).
+
+```typescript
+address('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v')
+```
+
+#### `USDC_DECIMALS`
+
+USDC decimal places: `6`
+
+#### `TOKEN_PROGRAM_ID`
+
+SPL Token Program ID: `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`
+
+#### `TOKEN_2022_PROGRAM_ID`
+
+SPL Token-2022 Program ID: `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`
+
+---
 
 #### `SCRYPT_PARAMS_PRODUCTION`
 
@@ -505,6 +619,17 @@ const loadedSigner = await loadEncryptedKeypair(
   PASSPHRASE,
 );
 ```
+
+## Legal & Compliance
+
+This software is provided "as-is" without warranty. Users are responsible for:
+
+- **Regulatory compliance**: OFAC/SDN screening, FinCEN MSB determination, and applicable money transmission regulations in your jurisdiction
+- **Token delegation risks**: SPL token delegation grants spending authority to agent keypairs — ensure proper key management and access controls
+- **Mainnet use**: All transactions on Solana mainnet-beta are irreversible — audit delegation amounts and test on devnet first
+- **Key management**: Agent keypairs encrypted at rest are only as secure as the passphrase — use strong, unique passphrases and never commit keypair files to version control
+
+This package does NOT provide legal, financial, or compliance advice. Consult qualified legal counsel before deploying in production.
 
 ## License
 

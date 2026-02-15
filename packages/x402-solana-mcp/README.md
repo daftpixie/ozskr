@@ -539,11 +539,21 @@ Agent keypairs use passphrase-based encryption:
 - **Cipher**: AES-256-GCM with random IV + auth tag
 - **File Permissions**: Keypair files should be `0600` (owner read/write only)
 
+### x402 Protocol Compatibility
+
+This server supports both x402 V1 and V2 header formats:
+
+- **V2** (preferred): `Payment-Required`, `Payment-Signature`, `Payment-Response` headers
+- **V1** (fallback): `X-Payment-Required`, `X-Payment-Signature`, `X-Payment-Response` headers
+
+Both formats are sent/checked automatically. The server also parses x402 payment requirements from JSON response bodies (most common server format).
+
 ### Facilitator Trust Model
 
 Facilitators handle transaction building, signing, and submission. This server uses:
 - **Primary**: CDP (`https://x402.org/facilitator`)
 - **Fallback**: PayAI (`https://facilitator.payai.network`)
+- **Self-hosted**: Point `X402_FACILITATOR_URL` to your own `@ozskr/x402-facilitator` instance
 
 Facilitators cannot steal funds — they only build transactions using the agent's delegated authority. The delegation cap is enforced on-chain.
 
@@ -591,6 +601,18 @@ Locally in `.x402-history.json` (JSON file). Query via `x402_transaction_history
 Yes. Set `SOLANA_NETWORK=mainnet-beta` and use a mainnet RPC URL. Ensure you've audited the delegation amount — mainnet transactions are irreversible.
 
 ---
+
+## Legal & Compliance
+
+This software is provided "as-is" without warranty. Users are responsible for:
+
+- **Regulatory compliance**: x402 payments may constitute money transmission depending on jurisdiction — consult legal counsel
+- **Delegation risks**: The agent spends tokens via delegated authority — audit delegation amounts and revoke when not in use
+- **Facilitator trust**: Third-party facilitators (CDP, PayAI) co-sign transactions — review their terms of service
+- **Mainnet use**: All transactions on Solana mainnet-beta are irreversible — test on devnet first and set conservative `maxAmount` caps
+- **Keypair security**: Agent keypairs are encrypted at rest but are only as secure as the passphrase — never commit keypair files or passphrases to version control
+
+This package does NOT provide legal, financial, or compliance advice. Consult qualified legal counsel before deploying in production.
 
 ## License
 

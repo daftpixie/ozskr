@@ -115,7 +115,7 @@ export async function retryWithPayment(
   const timer = setTimeout(() => controller.abort(), timeout);
 
   try {
-    // Encode payment proof into headers
+    // Encode payment proof into headers (send both V2 and V1 for compatibility)
     const paymentHeader = encodePaymentSignatureHeader(
       paymentPayload as Parameters<typeof encodePaymentSignatureHeader>[0],
     );
@@ -124,7 +124,8 @@ export async function retryWithPayment(
       method: options.method ?? 'GET',
       headers: {
         ...options.headers,
-        'X-Payment-Signature': paymentHeader,
+        'Payment-Signature': paymentHeader,      // V2
+        'X-Payment-Signature': paymentHeader,    // V1 fallback
       },
       body: options.body,
       signal: controller.signal,
@@ -137,9 +138,12 @@ export async function retryWithPayment(
     let payer: string | undefined;
 
     try {
-      const settleResponse = decodePaymentResponseHeader(
-        response.headers.get('X-Payment-Response') ?? '',
-      );
+      // Try V2 header first, fall back to V1
+      const responseHeader =
+        response.headers.get('Payment-Response') ??
+        response.headers.get('X-Payment-Response') ??
+        '';
+      const settleResponse = decodePaymentResponseHeader(responseHeader);
       settled = settleResponse.success;
       transactionSignature = settleResponse.transaction;
       network = settleResponse.network;
@@ -179,8 +183,10 @@ async function parsePaymentRequiredResponse(response: Response): Promise<ParsedP
     // Body not JSON — fall through to header parsing
   }
 
-  // Try V2: single base64-encoded JSON header
-  const v2Header = response.headers.get('X-Payment-Required');
+  // Try V2: single base64-encoded JSON header (check both V2 and V1 header names)
+  const v2Header =
+    response.headers.get('Payment-Required') ??
+    response.headers.get('X-Payment-Required');
   if (v2Header) {
     try {
       const decoded = decodePaymentRequiredHeader(v2Header);

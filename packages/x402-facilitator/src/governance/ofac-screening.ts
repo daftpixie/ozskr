@@ -4,6 +4,35 @@
 
 import { readFile } from 'node:fs/promises';
 
+/**
+ * Pluggable screening provider interface.
+ *
+ * The facilitator accepts any implementation of this interface for address screening.
+ * The default implementation (StaticSdnScreener) uses a local SDN blocklist file.
+ *
+ * Production operators SHOULD supplement with a real-time blockchain analytics service
+ * (Chainalysis, Elliptic, or TRM Labs) by implementing this interface.
+ *
+ * OFAC operates under strict liability — no intent is required for violations.
+ * Consult legal counsel for your compliance obligations.
+ */
+export interface ScreeningProvider {
+  /** Screen an address. Returns screening result. */
+  screenAddress(address: string): Promise<ScreeningResult>;
+  /** Provider identifier for audit logging */
+  providerName: string;
+  /** When the screening data was last refreshed */
+  lastRefreshed: Date;
+}
+
+export interface ScreeningResult {
+  blocked: boolean;
+  reason?: string;
+  matchType?: 'exact' | 'fuzzy';
+  source: string;  // 'static-sdn' | 'chainalysis' | 'trm-labs' | 'elliptic'
+  checkedAt: Date;
+}
+
 export interface OfacScreeningResult {
   status: 'pass' | 'fail' | 'error' | 'skip';
   matchedAddress?: string;
@@ -12,7 +41,7 @@ export interface OfacScreeningResult {
   errorDetail?: string;
 }
 
-export interface OfacScreener {
+export interface OfacScreener extends ScreeningProvider {
   screen(addresses: string[]): Promise<OfacScreeningResult>;
   updateList(path: string): Promise<void>;
   lastUpdated(): Date | null;
@@ -66,40 +95,43 @@ export async function createOfacScreener(
     }
   }
 
-  return {
-    async screen(addresses: string[]): Promise<OfacScreeningResult> {
-      if (blocklist.size === 0 && !lastUpdate) {
-        // List was never loaded
-        if (failClosed) {
-          return {
-            status: 'error',
-            screenedAddresses: addresses,
-            errorDetail: 'OFAC blocklist not loaded (fail-closed mode)',
-          };
-        }
+  // Define screen function to be reused by both interfaces
+  async function screen(addresses: string[]): Promise<OfacScreeningResult> {
+    if (blocklist.size === 0 && !lastUpdate) {
+      // List was never loaded
+      if (failClosed) {
         return {
-          status: 'skip',
+          status: 'error',
           screenedAddresses: addresses,
-          errorDetail: 'OFAC blocklist not loaded (fail-open mode)',
+          errorDetail: 'OFAC blocklist not loaded (fail-closed mode)',
         };
       }
-
-      for (const addr of addresses) {
-        if (blocklist.has(addr)) {
-          return {
-            status: 'fail',
-            matchedAddress: addr,
-            matchedList: 'SDN',
-            screenedAddresses: addresses,
-          };
-        }
-      }
-
       return {
-        status: 'pass',
+        status: 'skip',
         screenedAddresses: addresses,
+        errorDetail: 'OFAC blocklist not loaded (fail-open mode)',
       };
-    },
+    }
+
+    for (const addr of addresses) {
+      if (blocklist.has(addr)) {
+        return {
+          status: 'fail',
+          matchedAddress: addr,
+          matchedList: 'SDN',
+          screenedAddresses: addresses,
+        };
+      }
+    }
+
+    return {
+      status: 'pass',
+      screenedAddresses: addresses,
+    };
+  }
+
+  return {
+    screen,
 
     async updateList(path: string): Promise<void> {
       await loadList(path);
@@ -111,6 +143,27 @@ export async function createOfacScreener(
 
     listSize(): number {
       return blocklist.size;
+    },
+
+    // ScreeningProvider interface implementation
+    async screenAddress(address: string): Promise<ScreeningResult> {
+      const result = await screen([address]);
+
+      return {
+        blocked: result.status === 'fail',
+        reason: result.status === 'fail'
+          ? `Address matched ${result.matchedList} blocklist`
+          : result.errorDetail,
+        matchType: result.status === 'fail' ? 'exact' : undefined,
+        source: 'static-sdn',
+        checkedAt: new Date(),
+      };
+    },
+
+    providerName: 'static-sdn',
+
+    get lastRefreshed(): Date {
+      return lastUpdate ?? new Date(0);
     },
   };
 }

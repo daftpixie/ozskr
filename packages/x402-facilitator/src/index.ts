@@ -22,7 +22,7 @@ export { checkDelegation, type DelegationCheckResult, type DelegationRpc } from 
 export { createBudgetEnforcer, type BudgetEnforcer, type BudgetEnforcementResult } from './governance/budget-enforce.js';
 
 // Day 6: Compliance + adversarial defense
-export { createOfacScreener, type OfacScreener, type OfacScreeningResult } from './governance/ofac-screening.js';
+export { createOfacScreener, type OfacScreener, type OfacScreeningResult, type ScreeningProvider, type ScreeningResult } from './governance/ofac-screening.js';
 export { createCircuitBreaker, type CircuitBreaker, type CircuitBreakerResult } from './governance/circuit-breaker.js';
 export { validateBlockhashFreshness, type BlockhashValidationResult, type BlockhashRpc } from './settlement/blockhash-validator.js';
 
