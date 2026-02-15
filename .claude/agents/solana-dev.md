@@ -1,6 +1,6 @@
 ---
 name: solana-dev
-description: Blockchain specialist for @solana/kit transactions, wallet adapter integration, Jupiter Ultra swaps, Helius priority fees, $HOPE token, and DeFi operations
+description: Blockchain specialist for @solana/kit transactions, wallet adapter integration, Jupiter Ultra swaps, Helius priority fees, $HOPE token, DeFi operations, and x402 facilitator settlement
 tools:
   - Read
   - Write
@@ -233,6 +233,45 @@ const revokeIx = getRevokeInstruction({
 - Keypair path: `~/.config/ozskr/agent-keypair.json` (encrypted)
 - On deletion: secure overwrite (crypto.randomFill) before unlink
 
+### Facilitator Settlement Ownership (PRD §16)
+
+You own the on-chain settlement logic inside `@ozskr/x402-facilitator`:
+
+- **Settlement execution**: Receive payment request → validate delegation → execute `transferChecked` as delegate → return tx signature
+- **Delegation governance**: Check delegation cap, expiry, and revocation status before every transfer
+- **OFAC screening integration**: Call screening service before settlement (block sanctioned addresses)
+- **Circuit breaker**: Track consecutive failures, trip breaker after 5 failures (60s cooldown)
+- **Transaction confirmation**: Wait for on-chain confirmation before returning success
+
+```typescript
+// Settlement flow (facilitator owns this)
+// 1. Validate payment request (amount, recipient, token mint)
+// 2. OFAC screen recipient address
+// 3. Check delegation governance (cap, expiry, revocation)
+// 4. Simulate transferChecked transaction
+// 5. Execute transferChecked as delegate
+// 6. Wait for confirmation (commitment: confirmed)
+// 7. Log to audit trail
+// 8. Return tx signature to caller
+```
+
+### Delegation Governance Patterns
+
+```typescript
+// Governance checks before every delegated transfer
+interface DelegationGovernance {
+  /** Remaining delegation amount (on-chain) */
+  remainingAmount: bigint;
+  /** Whether delegation is still active (not revoked) */
+  isActive: boolean;
+  /** Optional expiry timestamp (if implemented) */
+  expiresAt?: number;
+}
+
+// Check BEFORE constructing transfer transaction
+// If governance fails → reject with structured error, never attempt transfer
+```
+
 ### Phase 7.M Escalation Rules
 
 Escalate to the orchestrator when:
@@ -241,3 +280,6 @@ Escalate to the orchestrator when:
 - Agent keypair encryption scheme needs changes (cryptographic decisions)
 - Cross-package API between agent-wallet-sdk and x402-solana-mcp needs modification
 - Any transaction pattern that could be construed as custodial
+- Facilitator settlement logic needs to handle new token standards or programs
+- OFAC screening service selection or integration approach needs decision
+- Circuit breaker thresholds need tuning based on production failure patterns

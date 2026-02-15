@@ -355,3 +355,84 @@ describe('SPL Delegation Lifecycle (devnet)', () => {
 - [ ] x402_estimate_cost: returns estimated cost from 402 headers
 - [ ] Server starts and connects via stdio transport
 - [ ] Server starts and connects via HTTP transport
+
+### Facilitator Test Patterns
+
+#### Devnet Integration Tests
+
+```typescript
+// tests/integration/facilitator-settlement.test.ts
+import { describe, it, expect } from 'vitest';
+
+describe('Facilitator Settlement (devnet)', () => {
+  it('should settle a valid payment request', async () => {
+    // 1. Send POST /settle with valid payment request
+    // 2. Verify tx signature returned
+    // 3. Verify on-chain transfer occurred
+    // 4. Verify audit log entry created
+  });
+
+  it('should reject settlement when delegation is revoked', async () => {
+    // 1. Revoke delegation on-chain
+    // 2. Send POST /settle
+    // 3. Verify structured error: DELEGATION_REVOKED
+    // 4. Verify no on-chain transfer attempted
+  });
+
+  it('should reject settlement when amount exceeds delegation cap', async () => {
+    // 1. Send POST /settle with amount > remaining delegation
+    // 2. Verify structured error: DELEGATION_EXCEEDED
+    // 3. Verify no on-chain transfer attempted
+  });
+
+  it('should block sanctioned addresses (OFAC)', async () => {
+    // 1. Send POST /settle with OFAC-blocked recipient
+    // 2. Verify structured error: OFAC_BLOCKED
+    // 3. Verify no on-chain transfer attempted
+    // 4. Verify audit log records blocked attempt
+  });
+});
+```
+
+#### Governance Unit Tests
+
+```typescript
+// tests/unit/governance.test.ts
+describe('Delegation Governance', () => {
+  it('should pass when delegation is active and amount within cap', () => {});
+  it('should reject when delegation is revoked', () => {});
+  it('should reject when amount exceeds remaining cap', () => {});
+  it('should reject when delegation is expired', () => {});
+});
+
+// tests/unit/circuit-breaker.test.ts
+describe('Circuit Breaker', () => {
+  it('should start in closed state', () => {});
+  it('should trip to open after 5 consecutive failures', () => {});
+  it('should reject requests while open', () => {});
+  it('should transition to half-open after cooldown', () => {});
+  it('should reset to closed on successful request in half-open', () => {});
+  it('should trip back to open on failure in half-open', () => {});
+});
+
+// tests/unit/ofac-screening.test.ts
+describe('OFAC Screening', () => {
+  it('should pass clean addresses', () => {});
+  it('should block sanctioned addresses', () => {});
+  it('should fail-closed when screening service is down', () => {});
+});
+```
+
+### Facilitator Test Checklist
+
+- [ ] POST /settle: successful settlement → tx signature + audit entry
+- [ ] POST /settle: insufficient delegation → structured error
+- [ ] POST /settle: revoked delegation → structured error
+- [ ] POST /settle: OFAC-blocked recipient → structured error + audit
+- [ ] POST /settle: simulation failure → structured error (no submission)
+- [ ] POST /settle: circuit breaker open → 503 with retry guidance
+- [ ] GET /health: returns circuit breaker state + uptime
+- [ ] GET /audit: returns settlement history (authenticated)
+- [ ] Circuit breaker: trips after 5 failures, resets after cooldown
+- [ ] Delegation governance: all edge cases (cap, expiry, revocation)
+- [ ] OFAC screening: clean, blocked, service-down scenarios

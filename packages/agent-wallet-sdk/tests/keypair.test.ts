@@ -71,7 +71,8 @@ describe('encryptKeypair', () => {
 
     const encrypted = encryptKeypair(keypairBytes, TEST_PASSPHRASE, SCRYPT_PARAMS_FAST);
 
-    expect(encrypted.version).toBe(1);
+    expect(encrypted.version).toBe(2);
+    expect(encrypted.scryptParams).toEqual(SCRYPT_PARAMS_FAST);
     expect(encrypted.salt).toBeTruthy();
     expect(encrypted.iv).toBeTruthy();
     expect(encrypted.ciphertext).toBeTruthy();
@@ -142,7 +143,7 @@ describe('decryptKeypair', () => {
     const { keypairBytes } = await generateAgentKeypair();
     const encrypted = encryptKeypair(keypairBytes, TEST_PASSPHRASE, SCRYPT_PARAMS_FAST);
 
-    const badVersion = { ...encrypted, version: 2 as 1 };
+    const badVersion = { ...encrypted, version: 99 as 1 };
 
     expect(() => decryptKeypair(badVersion, TEST_PASSPHRASE, SCRYPT_PARAMS_FAST)).toThrow(DelegationError);
     expect(() => decryptKeypair(badVersion, TEST_PASSPHRASE, SCRYPT_PARAMS_FAST)).toThrow('Unsupported');

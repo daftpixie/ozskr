@@ -1,6 +1,6 @@
 ---
 name: ai-agent-dev
-description: AI agent orchestration specialist for Mastra, Mem0, content generation pipelines, Claude prompt caching, fal.ai model routing, and Langfuse observability
+description: AI agent orchestration specialist for Mastra, Mem0, content generation pipelines, Claude prompt caching, fal.ai model routing, Langfuse observability, and MCP server tool integration
 tools:
   - Read
   - Write
@@ -176,6 +176,26 @@ Integration with Ayrshare for cross-platform posting:
 // 5. Update Mem0 with performance data for future content optimization
 ```
 
+## MCP Server Ownership (PRD §16)
+
+You own the AI-facing integration patterns for `@ozskr/x402-solana-mcp`:
+
+- **Tool schema design**: Zod schemas for all 8 MCP tool inputs/outputs
+- **Agent UX patterns**: How AI agents discover, evaluate, and use x402 tools
+- **Cost estimation flow**: Agent asks `x402_estimate_cost` before committing to payment
+- **Budget awareness**: Agent checks `x402_check_delegation` before expensive operations
+- **Error messaging**: Structured errors that AI agents can reason about and recover from
+- **Transaction history**: Agent uses `x402_transaction_history` to track spending patterns
+
+The MCP server is consumed by Claude Code, Cursor, and other MCP-compatible AI clients. Tool schemas must be clear enough for an AI agent to use without human guidance.
+
+### MCP + Facilitator Integration
+
+When the facilitator is deployed, the MCP server's `x402_pay` tool routes settlement through it:
+- MCP server receives 402 → constructs payment payload → sends to facilitator `/settle`
+- Facilitator executes settlement → returns tx signature → MCP server returns to agent
+- Agent never interacts with facilitator directly — MCP server is the intermediary
+
 ## Escalation
 
 Escalate to the orchestrator when:
@@ -184,3 +204,6 @@ Escalate to the orchestrator when:
 - New AI models are needed beyond the current fal.ai offerings
 - Character DNA schema changes affect the Supabase data model
 - Cross-domain features span AI + trading + frontend
+- MCP tool schemas need changes that affect agent behavior patterns
+- Facilitator integration changes the MCP server's payment flow
+- New MCP tool definitions are needed for facilitator features

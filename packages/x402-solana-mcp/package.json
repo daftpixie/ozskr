@@ -1,6 +1,6 @@
 {
   "name": "@ozskr/x402-solana-mcp",
-  "version": "0.1.1-beta",
+  "version": "0.2.0-beta",
   "description": "First MCP server for AI agent x402 payments on Solana with SPL delegation",
   "license": "MIT",
   "author": {

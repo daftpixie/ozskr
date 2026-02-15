@@ -41,7 +41,8 @@ src/
 └── types/                  # Shared TypeScript types
 packages/                       # Open-source packages (MIT license)
 ├── agent-wallet-sdk/           # SPL delegation primitives
-└── x402-solana-mcp/            # MCP server for x402 payments
+├── x402-solana-mcp/            # MCP server for x402 payments
+└── x402-facilitator/           # Governance-aware x402 payment settlement
 ```
 
 ## Deployment
@@ -91,6 +92,10 @@ When implementing features, the orchestrator (Opus) should:
 | SPL delegation, agent keypair, x402 tx | `solana-dev` | PRD §16 |
 | MCP server, tool definitions, x402 HTTP | `mcp-dev` | PRD §16 |
 | MCP server test coverage | `test-writer` | PRD §16 |
+| Facilitator settlement, OFAC screening, circuit breaker | `solana-dev` | PRD §16 |
+| Facilitator Hono service, audit logging, REST API | `api-architect` | PRD §16 |
+| Facilitator security audit (payment flow, OFAC, governance) | `security-auditor` | PRD §16 |
+| Facilitator test coverage (devnet integration, governance) | `test-writer` | PRD §16 |
 
 ### Agent Interaction Rules
 
@@ -193,6 +198,10 @@ const pk = new PublicKey('...');
 - SPL delegation: spending caps enforced both on-chain (approveChecked amount) and client-side (budget.ts)
 - x402 payments: transaction simulation required before every payment submission
 - npm packages: zero secrets, zero hardcoded endpoints, full dependency audit before publication
+- Facilitator: OFAC screening REQUIRED before every settlement (no bypass path)
+- Facilitator: circuit breaker on consecutive settlement failures (5 failures → 60s cooldown)
+- Facilitator: delegation governance checks before every transfer (cap, expiry, revocation status)
+- Facilitator: audit log for every settlement attempt (success and failure, with tx signature)
 
 ## AI Compliance — CRITICAL
 
@@ -279,14 +288,17 @@ All agents MUST follow this language guide when generating content mentioning $H
   - [ ] 7.14: Product Hunt launch execution
   - [ ] 7.15: Mainnet preparation (network switch, final security audit)
   - [ ] 7.16: Post-launch monitoring and iteration
-- [ ] Phase 7.M: MCP Server Build ← CURRENT (parallel open-source track)
-  - [ ] 7.M.1: Workspace initialization + agent specs
-  - [ ] 7.M.2: @ozskr/agent-wallet-sdk (SPL delegation, budget, keypair)
-  - [ ] 7.M.3: @ozskr/x402-solana-mcp (8 MCP tools, x402 payment flow)
-  - [ ] 7.M.4: Documentation, testing, npm publication
+- [ ] Phase 7.M: MCP Server + Facilitator Build ← CURRENT (parallel open-source track)
+  - [x] 7.M.1: Workspace initialization + agent specs
+  - [x] 7.M.2: @ozskr/agent-wallet-sdk v0.1.2-beta (SPL delegation, budget, keypair)
+  - [x] 7.M.3: @ozskr/x402-solana-mcp v0.2.0-beta (8 MCP tools, x402 payment flow)
+  - [x] 7.M.4: Documentation, testing, npm publication
   - [ ] 7.M.5: MCP directory submissions, ecosystem announcements
+  - [ ] 7.M.6: @ozskr/x402-facilitator (governance-aware settlement service)
+  - [ ] 7.M.7: Facilitator devnet integration testing
+  - [ ] 7.M.8: Facilitator documentation + npm publication
 - [ ] Phase 8: Agentic Commerce Layer (activation-gated: 100+ users, attorney sign-off, x402 recovery)
 - [ ] Phase 9: Agent Marketplace (activation-gated: Phase 8 stable 3+ months, 500+ agents)
 - [ ] Deferred: Auto-Stake Smart Contract (pending security audit budget $15-30K)
 
-Phase 6 engineering complete. Phase 7 Sprints 1-3 complete. 659 tests across 63 files. Remaining: Product Hunt launch, mainnet prep, Phase 7.M MCP server build.
+Phase 6 engineering complete. Phase 7 Sprints 1-3 complete. 659 tests across 63 files. SDK v0.1.2-beta + MCP v0.2.0-beta published. Remaining: Product Hunt launch, mainnet prep, Phase 7.M facilitator build.

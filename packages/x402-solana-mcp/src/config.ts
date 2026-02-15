@@ -12,6 +12,7 @@ import { z } from 'zod';
  * - AGENT_KEYPAIR_PATH → agentKeypairPath
  * - SOLANA_NETWORK → solanaNetwork
  * - X402_FACILITATOR_URL → x402FacilitatorUrl
+ * - OZSKR_SCRYPT_PARAMS → scryptMode ("fast" | "production", default "fast")
  * - LOG_LEVEL → logLevel
  */
 export const ConfigSchema = z.object({
@@ -42,6 +43,11 @@ export const ConfigSchema = z.object({
     .optional()
     .describe('Fallback x402 facilitator URL (defaults to PayAI facilitator)'),
 
+  scryptMode: z
+    .enum(['fast', 'production'])
+    .default('fast')
+    .describe('Scrypt KDF mode for keypair encryption (fast=N^14 for dev, production=N^20)'),
+
   logLevel: z
     .enum(['debug', 'info', 'warn', 'error'])
     .default('info')
@@ -67,6 +73,7 @@ export function loadConfigFromEnv(): Config {
     solanaNetwork: process.env.SOLANA_NETWORK || undefined,
     x402FacilitatorUrl: process.env.X402_FACILITATOR_URL || undefined,
     x402FacilitatorFallbackUrl: process.env.X402_FACILITATOR_FALLBACK_URL || undefined,
+    scryptMode: process.env.OZSKR_SCRYPT_PARAMS || undefined,
     logLevel: process.env.LOG_LEVEL || undefined,
   });
 }
