@@ -38,3 +38,18 @@ export {
   SCRYPT_PARAMS_PRODUCTION,
   SCRYPT_PARAMS_FAST,
 } from './types.js';
+
+// Key management (pluggable interface)
+export type { KeyManager, KeyManagerConfig } from './key-management/index.js';
+export { EncryptedJsonKeyManager, createKeyManager } from './key-management/index.js';
+
+// Constants
+export {
+  USDC_MINT_MAINNET,
+  USDC_DECIMALS,
+  TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
+} from './constants.js';
+
+// Validation
+export { validateTokenMint } from './validation.js';

@@ -91,4 +91,38 @@ describe('OfacScreener', () => {
     expect(screener.lastUpdated()).toBeInstanceOf(Date);
     expect(screener.listSize()).toBe(3);
   });
+
+  describe('ScreeningProvider interface', () => {
+    it('screenAddress returns blocked=true for blocked address', async () => {
+      await writeFile(blocklistPath, JSON.stringify(['SANCTIONED_ADDR']));
+      const screener = await createOfacScreener(blocklistPath);
+      const result = await screener.screenAddress('SANCTIONED_ADDR');
+      expect(result.blocked).toBe(true);
+      expect(result.source).toBe('static-sdn');
+      expect(result.matchType).toBe('exact');
+      expect(result.reason).toContain('SDN blocklist');
+    });
+
+    it('screenAddress returns blocked=false for clean address', async () => {
+      await writeFile(blocklistPath, JSON.stringify(['SANCTIONED_ADDR']));
+      const screener = await createOfacScreener(blocklistPath);
+      const result = await screener.screenAddress('CLEAN_ADDR');
+      expect(result.blocked).toBe(false);
+      expect(result.source).toBe('static-sdn');
+      expect(result.checkedAt).toBeInstanceOf(Date);
+    });
+
+    it('providerName returns "static-sdn"', async () => {
+      await writeFile(blocklistPath, JSON.stringify(['A']));
+      const screener = await createOfacScreener(blocklistPath);
+      expect(screener.providerName).toBe('static-sdn');
+    });
+
+    it('lastRefreshed returns a Date', async () => {
+      await writeFile(blocklistPath, JSON.stringify(['A', 'B']));
+      const screener = await createOfacScreener(blocklistPath);
+      expect(screener.lastRefreshed).toBeInstanceOf(Date);
+      expect(screener.lastRefreshed.getTime()).toBeGreaterThan(Date.now() - 5000);
+    });
+  });
 });
