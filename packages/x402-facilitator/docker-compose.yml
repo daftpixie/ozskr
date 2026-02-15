@@ -1,0 +1,9 @@
+services:
+  facilitator:
+    build: .
+    ports:
+      - "4020:4020"
+    env_file: .env
+    volumes:
+      - ./fee-payer-keypair.json:/app/fee-payer-keypair.json:ro
+    restart: unless-stopped

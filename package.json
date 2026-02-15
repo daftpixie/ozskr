@@ -20,7 +20,8 @@
     "test:e2e": "playwright test",
     "publish:sdk": "cd packages/agent-wallet-sdk && pnpm publish --access public --no-git-checks",
     "publish:mcp": "cd packages/x402-solana-mcp && pnpm publish --access public --no-git-checks",
-    "publish:all": "pnpm run publish:sdk && pnpm run publish:mcp"
+    "publish:facilitator": "cd packages/x402-facilitator && pnpm publish --access public --no-git-checks",
+    "publish:all": "pnpm run publish:sdk && pnpm run publish:mcp && pnpm run publish:facilitator"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.44",
