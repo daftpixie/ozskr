@@ -1,68 +1,103 @@
 /**
  * Server-side agent transfer execution.
- * Builds and submits a delegated SPL token transfer using the agent's keypair.
+ * Builds and submits a delegated SPL token transfer using the agent's KeyPairSigner.
  *
- * Uses @solana/web3.js v1 to avoid Turbopack's externals-tracing issue with
- * @solana-program/token → @solana/kit version conflict.
+ * Uses @solana/kit natively for transaction building, signing (Web Crypto Ed25519),
+ * and RPC submission. This avoids the tweetnacl incompatibility that occurs when
+ * @solana/web3.js v1 is bundled through Turbopack.
  */
 
-// TODO: Replace with @solana/kit native signing once Turbopack resolves
-// @solana-program/token → @solana/kit version conflict. @solana/web3.js v1 is
-// deprecated but necessary here because delegate.ts can't be imported through
-// Turbopack's externals-tracing. See: next.config.ts serverExternalPackages.
 import {
-  Connection,
-  Keypair,
-  PublicKey,
-  SystemProgram,
-  Transaction,
-  TransactionInstruction,
-} from '@solana/web3.js';
-import { loadAgentKeypairBytes } from './index';
+  type Instruction,
+  type Address,
+  address,
+  pipe,
+  createTransactionMessage,
+  setTransactionMessageFeePayer,
+  setTransactionMessageLifetimeUsingBlockhash,
+  appendTransactionMessageInstruction,
+  signTransactionMessageWithSigners,
+  getBase64EncodedWireTransaction,
+  getSignatureFromTransaction,
+  createSolanaRpc,
+  AccountRole,
+  getProgramDerivedAddress,
+} from '@solana/kit';
+import { loadAgentSigner } from './index';
 
-const TOKEN_PROGRAM_ID = new PublicKey(
-  'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'
-);
+const TOKEN_PROGRAM: Address = address('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+const ATA_PROGRAM: Address = address('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+const SYSTEM_PROGRAM: Address = address('11111111111111111111111111111111');
 
-const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
-  'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'
-);
+function getSolanaRpcUrl(): string {
+  return process.env.SOLANA_RPC_URL
+    || process.env.NEXT_PUBLIC_HELIUS_RPC_URL
+    || 'https://api.devnet.solana.com';
+}
 
-const SOLANA_RPC_URL = process.env.SOLANA_RPC_URL
-  || process.env.NEXT_PUBLIC_HELIUS_RPC_URL
-  || 'https://api.devnet.solana.com';
-
-function getAssociatedTokenAddress(mint: PublicKey, owner: PublicKey): PublicKey {
-  const [ata] = PublicKey.findProgramAddressSync(
-    [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
-    ASSOCIATED_TOKEN_PROGRAM_ID,
-  );
+/**
+ * Derive the Associated Token Account address for a wallet + mint.
+ */
+async function getAssociatedTokenAddress(
+  mint: Address,
+  owner: Address,
+): Promise<Address> {
+  const [ata] = await getProgramDerivedAddress({
+    programAddress: ATA_PROGRAM,
+    seeds: [
+      // owner bytes
+      getAddressBytes(owner),
+      // token program bytes
+      getAddressBytes(TOKEN_PROGRAM),
+      // mint bytes
+      getAddressBytes(mint),
+    ],
+  });
   return ata;
+}
+
+/**
+ * Convert an Address to a 32-byte Uint8Array seed for PDA derivation.
+ */
+function getAddressBytes(addr: Address): Uint8Array {
+  // Base58 decode: @solana/kit addresses are base58-encoded 32-byte public keys
+  const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+  let num = 0n;
+  for (const char of addr) {
+    const idx = ALPHABET.indexOf(char);
+    if (idx === -1) throw new Error(`Invalid base58 character: ${char}`);
+    num = num * 58n + BigInt(idx);
+  }
+  const bytes = new Uint8Array(32);
+  for (let i = 31; i >= 0; i--) {
+    bytes[i] = Number(num & 0xffn);
+    num >>= 8n;
+  }
+  return bytes;
 }
 
 /**
  * Build a CreateAssociatedTokenAccountIdempotent instruction.
  * ATA program instruction index 1 = create_idempotent (no-op if exists).
- * Accounts: payer(s,w), ata(w), owner, mint, systemProgram, tokenProgram
  */
-function buildCreateAtaIdempotentInstruction(
-  payer: PublicKey,
-  ata: PublicKey,
-  owner: PublicKey,
-  mint: PublicKey,
-): TransactionInstruction {
-  return new TransactionInstruction({
-    programId: ASSOCIATED_TOKEN_PROGRAM_ID,
-    keys: [
-      { pubkey: payer, isSigner: true, isWritable: true },
-      { pubkey: ata, isSigner: false, isWritable: true },
-      { pubkey: owner, isSigner: false, isWritable: false },
-      { pubkey: mint, isSigner: false, isWritable: false },
-      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+function buildCreateAtaIdempotentIx(
+  payer: Address,
+  ata: Address,
+  owner: Address,
+  mint: Address,
+): Instruction {
+  return {
+    programAddress: ATA_PROGRAM,
+    accounts: [
+      { address: payer, role: AccountRole.WRITABLE_SIGNER },
+      { address: ata, role: AccountRole.WRITABLE },
+      { address: owner, role: AccountRole.READONLY },
+      { address: mint, role: AccountRole.READONLY },
+      { address: SYSTEM_PROGRAM, role: AccountRole.READONLY },
+      { address: TOKEN_PROGRAM, role: AccountRole.READONLY },
     ],
-    data: Buffer.from([1]), // instruction index 1 = create_idempotent
-  });
+    data: new Uint8Array([1]), // instruction index 1 = create_idempotent
+  };
 }
 
 /**
@@ -71,29 +106,30 @@ function buildCreateAtaIdempotentInstruction(
  *   [12, amount(u64 LE), decimals(u8)]
  *   Accounts: source(w), mint, destination(w), authority(s)
  */
-function buildTransferCheckedInstruction(
-  source: PublicKey,
-  mint: PublicKey,
-  destination: PublicKey,
-  authority: PublicKey,
+function buildTransferCheckedIx(
+  source: Address,
+  mint: Address,
+  destination: Address,
+  authority: Address,
   amount: bigint,
   decimals: number,
-): TransactionInstruction {
-  const data = Buffer.alloc(10);
-  data.writeUInt8(12, 0);
-  data.writeBigUInt64LE(amount, 1);
-  data.writeUInt8(decimals, 9);
+): Instruction {
+  const data = new Uint8Array(10);
+  const view = new DataView(data.buffer);
+  view.setUint8(0, 12); // TransferChecked discriminator
+  view.setBigUint64(1, amount, true); // little-endian
+  view.setUint8(9, decimals);
 
-  return new TransactionInstruction({
-    programId: TOKEN_PROGRAM_ID,
-    keys: [
-      { pubkey: source, isSigner: false, isWritable: true },
-      { pubkey: mint, isSigner: false, isWritable: false },
-      { pubkey: destination, isSigner: false, isWritable: true },
-      { pubkey: authority, isSigner: true, isWritable: false },
+  return {
+    programAddress: TOKEN_PROGRAM,
+    accounts: [
+      { address: source, role: AccountRole.WRITABLE },
+      { address: mint, role: AccountRole.READONLY },
+      { address: destination, role: AccountRole.WRITABLE },
+      { address: authority, role: AccountRole.READONLY_SIGNER },
     ],
     data,
-  });
+  };
 }
 
 interface ExecuteTransferParams {
@@ -116,85 +152,98 @@ interface TransferResult {
  * The agent must have active delegation from the token account owner.
  *
  * Flow:
- * 1. Load agent keypair from encrypted storage
+ * 1. Load agent KeyPairSigner from encrypted storage
  * 2. Build CreateAtaIdempotent + TransferChecked instructions
- * 3. Sign with agent keypair
- * 4. Simulate signed transaction, then submit
+ * 3. Sign with Web Crypto Ed25519 (via KeyPairSigner)
+ * 4. Simulate, then submit
  */
 export async function executeAgentTransfer(
   params: ExecuteTransferParams,
 ): Promise<TransferResult> {
-  const connection = new Connection(SOLANA_RPC_URL, 'confirmed');
+  const rpcUrl = getSolanaRpcUrl();
+  const rpc = createSolanaRpc(rpcUrl);
 
-  // Load agent keypair bytes and convert to web3.js v1 Keypair
-  const keypairBytes = await loadAgentKeypairBytes(params.characterId);
-  let agentKeypair: Keypair;
-  try {
-    agentKeypair = Keypair.fromSecretKey(keypairBytes);
-  } finally {
-    keypairBytes.fill(0);
-  }
+  // Load agent's KeyPairSigner (Web Crypto Ed25519)
+  const agentSigner = await loadAgentSigner(params.characterId);
+  const agentAddress = agentSigner.address;
 
-  const mint = new PublicKey(params.tokenMint);
-  const owner = new PublicKey(params.ownerAddress);
-  const destination = new PublicKey(params.destinationTokenAccount);
+  const mint = address(params.tokenMint);
+  const ownerAddr = address(params.ownerAddress);
+  const destination = address(params.destinationTokenAccount);
 
   // Source is the owner's ATA for this token
-  const source = getAssociatedTokenAddress(mint, owner);
+  const source = await getAssociatedTokenAddress(mint, ownerAddr);
 
-  // Ensure destination ATA exists (idempotent — no-op if already created)
-  const createAtaIx = buildCreateAtaIdempotentInstruction(
-    agentKeypair.publicKey, // agent pays rent for ATA creation
-    destination,
-    new PublicKey(params.destinationOwner || agentKeypair.publicKey.toBase58()),
-    mint,
+  // Determine destination owner for ATA creation
+  const destOwner = params.destinationOwner
+    ? address(params.destinationOwner)
+    : agentAddress;
+
+  // Build instructions
+  const createAtaIx = buildCreateAtaIdempotentIx(agentAddress, destination, destOwner, mint);
+  const transferIx = buildTransferCheckedIx(
+    source, mint, destination, agentAddress, params.amount, params.decimals,
   );
 
-  // Build the TransferChecked instruction with agent as authority (delegate)
-  const transferIx = buildTransferCheckedInstruction(
-    source,
-    mint,
-    destination,
-    agentKeypair.publicKey,
-    params.amount,
-    params.decimals,
+  // Get recent blockhash
+  const { value: blockhash } = await rpc.getLatestBlockhash({ commitment: 'confirmed' }).send();
+
+  // Build transaction message
+  const txMessage = pipe(
+    createTransactionMessage({ version: 'legacy' }),
+    (tx) => setTransactionMessageFeePayer(agentAddress, tx),
+    (tx) => setTransactionMessageLifetimeUsingBlockhash(blockhash, tx),
+    (tx) => appendTransactionMessageInstruction(createAtaIx, tx),
+    (tx) => appendTransactionMessageInstruction(transferIx, tx),
   );
 
-  // Build transaction: create ATA (idempotent) → transfer
-  const transaction = new Transaction().add(createAtaIx, transferIx);
-  const { blockhash, lastValidBlockHeight } =
-    await connection.getLatestBlockhash();
-  transaction.recentBlockhash = blockhash;
-  transaction.lastValidBlockHeight = lastValidBlockHeight;
-  transaction.feePayer = agentKeypair.publicKey;
+  // Sign with Web Crypto Ed25519 (KeyPairSigner)
+  const signedTx = await signTransactionMessageWithSigners(txMessage);
 
-  // Sign first, then simulate the signed transaction.
-  // Note: simulateTransaction(tx, [signers]) is unreliable on some RPC endpoints;
-  // signing first and simulating the signed tx is the proven approach.
-  transaction.sign(agentKeypair);
+  // Get wire format and signature
+  const wireBase64 = getBase64EncodedWireTransaction(signedTx);
+  const txSignature = getSignatureFromTransaction(signedTx);
 
-  const simulation = await connection.simulateTransaction(transaction);
-  if (simulation.value.err) {
+  // Simulate before sending
+  const simResult = await rpc.simulateTransaction(wireBase64, {
+    encoding: 'base64',
+    commitment: 'confirmed',
+  }).send();
+
+  if (simResult.value.err) {
     throw new Error(
-      `Transaction simulation failed: ${JSON.stringify(simulation.value.err)}`
+      `Transaction simulation failed: ${JSON.stringify(simResult.value.err)}`
     );
   }
 
-  // Send signed transaction
-  const signature = await connection.sendRawTransaction(
-    transaction.serialize(),
-    { skipPreflight: false },
-  );
+  // Send the signed transaction
+  await rpc.sendTransaction(wireBase64, {
+    encoding: 'base64',
+    skipPreflight: false,
+  }).send();
 
-  // Wait for confirmation
-  await connection.confirmTransaction({
-    signature,
-    blockhash,
-    lastValidBlockHeight,
-  });
+  // Poll until confirmed
+
+  let confirmed = false;
+  for (let i = 0; i < 30; i++) {
+    const statusResult = await rpc.getSignatureStatuses([txSignature]).send();
+    const status = statusResult.value[0];
+    if (status && (status.confirmationStatus === 'confirmed' || status.confirmationStatus === 'finalized')) {
+      if (status.err) {
+        throw new Error(`Transaction failed on-chain: ${JSON.stringify(status.err)}`);
+      }
+      confirmed = true;
+      break;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+
+  if (!confirmed) {
+    throw new Error('Transaction confirmation timeout');
+  }
 
   return {
-    signature,
+    signature: txSignature,
     amount: params.amount.toString(),
   };
 }
