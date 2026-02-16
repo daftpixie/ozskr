@@ -56,10 +56,12 @@ export async function buildApproveCheckedTransaction(
   const sourceTokenAccount = getAssociatedTokenAddress(mint, owner);
 
   // Build instruction data: [13, amount(u64 LE), decimals(u8)]
-  const data = Buffer.alloc(10);
-  data.writeUInt8(13, 0);
-  data.writeBigUInt64LE(amount, 1);
-  data.writeUInt8(decimals, 9);
+  // Uses DataView instead of Buffer for browser compatibility.
+  const data = new Uint8Array(10);
+  const view = new DataView(data.buffer);
+  view.setUint8(0, 13);
+  view.setBigUint64(1, amount, true); // little-endian
+  view.setUint8(9, decimals);
 
   const instruction = new TransactionInstruction({
     programId: TOKEN_PROGRAM_ID,
@@ -69,7 +71,7 @@ export async function buildApproveCheckedTransaction(
       { pubkey: delegate, isSigner: false, isWritable: false },
       { pubkey: owner, isSigner: true, isWritable: false },
     ],
-    data,
+    data: data as Buffer,
   });
 
   const transaction = new Transaction().add(instruction);
@@ -96,8 +98,8 @@ export async function buildRevokeTransaction(
 ): Promise<Transaction> {
   const sourceTokenAccount = getAssociatedTokenAddress(mint, owner);
 
-  const data = Buffer.alloc(1);
-  data.writeUInt8(5, 0);
+  const data = new Uint8Array(1);
+  data[0] = 5;
 
   const instruction = new TransactionInstruction({
     programId: TOKEN_PROGRAM_ID,
@@ -105,7 +107,7 @@ export async function buildRevokeTransaction(
       { pubkey: sourceTokenAccount, isSigner: false, isWritable: true },
       { pubkey: owner, isSigner: true, isWritable: false },
     ],
-    data,
+    data: data as Buffer,
   });
 
   const transaction = new Transaction().add(instruction);
