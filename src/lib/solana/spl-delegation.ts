@@ -41,8 +41,8 @@ export function getAssociatedTokenAddress(
  * Build an ApproveChecked transaction for SPL token delegation.
  * The owner approves a delegate (agent) to spend up to `amount` tokens.
  *
- * Instruction layout (ApproveChecked = discriminator 12):
- *   [12, amount(u64 LE), decimals(u8)]
+ * Instruction layout (ApproveChecked = discriminator 13):
+ *   [13, amount(u64 LE), decimals(u8)]
  *   Accounts: source(writable), mint, delegate, owner(signer)
  */
 export async function buildApproveCheckedTransaction(
@@ -55,9 +55,9 @@ export async function buildApproveCheckedTransaction(
 ): Promise<Transaction> {
   const sourceTokenAccount = getAssociatedTokenAddress(mint, owner);
 
-  // Build instruction data: [12, amount(u64 LE), decimals(u8)]
+  // Build instruction data: [13, amount(u64 LE), decimals(u8)]
   const data = Buffer.alloc(10);
-  data.writeUInt8(12, 0);
+  data.writeUInt8(13, 0);
   data.writeBigUInt64LE(amount, 1);
   data.writeUInt8(decimals, 9);
 
