@@ -34,7 +34,7 @@ export const UuidSchema = z.string().uuid();
 /**
  * ISO 8601 timestamp
  */
-export const TimestampSchema = z.string().datetime();
+export const TimestampSchema = z.string().datetime({ offset: true });
 
 // =============================================================================
 // ENUMS

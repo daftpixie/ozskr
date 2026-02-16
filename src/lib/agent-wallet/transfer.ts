@@ -6,6 +6,10 @@
  * @solana-program/token → @solana/kit version conflict.
  */
 
+// TODO: Replace with @solana/kit native signing once Turbopack resolves
+// @solana-program/token → @solana/kit version conflict. @solana/web3.js v1 is
+// deprecated but necessary here because delegate.ts can't be imported through
+// Turbopack's externals-tracing. See: next.config.ts serverExternalPackages.
 import {
   Connection,
   Keypair,

@@ -4,6 +4,8 @@
  * Uses @solana/web3.js v1 (wallet adapter compatible).
  */
 
+// TODO: Replace with @solana/kit once wallet adapter migrates to v2+ types.
+// @solana/web3.js v1 is required here for wallet adapter sendTransaction() compat.
 import {
   PublicKey,
   Transaction,

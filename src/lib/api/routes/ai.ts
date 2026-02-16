@@ -238,7 +238,13 @@ ai.post('/characters', zValidator('json', CharacterCreateSchema), async (c) => {
       .then(({ updateStreak }) => updateStreak(auth.walletAddress))
       .catch(() => {});
 
-    return c.json(mapCharacterToResponse(character), 201);
+    // Merge agentPubkey into response (character was fetched before keypair gen)
+    const response = mapCharacterToResponse(character);
+    if (agentPubkey) {
+      response.agentPubkey = agentPubkey;
+    }
+
+    return c.json(response, 201);
   } catch {
     return c.json(
       { error: 'Failed to create character', code: 'INTERNAL_ERROR' },
