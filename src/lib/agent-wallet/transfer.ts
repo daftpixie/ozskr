@@ -14,6 +14,7 @@ import {
   Connection,
   Keypair,
   PublicKey,
+  SystemProgram,
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
@@ -37,6 +38,31 @@ function getAssociatedTokenAddress(mint: PublicKey, owner: PublicKey): PublicKey
     ASSOCIATED_TOKEN_PROGRAM_ID,
   );
   return ata;
+}
+
+/**
+ * Build a CreateAssociatedTokenAccountIdempotent instruction.
+ * ATA program instruction index 1 = create_idempotent (no-op if exists).
+ * Accounts: payer(s,w), ata(w), owner, mint, systemProgram, tokenProgram
+ */
+function buildCreateAtaIdempotentInstruction(
+  payer: PublicKey,
+  ata: PublicKey,
+  owner: PublicKey,
+  mint: PublicKey,
+): TransactionInstruction {
+  return new TransactionInstruction({
+    programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+    keys: [
+      { pubkey: payer, isSigner: true, isWritable: true },
+      { pubkey: ata, isSigner: false, isWritable: true },
+      { pubkey: owner, isSigner: false, isWritable: false },
+      { pubkey: mint, isSigner: false, isWritable: false },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+    ],
+    data: Buffer.from([1]), // instruction index 1 = create_idempotent
+  });
 }
 
 /**
@@ -74,6 +100,7 @@ interface ExecuteTransferParams {
   characterId: string;
   ownerAddress: string;
   destinationTokenAccount: string;
+  destinationOwner?: string;
   amount: bigint;
   decimals: number;
   tokenMint: string;
@@ -90,9 +117,9 @@ interface TransferResult {
  *
  * Flow:
  * 1. Load agent keypair from encrypted storage
- * 2. Build TransferChecked instruction (agent as delegate/authority)
- * 3. Simulate transaction
- * 4. Sign with agent keypair and submit
+ * 2. Build CreateAtaIdempotent + TransferChecked instructions
+ * 3. Sign with agent keypair
+ * 4. Simulate signed transaction, then submit
  */
 export async function executeAgentTransfer(
   params: ExecuteTransferParams,
@@ -115,8 +142,16 @@ export async function executeAgentTransfer(
   // Source is the owner's ATA for this token
   const source = getAssociatedTokenAddress(mint, owner);
 
+  // Ensure destination ATA exists (idempotent — no-op if already created)
+  const createAtaIx = buildCreateAtaIdempotentInstruction(
+    agentKeypair.publicKey, // agent pays rent for ATA creation
+    destination,
+    new PublicKey(params.destinationOwner || agentKeypair.publicKey.toBase58()),
+    mint,
+  );
+
   // Build the TransferChecked instruction with agent as authority (delegate)
-  const instruction = buildTransferCheckedInstruction(
+  const transferIx = buildTransferCheckedInstruction(
     source,
     mint,
     destination,
@@ -125,24 +160,27 @@ export async function executeAgentTransfer(
     params.decimals,
   );
 
-  // Build transaction
-  const transaction = new Transaction().add(instruction);
+  // Build transaction: create ATA (idempotent) → transfer
+  const transaction = new Transaction().add(createAtaIx, transferIx);
   const { blockhash, lastValidBlockHeight } =
     await connection.getLatestBlockhash();
   transaction.recentBlockhash = blockhash;
   transaction.lastValidBlockHeight = lastValidBlockHeight;
   transaction.feePayer = agentKeypair.publicKey;
 
-  // Simulate before sending
-  const simulation = await connection.simulateTransaction(transaction, [agentKeypair]);
+  // Sign first, then simulate the signed transaction.
+  // Note: simulateTransaction(tx, [signers]) is unreliable on some RPC endpoints;
+  // signing first and simulating the signed tx is the proven approach.
+  transaction.sign(agentKeypair);
+
+  const simulation = await connection.simulateTransaction(transaction);
   if (simulation.value.err) {
     throw new Error(
       `Transaction simulation failed: ${JSON.stringify(simulation.value.err)}`
     );
   }
 
-  // Sign and send
-  transaction.sign(agentKeypair);
+  // Send signed transaction
   const signature = await connection.sendRawTransaction(
     transaction.serialize(),
     { skipPreflight: false },
