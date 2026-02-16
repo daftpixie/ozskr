@@ -12,6 +12,7 @@ import { useAuthStore } from '@/features/wallet/store';
 import {
   buildApproveCheckedTransaction,
   buildRevokeTransaction,
+  getAssociatedTokenAddress,
 } from '@/lib/solana/spl-delegation';
 
 const DELEGATION_API = '/api/delegation';
@@ -254,6 +255,92 @@ export function useRevokeDelegation() {
       });
       queryClient.invalidateQueries({
         queryKey: ['character', variables.characterId],
+      });
+    },
+  });
+}
+
+interface AgentSpendParams {
+  characterId: string;
+  /** Recipient wallet address (NOT the ATA — ATA is derived automatically) */
+  destinationOwner: string;
+  /** Amount in base units (e.g. 100000 = 0.10 USDC) */
+  amount: string;
+  decimals: number;
+  tokenMint: string;
+}
+
+interface AgentSpendResult {
+  signature: string;
+  amount: string;
+  explorerUrl: string;
+}
+
+/**
+ * Execute a delegated agent spend.
+ * The agent signs the transaction server-side — no wallet popup.
+ */
+export function useAgentSpend() {
+  const token = useAuthStore((state) => state.token);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      characterId,
+      destinationOwner,
+      amount,
+      decimals,
+      tokenMint,
+    }: AgentSpendParams): Promise<AgentSpendResult> => {
+      if (!token) throw new Error('Not authenticated');
+
+      // Derive the destination ATA from the recipient's wallet address
+      const mintPk = new PublicKey(tokenMint);
+      const ownerPk = new PublicKey(destinationOwner);
+      const destinationAta = getAssociatedTokenAddress(mintPk, ownerPk);
+
+      const response = await fetch(
+        `${DELEGATION_API}/${characterId}/transfer`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            destinationTokenAccount: destinationAta.toBase58(),
+            destinationOwner,
+            amount,
+            decimals,
+            tokenMint,
+            method: 'demo_agent_spend',
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Agent spend failed');
+      }
+
+      const result = await response.json();
+
+      const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'devnet';
+      const clusterParam = network === 'mainnet-beta' ? '' : `?cluster=${network}`;
+      const explorerUrl = `https://explorer.solana.com/tx/${result.signature}${clusterParam}`;
+
+      return {
+        signature: result.signature,
+        amount: result.amount,
+        explorerUrl,
+      };
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['delegation', variables.characterId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['delegation-transactions', variables.characterId],
       });
     },
   });

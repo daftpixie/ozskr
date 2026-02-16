@@ -205,6 +205,7 @@ delegation.get('/:characterId/transactions', async (c) => {
 
 const TransferSchema = z.object({
   destinationTokenAccount: WalletAddressSchema,
+  destinationOwner: WalletAddressSchema.optional(),
   amount: z.string().regex(/^\d+$/, 'Amount must be a positive integer string'),
   decimals: z.number().int().min(0).max(18),
   tokenMint: WalletAddressSchema,
@@ -238,7 +239,7 @@ delegation.post(
       // Verify ownership + get delegation info
       const { data: character, error: verifyError } = await supabase
         .from('characters')
-        .select('id, agent_pubkey, delegation_status, delegation_token_mint, delegation_token_account, wallet_address')
+        .select('id, agent_pubkey, delegation_status, delegation_token_mint, delegation_token_account, delegation_remaining, wallet_address')
         .eq('id', characterId)
         .eq('wallet_address', auth.walletAddress)
         .single();
@@ -261,6 +262,7 @@ delegation.post(
         characterId,
         ownerAddress: character.wallet_address,
         destinationTokenAccount: input.destinationTokenAccount,
+        destinationOwner: input.destinationOwner,
         amount: BigInt(input.amount),
         decimals: input.decimals,
         tokenMint: input.tokenMint,
@@ -277,6 +279,19 @@ delegation.post(
         method: input.method || 'delegation_transfer',
         status: 'confirmed',
       });
+
+      // Update delegation_remaining (optimistic: subtract spent amount)
+      const currentRemaining = character.delegation_remaining
+        ? BigInt(character.delegation_remaining)
+        : null;
+      if (currentRemaining !== null) {
+        const spent = BigInt(input.amount);
+        const newRemaining = currentRemaining > spent ? currentRemaining - spent : 0n;
+        await supabase
+          .from('characters')
+          .update({ delegation_remaining: newRemaining.toString() })
+          .eq('id', characterId);
+      }
 
       logger.info('Agent transfer executed', {
         characterId,

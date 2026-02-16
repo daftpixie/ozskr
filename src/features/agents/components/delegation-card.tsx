@@ -27,6 +27,7 @@ import {
   useDelegationTransactions,
   useApproveDelegation,
   useRevokeDelegation,
+  useAgentSpend,
 } from '@/hooks/use-delegation';
 import { formatTokenAmount, parseTokenAmount } from '@/lib/solana/tokens';
 import {
@@ -39,12 +40,18 @@ import {
   AlertTriangle,
   Copy,
   Check,
+  Send,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Devnet USDC-Dev SPL token mint (Circle test faucet)
 const DEVNET_USDC_MINT = '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU';
 const USDC_DECIMALS = 6;
+
+// Devnet demo: deterministic recipient for testing delegated agent spends.
+// PDA derived from ['ozskr', 'demo-fee'] via System Program — no private key exists.
+const DEMO_FEE_RECIPIENT = 'Eum62rLLk5EyhfCiC8Ka6PZpTKqv1fQ3dj3apiMpTHyN';
+const DEMO_SPEND_AMOUNT = '100000'; // 0.10 USDC in base units
 
 interface DelegationCardProps {
   characterId: string;
@@ -97,11 +104,16 @@ export function DelegationCard({ characterId, characterName }: DelegationCardPro
   const { data: txData } = useDelegationTransactions(characterId);
   const approveMutation = useApproveDelegation();
   const revokeMutation = useRevokeDelegation();
+  const spendMutation = useAgentSpend();
 
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
   const [amountInput, setAmountInput] = useState('10');
   const [mintInput, setMintInput] = useState(DEVNET_USDC_MINT);
+  const [lastSpend, setLastSpend] = useState<{
+    signature: string;
+    explorerUrl: string;
+  } | null>(null);
 
   if (isLoading) {
     return (
@@ -183,6 +195,24 @@ export function DelegationCard({ characterId, characterName }: DelegationCardPro
         tokenMint: delegation.delegationTokenMint,
       });
       setRevokeDialogOpen(false);
+    } catch {
+      // Error handled by mutation state
+    }
+  };
+
+  const handleTestSpend = async () => {
+    try {
+      const result = await spendMutation.mutateAsync({
+        characterId,
+        destinationOwner: DEMO_FEE_RECIPIENT,
+        amount: DEMO_SPEND_AMOUNT,
+        decimals: USDC_DECIMALS,
+        tokenMint: delegation.delegationTokenMint || DEVNET_USDC_MINT,
+      });
+      setLastSpend({
+        signature: result.signature,
+        explorerUrl: result.explorerUrl,
+      });
     } catch {
       // Error handled by mutation state
     }
@@ -396,6 +426,59 @@ export function DelegationCard({ characterId, characterName }: DelegationCardPro
                 </DialogContent>
               </Dialog>
             )}
+
+            {/* Test Agent Spend */}
+            {isActive && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleTestSpend}
+                disabled={spendMutation.isPending}
+                className="border-solana-green/30 text-solana-green hover:bg-solana-green/10"
+              >
+                {spendMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Test Agent Spend (0.10 USDC)
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Last spend result */}
+        {lastSpend && (
+          <div className="rounded-lg border border-solana-green/30 bg-solana-green/5 p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-solana-green">Agent spend confirmed</span>
+              <a
+                href={lastSpend.explorerUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-solana-purple hover:underline"
+              >
+                View on Explorer
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+            <p className="mt-1 font-mono text-xs text-muted-foreground">
+              {lastSpend.signature}
+            </p>
+          </div>
+        )}
+
+        {/* Spend error */}
+        {spendMutation.error && !spendMutation.isPending && (
+          <div className="rounded-lg bg-destructive/10 p-3">
+            <p className="text-xs text-destructive">
+              {spendMutation.error.message}
+            </p>
           </div>
         )}
 
