@@ -1,10 +1,11 @@
 /**
  * Server-side agent transfer execution.
- * Builds and submits a delegated SPL token transfer using the agent's KeyPairSigner.
+ * Builds and submits a delegated SPL token transfer using the agent's signer.
  *
- * Uses @solana/kit natively for transaction building, signing (Web Crypto Ed25519),
- * and RPC submission. This avoids the tweetnacl incompatibility that occurs when
- * @solana/web3.js v1 is bundled through Turbopack.
+ * Supports both local (encrypted JSON / Web Crypto Ed25519) and remote
+ * (Turnkey TEE) signers transparently via the signer adapter.
+ *
+ * Uses @solana/kit natively for transaction building, signing, and RPC submission.
  */
 
 import {
@@ -13,7 +14,7 @@ import {
   address,
   pipe,
   createTransactionMessage,
-  setTransactionMessageFeePayer,
+  setTransactionMessageFeePayerSigner,
   setTransactionMessageLifetimeUsingBlockhash,
   appendTransactionMessageInstruction,
   signTransactionMessageWithSigners,
@@ -24,6 +25,7 @@ import {
   getProgramDerivedAddress,
 } from '@solana/kit';
 import { loadAgentSigner } from './index';
+import { logger } from '@/lib/utils/logger';
 
 const TOKEN_PROGRAM: Address = address('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 const ATA_PROGRAM: Address = address('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
@@ -152,9 +154,9 @@ interface TransferResult {
  * The agent must have active delegation from the token account owner.
  *
  * Flow:
- * 1. Load agent KeyPairSigner from encrypted storage
+ * 1. Load agent signer (local or Turnkey TEE)
  * 2. Build CreateAtaIdempotent + TransferChecked instructions
- * 3. Sign with Web Crypto Ed25519 (via KeyPairSigner)
+ * 3. Sign via signer adapter (Web Crypto or Turnkey API)
  * 4. Simulate, then submit
  */
 export async function executeAgentTransfer(
@@ -163,9 +165,16 @@ export async function executeAgentTransfer(
   const rpcUrl = getSolanaRpcUrl();
   const rpc = createSolanaRpc(rpcUrl);
 
-  // Load agent's KeyPairSigner (Web Crypto Ed25519)
+  // Load agent signer (local encrypted JSON or Turnkey TEE)
   const agentSigner = await loadAgentSigner(params.characterId);
   const agentAddress = agentSigner.address;
+
+  logger.info('Executing agent transfer', {
+    characterId: params.characterId,
+    agentAddress,
+    amount: params.amount.toString(),
+    tokenMint: params.tokenMint,
+  });
 
   const mint = address(params.tokenMint);
   const ownerAddr = address(params.ownerAddress);
@@ -188,16 +197,17 @@ export async function executeAgentTransfer(
   // Get recent blockhash
   const { value: blockhash } = await rpc.getLatestBlockhash({ commitment: 'confirmed' }).send();
 
-  // Build transaction message
+  // Build transaction message — embed agentSigner so signTransactionMessageWithSigners
+  // can find the signing key (setTransactionMessageFeePayerSigner vs plain address).
   const txMessage = pipe(
     createTransactionMessage({ version: 'legacy' }),
-    (tx) => setTransactionMessageFeePayer(agentAddress, tx),
+    (tx) => setTransactionMessageFeePayerSigner(agentSigner, tx),
     (tx) => setTransactionMessageLifetimeUsingBlockhash(blockhash, tx),
     (tx) => appendTransactionMessageInstruction(createAtaIx, tx),
     (tx) => appendTransactionMessageInstruction(transferIx, tx),
   );
 
-  // Sign with Web Crypto Ed25519 (KeyPairSigner)
+  // Sign via signer adapter (discovers signer from fee payer)
   const signedTx = await signTransactionMessageWithSigners(txMessage);
 
   // Get wire format and signature
