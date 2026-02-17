@@ -6,9 +6,9 @@
  * Turnkey TEE (AWS Nitro Enclaves) in production. The signer backend is
  * selected via TURNKEY_ORGANIZATION_ID env var (feature flag).
  *
- * IMPORT NOTE: Uses subpath imports (@ozskr/agent-wallet-sdk/keypair and /types)
- * to avoid pulling in delegate.js → @solana-program/token which requires a
- * @solana/kit version incompatible with the main app's resolved version.
+ * IMPORT NOTE: Uses subpath imports (@ozskr/agent-wallet-sdk/keypair, /types,
+ * /key-management) to avoid pulling in delegate.js → @solana-program/token
+ * which requires a @solana/kit version incompatible with the main app's.
  */
 
 import { existsSync, mkdirSync } from 'fs';
@@ -74,7 +74,7 @@ async function createAgentKeypairLocal(characterId: string): Promise<string> {
 }
 
 async function createAgentKeypairTurnkey(characterId: string): Promise<string> {
-  const { createTurnkeyWallet } = await import('@ozskr/agent-wallet-sdk');
+  const { createTurnkeyWallet } = await import('@ozskr/agent-wallet-sdk/key-management');
 
   const wallet = await createTurnkeyWallet({
     organizationId: process.env.TURNKEY_ORGANIZATION_ID!,
@@ -119,7 +119,7 @@ async function loadLocalSigner(characterId: string): Promise<AgentSigner> {
 
   // Wrap the KeyPairSigner — it already has signMessages/signTransactions
   // but we wrap it for consistent typing and audit logging
-  const { EncryptedJsonKeyManager } = await import('@ozskr/agent-wallet-sdk');
+  const { EncryptedJsonKeyManager } = await import('@ozskr/agent-wallet-sdk/key-management');
   const km = new EncryptedJsonKeyManager(keypairPath, passphrase, scryptParams);
   return createSignerFromKeyManager(km, signer.address, 'local');
 }
@@ -130,7 +130,7 @@ async function loadTurnkeySigner(characterId: string): Promise<AgentSigner> {
     throw new Error(`No Turnkey mapping for character ${characterId}`);
   }
 
-  const { createKeyManager } = await import('@ozskr/agent-wallet-sdk');
+  const { createKeyManager } = await import('@ozskr/agent-wallet-sdk/key-management');
 
   const km = createKeyManager({
     provider: 'turnkey',

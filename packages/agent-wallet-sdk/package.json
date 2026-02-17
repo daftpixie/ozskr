@@ -27,6 +27,10 @@
     "./types": {
       "import": "./dist/types.js",
       "types": "./dist/types.d.ts"
+    },
+    "./key-management": {
+      "import": "./dist/key-management/index.js",
+      "types": "./dist/key-management/index.d.ts"
     }
   },
   "files": [
