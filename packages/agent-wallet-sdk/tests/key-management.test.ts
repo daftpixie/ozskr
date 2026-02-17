@@ -3,7 +3,7 @@ import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { Address } from '@solana/kit';
-import { EncryptedJsonKeyManager, createKeyManager } from '../src/key-management/index.js';
+import { EncryptedJsonKeyManager, TurnkeyKeyManager, createKeyManager } from '../src/key-management/index.js';
 import type { KeyManager } from '../src/key-management/types.js';
 import { generateAgentKeypair, storeEncryptedKeypair } from '../src/keypair.js';
 import { SCRYPT_PARAMS_FAST } from '../src/types.js';
@@ -206,10 +206,38 @@ describe('KeyManager Interface', () => {
     it('should throw for unknown provider', () => {
       expect(() =>
         createKeyManager({
-          provider: 'turnkey' as const,
+          provider: 'custom' as const,
           options: {},
         }),
-      ).toThrow(/Unsupported key manager provider: turnkey/);
+      ).toThrow(/Unsupported key manager provider: custom/);
+    });
+
+    it('should create TurnkeyKeyManager from config', () => {
+      const keyManager = createKeyManager({
+        provider: 'turnkey',
+        options: {
+          organizationId: 'org-test',
+          apiPublicKey: 'pk-test',
+          apiPrivateKey: 'sk-test',
+          signWith: 'So11111111111111111111111111111111111111112',
+        },
+      });
+
+      expect(keyManager).toBeInstanceOf(TurnkeyKeyManager);
+    });
+
+    it('should throw if turnkey options are missing', () => {
+      expect(() =>
+        createKeyManager({
+          provider: 'turnkey',
+          options: {
+            organizationId: '',
+            apiPublicKey: 'pk-test',
+            apiPrivateKey: 'sk-test',
+            signWith: 'SomeAddress',
+          },
+        }),
+      ).toThrow(/requires organizationId/);
     });
 
     it('should throw if filePath is missing', () => {

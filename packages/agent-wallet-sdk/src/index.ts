@@ -40,8 +40,8 @@ export {
 } from './types.js';
 
 // Key management (pluggable interface)
-export type { KeyManager, KeyManagerConfig } from './key-management/index.js';
-export { EncryptedJsonKeyManager, createKeyManager } from './key-management/index.js';
+export type { KeyManager, KeyManagerConfig, TurnkeyKeyManagerOptions, CreateTurnkeyWalletOptions, TurnkeyWalletResult } from './key-management/index.js';
+export { EncryptedJsonKeyManager, TurnkeyKeyManager, createKeyManager, createTurnkeyWallet } from './key-management/index.js';
 
 // Constants
 export {
