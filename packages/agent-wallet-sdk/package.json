@@ -27,6 +27,10 @@
     "./types": {
       "import": "./dist/types.js",
       "types": "./dist/types.d.ts"
+    },
+    "./key-management": {
+      "import": "./dist/key-management/index.js",
+      "types": "./dist/key-management/index.d.ts"
     }
   },
   "files": [
@@ -61,11 +65,12 @@
     "prepublishOnly": "node -e \"const ua=process.env.npm_config_user_agent||'';if(!ua.includes('pnpm')){const p=require('./package.json');const d=JSON.stringify(p.dependencies||{});if(d.includes('workspace:')){console.error('ERROR: workspace: protocol in dependencies. Use pnpm publish, not npm publish.');process.exit(1)}}\" && pnpm run build && pnpm run test"
   },
   "dependencies": {
+    "@solana-program/token": "^0.9.0",
     "@solana/kit": "^2.1.0",
-    "@solana-program/token": "^0.9.0"
+    "@turnkey/sdk-server": "^5.0.3"
   },
   "devDependencies": {
-    "vitest": "^4.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.0"
   }
 }
