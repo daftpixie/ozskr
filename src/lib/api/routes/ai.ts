@@ -71,6 +71,13 @@ function mapCharacterToResponse(char: Character) {
     lastGeneratedAt: char.last_generated_at,
     createdAt: char.created_at,
     updatedAt: char.updated_at,
+    agentPubkey: char.agent_pubkey ?? null,
+    delegationStatus: char.delegation_status ?? 'none',
+    delegationAmount: char.delegation_amount ?? null,
+    delegationRemaining: char.delegation_remaining ?? null,
+    delegationTokenMint: char.delegation_token_mint ?? null,
+    delegationTokenAccount: char.delegation_token_account ?? null,
+    delegationTxSignature: char.delegation_tx_signature ?? null,
   };
 }
 
@@ -196,6 +203,22 @@ ai.post('/characters', zValidator('json', CharacterCreateSchema), async (c) => {
       );
     }
 
+    // Generate agent keypair (async, but we need the pubkey for the response)
+    let agentPubkey: string | null = null;
+    try {
+      const { createAgentKeypair } = await import('@/lib/agent-wallet');
+      agentPubkey = await createAgentKeypair(character.id);
+
+      // Store pubkey in characters table
+      await supabase
+        .from('characters')
+        .update({ agent_pubkey: agentPubkey })
+        .eq('id', character.id);
+    } catch (agentError) {
+      // Log but don't fail character creation — keypair can be generated later
+      console.error('Failed to generate agent keypair:', agentError);
+    }
+
     // Award points for agent creation (async, don't fail the main operation)
     import('@/lib/gamification/points')
       .then(({ awardPoints, POINTS_VALUES }) =>
@@ -215,7 +238,13 @@ ai.post('/characters', zValidator('json', CharacterCreateSchema), async (c) => {
       .then(({ updateStreak }) => updateStreak(auth.walletAddress))
       .catch(() => {});
 
-    return c.json(mapCharacterToResponse(character), 201);
+    // Merge agentPubkey into response (character was fetched before keypair gen)
+    const response = mapCharacterToResponse(character);
+    if (agentPubkey) {
+      response.agentPubkey = agentPubkey;
+    }
+
+    return c.json(response, 201);
   } catch {
     return c.json(
       { error: 'Failed to create character', code: 'INTERNAL_ERROR' },

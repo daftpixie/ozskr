@@ -25,6 +25,7 @@ import {
 import { useCharacter, useUpdateCharacter } from '@/hooks/use-characters';
 import { GenerateModal } from '@/features/agents/components/generate-modal';
 import { ScheduleModal } from '@/features/agents/components/schedule-modal';
+import { DelegationCard } from '@/features/agents/components/delegation-card';
 import { useContentSchedules, useDeleteSchedule, useTriggerSchedule } from '@/hooks/use-schedules';
 import { timeAgo, formatDate } from '@/lib/utils/time';
 import { CharacterStatus, ScheduleContentType } from '@/types/database';
@@ -221,6 +222,12 @@ export default function AgentDetailPage({ params }: AgentDetailPageProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Agent Delegation */}
+      <DelegationCard
+        characterId={id}
+        characterName={character.name}
+      />
 
       {/* Character DNA */}
       <div className="grid gap-6 md:grid-cols-2">

@@ -120,6 +120,13 @@ describe('generate-scheduled', () => {
         last_generated_at: null,
         created_at: '2024-01-15T00:00:00Z',
         updated_at: '2024-01-15T00:00:00Z',
+        agent_pubkey: null,
+        delegation_status: 'none',
+        delegation_amount: null,
+        delegation_remaining: null,
+        delegation_token_mint: null,
+        delegation_token_account: null,
+        delegation_tx_signature: null,
       };
 
       const insertSpy = vi.fn().mockReturnThis();
@@ -205,6 +212,13 @@ describe('generate-scheduled', () => {
         last_generated_at: null,
         created_at: '2024-01-15T00:00:00Z',
         updated_at: '2024-01-15T00:00:00Z',
+        agent_pubkey: null,
+        delegation_status: 'none',
+        delegation_amount: null,
+        delegation_remaining: null,
+        delegation_token_mint: null,
+        delegation_token_account: null,
+        delegation_tx_signature: null,
       };
 
       mockFrom.mockImplementation((tableName: string) => {
@@ -285,6 +299,13 @@ describe('generate-scheduled', () => {
         last_generated_at: null,
         created_at: '2024-01-15T00:00:00Z',
         updated_at: '2024-01-15T00:00:00Z',
+        agent_pubkey: null,
+        delegation_status: 'none',
+        delegation_amount: null,
+        delegation_remaining: null,
+        delegation_token_mint: null,
+        delegation_token_account: null,
+        delegation_tx_signature: null,
       };
 
       const updateSpy = vi.fn().mockReturnThis();
@@ -362,6 +383,13 @@ describe('generate-scheduled', () => {
         last_generated_at: null,
         created_at: '2024-01-15T00:00:00Z',
         updated_at: '2024-01-15T00:00:00Z',
+        agent_pubkey: null,
+        delegation_status: 'none',
+        delegation_amount: null,
+        delegation_remaining: null,
+        delegation_token_mint: null,
+        delegation_token_account: null,
+        delegation_tx_signature: null,
       };
 
       const nextRunTime = new Date('2024-01-16T09:00:00Z');
@@ -442,6 +470,13 @@ describe('generate-scheduled', () => {
         last_generated_at: null,
         created_at: '2024-01-15T00:00:00Z',
         updated_at: '2024-01-15T00:00:00Z',
+        agent_pubkey: null,
+        delegation_status: 'none',
+        delegation_amount: null,
+        delegation_remaining: null,
+        delegation_token_mint: null,
+        delegation_token_account: null,
+        delegation_tx_signature: null,
       };
 
       const updateSpy = vi.fn().mockReturnThis();
@@ -518,6 +553,13 @@ describe('generate-scheduled', () => {
         last_generated_at: null,
         created_at: '2024-01-15T00:00:00Z',
         updated_at: '2024-01-15T00:00:00Z',
+        agent_pubkey: null,
+        delegation_status: 'none',
+        delegation_amount: null,
+        delegation_remaining: null,
+        delegation_token_mint: null,
+        delegation_token_account: null,
+        delegation_tx_signature: null,
       };
 
       mockRunPipeline.mockRejectedValue(new Error('Pipeline failed'));
@@ -593,6 +635,13 @@ describe('generate-scheduled', () => {
         last_generated_at: null,
         created_at: '2024-01-15T00:00:00Z',
         updated_at: '2024-01-15T00:00:00Z',
+        agent_pubkey: null,
+        delegation_status: 'none',
+        delegation_amount: null,
+        delegation_remaining: null,
+        delegation_token_mint: null,
+        delegation_token_account: null,
+        delegation_tx_signature: null,
       };
 
       mockFrom.mockImplementation((tableName: string) => {
