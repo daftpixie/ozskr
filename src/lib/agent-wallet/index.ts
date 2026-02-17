@@ -179,11 +179,24 @@ async function storeTurnkeyMapping(
 }
 
 /**
- * Look up a character's Turnkey wallet mapping from Supabase.
+ * Look up a character's Turnkey wallet mapping.
+ *
+ * Resolution order:
+ * 1. Env vars TURNKEY_AGENT_WALLET_ID + TURNKEY_AGENT_SOLANA_ADDRESS (demo shortcut)
+ * 2. Supabase agent_turnkey_mapping table (production)
  */
 async function getTurnkeyMapping(
   characterId: string,
 ): Promise<{ turnkeyWalletId: string; turnkeyPublicKey: string } | null> {
+  // Fast path: env var override for demo / single-agent deployments
+  const envWalletId = process.env.TURNKEY_AGENT_WALLET_ID;
+  const envAddress = process.env.TURNKEY_AGENT_SOLANA_ADDRESS;
+  if (envWalletId && envAddress) {
+    logger.debug('Using env var Turnkey mapping', { characterId, address: envAddress });
+    return { turnkeyWalletId: envWalletId, turnkeyPublicKey: envAddress };
+  }
+
+  // Production path: Supabase mapping table
   const { createClient } = await import('@supabase/supabase-js');
 
   const supabase = createClient(
