@@ -35,6 +35,8 @@ jobs:
         with:
           node-version: 20
       - run: pnpm install --frozen-lockfile
+      - name: Build workspace packages
+        run: pnpm --filter './packages/*' build
       - run: pnpm typecheck
 
   test:
@@ -61,6 +63,8 @@ jobs:
         with:
           node-version: 20
       - run: pnpm install --frozen-lockfile
+      - name: Build workspace packages
+        run: pnpm --filter './packages/*' build
       - run: pnpm build
         env:
           NEXT_PUBLIC_HELIUS_RPC_URL: https://placeholder.helius-rpc.com
