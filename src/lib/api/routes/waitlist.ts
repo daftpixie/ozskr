@@ -17,6 +17,7 @@ const WaitlistSignupSchema = z
   .object({
     email: z.string().email().optional(),
     walletAddress: z.string().min(32).max(44).optional(),
+    source: z.enum(['landing', 'blog', 'twitter', 'direct']).optional(),
   })
   .refine((data) => data.email || data.walletAddress, {
     message: 'Either email or walletAddress is required',
@@ -28,7 +29,7 @@ const waitlist = new Hono();
  * POST / — Add to waitlist (enforces 500-spot cap)
  */
 waitlist.post('/', zValidator('json', WaitlistSignupSchema), async (c) => {
-  const { email, walletAddress } = c.req.valid('json');
+  const { email, walletAddress, source } = c.req.valid('json');
 
   try {
     const supabase = createSupabaseClient();
@@ -48,6 +49,7 @@ waitlist.post('/', zValidator('json', WaitlistSignupSchema), async (c) => {
     const { error } = await supabase.from('waitlist').insert({
       email: email || null,
       wallet_address: walletAddress || null,
+      source: source || null,
     });
 
     if (error) {

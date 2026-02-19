@@ -2,12 +2,12 @@
  * Legal Document Page
  * Dynamic route for displaying legal documents from docs/legal/
  * Server component — reads markdown files at build time
+ * Header and footer provided by (public) layout
  */
 
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import { MarkdownRenderer } from '@/components/features/legal/markdown-renderer';
 import { notFound } from 'next/navigation';
 
@@ -109,48 +109,25 @@ export default function LegalPage({ params }: LegalPageProps) {
   }
 
   return (
-    <div className="relative min-h-screen bg-void-black text-white">
-      {/* Header */}
-      <header className="fixed left-0 right-0 top-0 z-50 border-b border-white/5 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight">
-            <span className="logo-brick logo-brick-gradient text-[10px]" />
-            <span className="font-display bg-gradient-to-r from-solana-purple to-solana-green bg-clip-text text-transparent">
-              ozskr.ai
-            </span>
-          </Link>
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Home
-          </Link>
-        </div>
-      </header>
+    <div className="mx-auto max-w-4xl px-6 pb-24 pt-24">
+      <div className="rounded-lg border border-white/5 bg-white/[0.02] p-8 md:p-12">
+        <MarkdownRenderer content={content} />
+      </div>
 
-      {/* Content */}
-      <main className="mx-auto max-w-4xl px-6 pb-24 pt-24">
-        <div className="rounded-lg border border-white/5 bg-white/[0.02] p-8 md:p-12">
-          <MarkdownRenderer content={content} />
-        </div>
-
-        {/* Footer navigation */}
-        <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-8 sm:flex-row">
-          <Link
-            href="/legal"
-            className="text-sm text-muted-foreground transition-colors hover:text-white"
-          >
-            View all legal documents
-          </Link>
-          <Link
-            href="/"
-            className="text-sm text-muted-foreground transition-colors hover:text-white"
-          >
-            Return to ozskr.ai
-          </Link>
-        </div>
-      </main>
+      <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-8 sm:flex-row">
+        <Link
+          href="/legal"
+          className="text-sm text-muted-foreground transition-colors hover:text-white"
+        >
+          View all legal documents
+        </Link>
+        <Link
+          href="/"
+          className="text-sm text-muted-foreground transition-colors hover:text-white"
+        >
+          Return to ozskr.ai
+        </Link>
+      </div>
     </div>
   );
 }

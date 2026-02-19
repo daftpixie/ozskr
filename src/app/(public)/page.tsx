@@ -3,15 +3,14 @@
 /**
  * Landing Page
  * Public marketing page with hero, features, how it works, and waitlist
+ * Header and footer are provided by the (public) layout
  */
 
 import { Suspense, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useWalletAuth } from '@/features/wallet/hooks/use-wallet-auth';
-import { WalletButton } from '@/features/wallet/components/wallet-button';
 import { WaitlistForm } from '@/components/features/landing/waitlist-form';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -25,8 +24,8 @@ import {
   Wallet,
   Rocket,
   ArrowRight,
-  Github,
-  Twitter,
+  Shield,
+  AlertTriangle,
 } from 'lucide-react';
 
 const FEATURES = [
@@ -97,6 +96,8 @@ function HomeContent() {
   const { setVisible } = useWalletModal();
   const { isAuthenticated } = useWalletAuth();
 
+  const accessRestricted = searchParams.get('access') === 'restricted';
+
   // Handle redirect after auth
   useEffect(() => {
     if (isAuthenticated) {
@@ -107,22 +108,23 @@ function HomeContent() {
     }
   }, [isAuthenticated, searchParams, router]);
 
-  const scrollToFeatures = () => {
-    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToWaitlist = () => {
+    document.getElementById('waitlist')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
-    <div className="relative min-h-screen bg-void-black text-white">
-      {/* Header */}
-      <header className="fixed left-0 right-0 top-0 z-50 border-b border-white/5 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <span className="flex items-center gap-2 text-xl font-bold tracking-tight">
-            <span className="logo-brick logo-brick-gradient text-[10px]" />
-            <span className="font-display bg-gradient-to-r from-solana-purple to-solana-green bg-clip-text text-transparent">ozskr.ai</span>
-          </span>
-          <WalletButton />
+    <div className="relative">
+      {/* Access restricted banner */}
+      {accessRestricted && (
+        <div className="fixed left-0 right-0 top-16 z-40 border-b border-brick-gold/20 bg-brick-gold/10 backdrop-blur-sm">
+          <div className="mx-auto flex max-w-7xl items-center gap-3 px-6 py-3">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-brick-gold" />
+            <p className="text-sm text-brick-gold">
+              Access is currently limited to approved testers. Join the waitlist below and we&apos;ll notify you when spots open.
+            </p>
+          </div>
         </div>
-      </header>
+      )}
 
       {/* Hero */}
       <section className="relative flex min-h-screen flex-col items-center justify-center px-6 pt-16 text-center pattern-bricks">
@@ -130,8 +132,8 @@ function HomeContent() {
           <h1 className="font-display bg-gradient-to-r from-solana-purple via-solana-green to-brick-gold bg-clip-text text-5xl font-bold tracking-tight text-transparent sm:text-7xl animate-fade-in-up">
             ozskr.ai
           </h1>
-          <p className="mx-auto max-w-2xl text-xl italic text-muted-foreground sm:text-2xl animate-fade-in-up stagger-1">
-            &ldquo;Pay no mind to the &lsquo;agents&rsquo; behind the emerald curtain.&rdquo;
+          <p className="mx-auto max-w-2xl text-xl font-medium text-white sm:text-2xl animate-fade-in-up stagger-1">
+            Your AI agents. Your rules. On-chain.
           </p>
           <p className="mx-auto max-w-xl text-base text-muted-foreground animate-fade-in-up stagger-2">
             Create AI-powered digital influencers. Built on Solana. Powered by imagination.
@@ -148,23 +150,25 @@ function HomeContent() {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             ) : (
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-solana-purple to-solana-green px-8 text-base hover:opacity-90"
-                onClick={() => setVisible(true)}
-              >
-                {connected ? 'Sign In' : 'Follow the Road'}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <>
+                <Button
+                  size="lg"
+                  variant="ghost"
+                  className="border border-white/10 px-8 text-base text-muted-foreground hover:text-white"
+                  onClick={scrollToWaitlist}
+                >
+                  Join Waitlist
+                </Button>
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-solana-purple to-solana-green px-8 text-base hover:opacity-90"
+                  onClick={() => setVisible(true)}
+                >
+                  {connected ? 'Sign In' : 'Connect Wallet'}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </>
             )}
-            <Button
-              variant="ghost"
-              size="lg"
-              className="border border-white/10 px-8 text-base text-muted-foreground hover:text-white"
-              onClick={scrollToFeatures}
-            >
-              See the Magic
-            </Button>
           </div>
         </div>
       </section>
@@ -194,6 +198,28 @@ function HomeContent() {
               </CardContent>
             </Card>
           ))}
+        </div>
+      </section>
+
+      {/* On-Chain Proof */}
+      <section className="mx-auto max-w-4xl px-6 py-16">
+        <div className="rounded-lg border border-solana-purple/20 bg-solana-purple/5 p-8 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-solana-purple/10">
+            <Shield className="h-6 w-6 text-solana-purple" />
+          </div>
+          <h2 className="font-display mb-2 text-2xl font-bold">On-Chain Proof</h2>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Agent delegation is enforced on-chain. TEE-signed transactions are verifiable by anyone.
+          </p>
+          <a
+            href="https://explorer.solana.com/?cluster=devnet"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm text-solana-purple transition-colors hover:text-solana-green"
+          >
+            View on Solana Explorer (devnet)
+            <ArrowRight className="h-3 w-3" />
+          </a>
         </div>
       </section>
 
@@ -241,67 +267,15 @@ function HomeContent() {
       </section>
 
       {/* Waitlist */}
-      <section className="mx-auto max-w-2xl px-6 py-24 text-center">
+      <section id="waitlist" className="mx-auto max-w-2xl px-6 py-24 text-center">
         <h2 className="font-display mb-4 text-3xl font-bold sm:text-4xl">
           Claim your spot on the road
         </h2>
         <p className="mb-8 text-muted-foreground">
           Be among the first to enter the Emerald City.
         </p>
-        <WaitlistForm />
+        <WaitlistForm source="landing" />
       </section>
-
-      {/* Footer */}
-      <footer className="border-t border-white/5 py-8">
-        <div className="mx-auto max-w-6xl space-y-6 px-6">
-          {/* First row: social, tagline, license */}
-          <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
-            <div className="flex items-center gap-4">
-              <a
-                href="https://github.com/daftpixie/ozskr"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground transition-colors hover:text-white"
-                aria-label="GitHub"
-              >
-                <Github className="h-5 w-5" />
-              </a>
-              <a
-                href="https://x.com/ozskr_ai"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground transition-colors hover:text-white"
-                aria-label="Twitter"
-              >
-                <Twitter className="h-5 w-5" />
-              </a>
-            </div>
-
-            <p className="text-sm text-muted-foreground">
-              Built with Claude Code. The magic is in your hands.
-            </p>
-
-            <p className="text-sm text-muted-foreground">
-              MIT License &copy; {new Date().getFullYear()} VT Infinite, Inc
-            </p>
-          </div>
-
-          {/* Second row: legal links */}
-          <div className="flex flex-wrap items-center justify-center gap-4 border-t border-white/5 pt-6 text-xs text-muted-foreground">
-            <Link href="/legal/privacy" className="transition-colors hover:text-white">
-              Privacy Policy
-            </Link>
-            <span className="text-white/20">•</span>
-            <Link href="/legal/terms" className="transition-colors hover:text-white">
-              Terms of Service
-            </Link>
-            <span className="text-white/20">•</span>
-            <Link href="/legal/cookies" className="transition-colors hover:text-white">
-              Cookies
-            </Link>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

@@ -5,7 +5,7 @@
 
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { SignJWT } from 'jose';
+import { SignJWT, jwtVerify } from 'jose';
 import { SiwsVerifyRequestSchema, SessionResponseSchema, ApiSuccessSchema } from '@/types/schemas';
 import { createSupabaseServerClient } from '../supabase';
 import { authMiddleware } from '../middleware/auth';
@@ -107,6 +107,19 @@ auth.post('/verify', zValidator('json', SiwsVerifyRequestSchema), async (c) => {
       );
     }
 
+    // STEP 3b: Check whitelist status
+    const { data: whitelistEntry } = await supabase
+      .from('alpha_whitelist')
+      .select('access_tier')
+      .eq('wallet_address', walletAddress)
+      .maybeSingle();
+
+    const isWhitelisted = !!whitelistEntry;
+
+    // Also check ADMIN_WALLETS
+    const adminWallets = (process.env.ADMIN_WALLETS ?? '').split(',').filter(Boolean);
+    const isAdmin = adminWallets.includes(walletAddress);
+
     // STEP 4: Generate JWT token
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
@@ -123,7 +136,10 @@ auth.post('/verify', zValidator('json', SiwsVerifyRequestSchema), async (c) => {
     expiresAt.setDate(expiresAt.getDate() + 7); // 7-day session
 
     const secret = new TextEncoder().encode(jwtSecret);
-    const token = await new SignJWT({ wallet_address: walletAddress })
+    const token = await new SignJWT({
+      wallet_address: walletAddress,
+      is_whitelisted: isWhitelisted || isAdmin,
+    })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
       .setExpirationTime('7d')
@@ -158,7 +174,7 @@ auth.post('/verify', zValidator('json', SiwsVerifyRequestSchema), async (c) => {
       },
     });
 
-    return c.json(response, 200);
+    return c.json({ ...response, isWhitelisted: isWhitelisted || isAdmin }, 200);
   } catch (error) {
     // Log full error server-side, return generic message to client
     logger.error('Authentication failed', {
@@ -280,6 +296,19 @@ auth.get('/session', authMiddleware, async (c: Context) => {
       );
     }
 
+    // Decode JWT to extract whitelist claim
+    let isWhitelisted = false;
+    try {
+      const jwtSecret = process.env.JWT_SECRET;
+      if (jwtSecret) {
+        const secret = new TextEncoder().encode(jwtSecret);
+        const { payload } = await jwtVerify(jwtToken, secret);
+        isWhitelisted = !!payload.is_whitelisted;
+      }
+    } catch {
+      // JWT decode failed — default to not whitelisted
+    }
+
     return c.json(
       {
         token: jwtToken,
@@ -289,6 +318,7 @@ auth.get('/session', authMiddleware, async (c: Context) => {
           displayName: user.display_name ?? null,
           avatarUrl: user.avatar_url ?? null,
         },
+        isWhitelisted,
       },
       200
     );

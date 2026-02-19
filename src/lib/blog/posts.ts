@@ -13,9 +13,22 @@ export interface BlogPost {
   readingTime: string;
   keywords: string[];
   content: string;
+  contentFile?: string;
 }
 
 export const blogPosts: BlogPost[] = [
+  {
+    slug: 'the-ozskr-livepaper',
+    title: 'The ozskr.ai Livepaper',
+    description:
+      'The canonical technical specification for ozskr.ai. Architecture, delegation model, on-chain enforcement, and everything backing the platform — commit-linked and verifiable.',
+    author: 'ozskr.ai',
+    publishedAt: '2026-02-19',
+    readingTime: '35 min read',
+    keywords: ['livepaper', 'architecture', 'Solana', 'AI agents', 'delegation', 'TEE', 'x402'],
+    content: '',
+    contentFile: 'docs/LIVEPAPER.md',
+  },
   {
     slug: 'how-ai-built-ai-platform',
     title: 'How AI Built an AI Agent Platform',

@@ -20,7 +20,11 @@ interface WaitlistCount {
   remaining: number;
 }
 
-export function WaitlistForm() {
+interface WaitlistFormProps {
+  source?: string;
+}
+
+export function WaitlistForm({ source }: WaitlistFormProps) {
   const { publicKey } = useWallet();
   const [email, setEmail] = useState('');
   const [state, setState] = useState<FormState>('idle');
@@ -48,6 +52,7 @@ export function WaitlistForm() {
         body: JSON.stringify({
           ...(email && { email }),
           ...(walletAddress && { walletAddress }),
+          ...(source && { source }),
         }),
       });
 
