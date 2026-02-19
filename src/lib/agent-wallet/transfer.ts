@@ -27,6 +27,11 @@ import {
 import { loadAgentSigner } from './index';
 import { logger } from '@/lib/utils/logger';
 
+/** JSON.stringify replacer that converts BigInt to string (avoids TypeError). */
+function bigIntReplacer(_key: string, value: unknown): unknown {
+  return typeof value === 'bigint' ? value.toString() : value;
+}
+
 const TOKEN_PROGRAM: Address = address('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 const ATA_PROGRAM: Address = address('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
 const SYSTEM_PROGRAM: Address = address('11111111111111111111111111111111');
@@ -222,7 +227,7 @@ export async function executeAgentTransfer(
 
   if (simResult.value.err) {
     throw new Error(
-      `Transaction simulation failed: ${JSON.stringify(simResult.value.err)}`
+      `Transaction simulation failed: ${JSON.stringify(simResult.value.err, bigIntReplacer)}`
     );
   }
 
@@ -240,7 +245,7 @@ export async function executeAgentTransfer(
     const status = statusResult.value[0];
     if (status && (status.confirmationStatus === 'confirmed' || status.confirmationStatus === 'finalized')) {
       if (status.err) {
-        throw new Error(`Transaction failed on-chain: ${JSON.stringify(status.err)}`);
+        throw new Error(`Transaction failed on-chain: ${JSON.stringify(status.err, bigIntReplacer)}`);
       }
       confirmed = true;
       break;
