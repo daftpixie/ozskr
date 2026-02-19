@@ -216,7 +216,8 @@ ai.post('/characters', zValidator('json', CharacterCreateSchema), async (c) => {
         .eq('id', character.id);
     } catch (agentError) {
       // Log but don't fail character creation — keypair can be generated later
-      console.error('Failed to generate agent keypair:', agentError);
+      const { logger } = await import('@/lib/utils/logger');
+      logger.error('Failed to generate agent keypair', { error: agentError, characterId: character.id });
     }
 
     // Award points for agent creation (async, don't fail the main operation)
