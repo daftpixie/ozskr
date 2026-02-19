@@ -104,10 +104,31 @@ async function createAgentKeypairTurnkey(characterId: string): Promise<string> {
  * { address, signMessages, signTransactions }
  */
 export async function loadAgentSigner(characterId: string): Promise<AgentSigner> {
-  if (process.env.TURNKEY_ORGANIZATION_ID) {
-    return loadTurnkeySigner(characterId);
+  const hasTurnkey = !!process.env.TURNKEY_ORGANIZATION_ID;
+  logger.info('loadAgentSigner: selecting signer backend', {
+    characterId,
+    hasTurnkey,
+    hasApiPublicKey: !!process.env.TURNKEY_API_PUBLIC_KEY,
+    hasApiPrivateKey: !!process.env.TURNKEY_API_PRIVATE_KEY,
+    hasWalletId: !!process.env.TURNKEY_AGENT_WALLET_ID,
+    hasAddress: !!process.env.TURNKEY_AGENT_SOLANA_ADDRESS,
+  });
+
+  if (hasTurnkey) {
+    const signer = await loadTurnkeySigner(characterId);
+    logger.info('loadAgentSigner: Turnkey signer loaded', {
+      characterId,
+      agentAddress: signer.address,
+    });
+    return signer;
   }
-  return loadLocalSigner(characterId);
+
+  const signer = await loadLocalSigner(characterId);
+  logger.info('loadAgentSigner: local signer loaded', {
+    characterId,
+    agentAddress: signer.address,
+  });
+  return signer;
 }
 
 async function loadLocalSigner(characterId: string): Promise<AgentSigner> {
