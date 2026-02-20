@@ -2,20 +2,21 @@
 
 /**
  * Auth Guard Component
- * Protects dashboard routes by requiring wallet authentication
+ * Protects dashboard routes by requiring wallet authentication + whitelist
  */
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWalletAuth } from '@/features/wallet/hooks/use-wallet-auth';
 import { WalletButton } from '@/features/wallet/components/wallet-button';
+import { Button } from '@/components/ui/button';
 
 interface AuthGuardProps {
   children: React.ReactNode;
 }
 
 export function AuthGuard({ children }: AuthGuardProps) {
-  const { isAuthenticated, isLoading } = useWalletAuth();
+  const { isAuthenticated, isWhitelisted, isLoading } = useWalletAuth();
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
 
@@ -58,6 +59,33 @@ export function AuthGuard({ children }: AuthGuardProps) {
             dashboard.
           </p>
           <WalletButton />
+        </div>
+      </div>
+    );
+  }
+
+  // Show access limited if authenticated but not whitelisted
+  if (!isWhitelisted) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-void-black">
+        <div className="flex flex-col items-center gap-6 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brick-gold/10">
+            <span className="text-3xl">&#128274;</span>
+          </div>
+          <h2 className="text-2xl font-bold text-white">
+            Access Limited
+          </h2>
+          <p className="max-w-md text-muted-foreground">
+            Your wallet is not yet on the whitelist. Join the waitlist and
+            we&apos;ll notify you when spots open.
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => router.push('/')}
+            className="border-white/10 text-white hover:bg-white/5"
+          >
+            Back to Home
+          </Button>
         </div>
       </div>
     );

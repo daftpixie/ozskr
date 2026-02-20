@@ -100,9 +100,10 @@ export const authMiddleware = createMiddleware(async (c: Context, next) => {
       }
     }
 
-    // Attach wallet address to context
+    // Attach wallet address and whitelist status to context
     c.set('walletAddress', walletAddress);
     c.set('jwtToken', token);
+    c.set('isWhitelisted', !!payload.is_whitelisted);
 
     await next();
   } catch (error) {

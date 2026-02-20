@@ -97,6 +97,7 @@ describe('Waitlist Routes', () => {
       expect(mockInsert).toHaveBeenCalledWith({
         email: 'test@example.com',
         wallet_address: null,
+        source: null,
       });
     });
 
@@ -113,6 +114,7 @@ describe('Waitlist Routes', () => {
       expect(mockInsert).toHaveBeenCalledWith({
         email: null,
         wallet_address: walletAddress,
+        source: null,
       });
     });
 
@@ -130,6 +132,7 @@ describe('Waitlist Routes', () => {
       expect(mockInsert).toHaveBeenCalledWith({
         email: 'test@example.com',
         wallet_address: '11111111111111111111111111111111',
+        source: null,
       });
     });
 

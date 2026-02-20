@@ -20,7 +20,7 @@ const API_BASE = '/api/auth';
 
 export function useWalletAuth() {
   const { publicKey, signMessage, connected, disconnect } = useWallet();
-  const { token, user, isAuthenticated, setAuth, clearAuth } = useAuthStore();
+  const { token, user, isAuthenticated, isWhitelisted, setAuth, clearAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,10 +82,11 @@ export function useWalletAuth() {
       }
 
       // Step 5: Parse and store session
-      const data: unknown = await response.json();
-      const session = SessionResponseSchema.parse(data);
+      const rawData = await response.json();
+      const session = SessionResponseSchema.parse(rawData);
+      const whitelisted = !!(rawData as Record<string, unknown>).isWhitelisted;
 
-      setAuth(session.token, session.user);
+      setAuth(session.token, session.user, whitelisted);
       setError(null);
     } catch (err) {
       const errorMessage =
@@ -169,10 +170,11 @@ export function useWalletAuth() {
           return;
         }
 
-        const data: unknown = await response.json();
-        const session = SessionResponseSchema.parse(data);
+        const rawData = await response.json();
+        const session = SessionResponseSchema.parse(rawData);
+        const whitelisted = !!(rawData as Record<string, unknown>).isWhitelisted;
 
-        setAuth(session.token, session.user);
+        setAuth(session.token, session.user, whitelisted);
       } catch {
         // Session validation failed - clear auth
         clearAuth();
@@ -197,6 +199,7 @@ export function useWalletAuth() {
 
   return {
     isAuthenticated,
+    isWhitelisted,
     isLoading,
     user,
     token,

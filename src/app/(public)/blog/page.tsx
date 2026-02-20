@@ -16,14 +16,8 @@ export default function BlogPage() {
   const posts = getAllBlogPosts();
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-3xl px-4 pb-16 pt-24 sm:px-6 lg:px-8">
       <header className="mb-12">
-        <Link
-          href="/"
-          className="mb-8 inline-block text-sm text-muted-foreground transition-colors hover:text-white"
-        >
-          &larr; Back to ozskr.ai
-        </Link>
         <h1 className="font-display text-4xl font-bold tracking-tight text-white">Blog</h1>
         <p className="mt-2 text-lg text-muted-foreground">
           Build-in-public updates and technical deep dives.

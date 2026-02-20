@@ -13,14 +13,17 @@ export interface AuthState {
     avatarUrl: string | null;
   } | null;
   isAuthenticated: boolean;
+  isWhitelisted: boolean;
   setAuth: (
     token: string,
     user: {
       walletAddress: string;
       displayName: string | null;
       avatarUrl: string | null;
-    }
+    },
+    isWhitelisted?: boolean
   ) => void;
+  setIsWhitelisted: (isWhitelisted: boolean) => void;
   clearAuth: () => void;
 }
 
@@ -29,24 +32,31 @@ const AUTH_STORAGE_KEY = 'ozskr_auth_token';
 /**
  * Auth state store.
  * Persists token to localStorage for session continuity.
+ * Sets the JWT itself as the session cookie so edge middleware can decode it.
  */
 export const useAuthStore = create<AuthState>((set) => ({
   token: null,
   user: null,
   isAuthenticated: false,
+  isWhitelisted: false,
 
-  setAuth: (token, user) => {
-    // Persist token to localStorage + set session cookie for middleware
+  setAuth: (token, user, isWhitelisted = false) => {
+    // Persist token to localStorage + set JWT as session cookie for middleware
     if (typeof window !== 'undefined') {
       localStorage.setItem(AUTH_STORAGE_KEY, token);
-      document.cookie = 'ozskr_session=1; path=/; max-age=2592000; SameSite=Lax';
+      document.cookie = `ozskr_session=${token}; path=/; max-age=2592000; SameSite=Lax`;
     }
 
     set({
       token,
       user,
       isAuthenticated: true,
+      isWhitelisted,
     });
+  },
+
+  setIsWhitelisted: (isWhitelisted) => {
+    set({ isWhitelisted });
   },
 
   clearAuth: () => {
@@ -60,6 +70,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       token: null,
       user: null,
       isAuthenticated: false,
+      isWhitelisted: false,
     });
   },
 }));

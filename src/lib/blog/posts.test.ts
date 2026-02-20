@@ -25,7 +25,8 @@ describe('Blog Posts', () => {
         expect(post.publishedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
         expect(post.readingTime).toBeTruthy();
         expect(post.keywords.length).toBeGreaterThan(0);
-        expect(post.content.length).toBeGreaterThan(100);
+        // Posts use either inline content or contentFile (loaded at build time)
+        expect(post.content.length > 100 || !!post.contentFile).toBe(true);
       }
     });
   });
@@ -67,6 +68,7 @@ describe('Blog Posts', () => {
       const slugs = getAllBlogSlugs();
       expect(slugs).toContain('how-ai-built-ai-platform');
       expect(slugs).toContain('architecture-deep-dive');
+      expect(slugs).toContain('the-ozskr-livepaper');
     });
   });
 });
