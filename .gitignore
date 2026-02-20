@@ -58,3 +58,6 @@ CLAUDE.local.md
 
 # Turborepo
 .turbo/
+
+# Downloaded fonts (cached by OG image script, not needed in repo)
+public/fonts/Inter-*.ttf

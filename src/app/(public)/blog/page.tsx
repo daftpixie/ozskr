@@ -3,12 +3,19 @@ import Link from 'next/link';
 import { getAllBlogPosts } from '@/lib/blog/posts';
 
 export const metadata: Metadata = {
-  title: 'Blog | ozskr.ai',
+  title: 'Blog',
   description: 'Build-in-public updates, technical deep dives, and AI agent development insights from the ozskr.ai team.',
   openGraph: {
     title: 'Blog | ozskr.ai',
     description: 'Build-in-public updates, technical deep dives, and AI agent development insights.',
     type: 'website',
+    images: [{ url: '/og/og-blog.png', width: 1200, height: 630, alt: 'ozskr.ai Blog' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Blog | ozskr.ai',
+    description: 'Build-in-public updates, technical deep dives, and AI agent development insights.',
+    images: ['/og/og-blog.png'],
   },
 };
 
