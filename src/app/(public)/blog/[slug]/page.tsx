@@ -19,8 +19,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const post = getBlogPost(slug);
   if (!post) return { title: 'Not Found | ozskr.ai' };
 
+  const ogImage = slug === 'the-ozskr-livepaper'
+    ? '/og/og-livepaper.png'
+    : '/og/og-default.png';
+
   return {
-    title: `${post.title} | ozskr.ai`,
+    title: post.title,
     description: post.description,
     keywords: post.keywords,
     authors: [{ name: post.author }],
@@ -30,11 +34,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       type: 'article',
       publishedTime: post.publishedAt,
       authors: [post.author],
+      images: [{ url: ogImage, width: 1200, height: 630, alt: post.title }],
     },
     twitter: {
       card: 'summary_large_image',
       title: post.title,
       description: post.description,
+      images: [ogImage],
     },
   };
 }

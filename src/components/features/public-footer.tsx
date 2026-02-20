@@ -51,16 +51,20 @@ export function PublicFooter() {
             Livepaper
           </Link>
           <span className="text-white/20">&middot;</span>
-          <Link href="/legal/privacy" className="transition-colors hover:text-white">
-            Privacy Policy
+          <Link href="/terms" className="transition-colors hover:text-white">
+            Terms
           </Link>
           <span className="text-white/20">&middot;</span>
-          <Link href="/legal/terms" className="transition-colors hover:text-white">
-            Terms of Service
+          <Link href="/privacy" className="transition-colors hover:text-white">
+            Privacy
           </Link>
           <span className="text-white/20">&middot;</span>
-          <Link href="/legal/cookies" className="transition-colors hover:text-white">
+          <Link href="/cookies" className="transition-colors hover:text-white">
             Cookies
+          </Link>
+          <span className="text-white/20">&middot;</span>
+          <Link href="/legal" className="transition-colors hover:text-white">
+            All Legal
           </Link>
         </div>
       </div>

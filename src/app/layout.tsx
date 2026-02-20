@@ -33,9 +33,31 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ozskr.ai — Solana AI Agent Platform",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || "https://ozskr.vercel.app"
+  ),
+  title: {
+    default: "ozskr.ai — Solana AI Agent Platform",
+    template: "%s | ozskr.ai",
+  },
   description:
-    "Web3 AI Influencer Platform built on Solana. Create, manage, and deploy autonomous AI agents.",
+    "Your AI agents. Your rules. On-chain. Create, manage, and deploy autonomous AI agents on Solana.",
+  openGraph: {
+    type: "website",
+    siteName: "ozskr.ai",
+    title: "ozskr.ai — Solana AI Agent Platform",
+    description:
+      "Your AI agents. Your rules. On-chain. Create, manage, and deploy autonomous AI agents on Solana.",
+    images: [{ url: "/og/og-default.png", width: 1200, height: 630, alt: "ozskr.ai" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@ozskrai",
+    title: "ozskr.ai — Solana AI Agent Platform",
+    description:
+      "Your AI agents. Your rules. On-chain. Create, manage, and deploy autonomous AI agents on Solana.",
+    images: ["/og/og-default.png"],
+  },
 };
 
 export default function RootLayout({
