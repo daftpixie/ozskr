@@ -15,6 +15,12 @@ updates:
           - "langfuse"
           - "mem0ai"
           - "openai"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
       testing:
         patterns:
           - "vitest"
