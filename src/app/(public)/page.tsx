@@ -26,6 +26,7 @@ import {
   ArrowRight,
   Shield,
   AlertTriangle,
+  FileDown,
 } from 'lucide-react';
 
 const FEATURES = [
@@ -219,6 +220,27 @@ function HomeContent() {
           >
             View on Solana Explorer (devnet)
             <ArrowRight className="h-3 w-3" />
+          </a>
+        </div>
+      </section>
+
+      {/* Whitepaper Download */}
+      <section className="mx-auto max-w-4xl px-6 py-16">
+        <div className="rounded-lg border border-brick-gold/20 bg-brick-gold/5 p-8 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brick-gold/10">
+            <FileDown className="h-6 w-6 text-brick-gold" />
+          </div>
+          <h2 className="font-display mb-2 text-2xl font-bold">Whitepaper</h2>
+          <p className="mb-6 text-sm text-muted-foreground">
+            The full technical specification. Architecture, tokenomics, and the road ahead.
+          </p>
+          <a
+            href="/ozskr-whitepaper-v1.pdf"
+            download
+            className="inline-flex items-center gap-2 rounded-lg border border-brick-gold/30 bg-brick-gold/10 px-6 py-2.5 text-sm font-medium text-brick-gold transition-all hover:bg-brick-gold/20 hover:border-brick-gold/50"
+          >
+            <FileDown className="h-4 w-4" />
+            Download PDF
           </a>
         </div>
       </section>
