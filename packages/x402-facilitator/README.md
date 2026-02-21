@@ -1,10 +1,23 @@
 # @ozskr/x402-facilitator
 
+[![npm version](https://img.shields.io/npm/v/@ozskr/x402-facilitator)](https://npmjs.com/package/@ozskr/x402-facilitator)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-20%2B-brightgreen)](https://nodejs.org)
+[![Built with Claude Code](https://img.shields.io/badge/Built_with-Claude_Code-D4A574?logo=anthropic)](https://claude.com/claude-code)
+
 Self-hosted x402 payment facilitator for Solana with governance hooks. Co-signs transactions as fee payer while enforcing OFAC screening, delegation validation, budget caps, and circuit breaker protection.
 
-**Status**: Beta
+**Status**: Beta (`0.1.0-beta`)
 **License**: MIT
 **Requires**: Node.js 20+, Solana RPC endpoint, encrypted agent keypair
+
+## Installation
+
+```bash
+npm install @ozskr/x402-facilitator
+# or
+pnpm add @ozskr/x402-facilitator
+```
 
 ## Quick Start
 
@@ -366,6 +379,27 @@ Before deploying to mainnet:
 - [ ] Consider Redis upgrade for multi-instance deployment
 - [ ] Run security audit on facilitator deployment
 
+## Development
+
+```bash
+# Clone the repo
+git clone https://github.com/daftpixie/ozskr.git
+cd ozskr
+
+# Install dependencies
+pnpm install
+
+# Build this package
+cd packages/x402-facilitator
+pnpm build
+
+# Run tests
+pnpm test
+
+# Type check
+pnpm typecheck
+```
+
 ## Legal & Compliance
 
 This software is provided "as-is" without warranty. Operators are responsible for:
@@ -378,6 +412,14 @@ This software is provided "as-is" without warranty. Operators are responsible fo
 - **Data protection**: Transaction logs may contain personal data (addresses linked to identities) — comply with applicable data protection regulations
 
 This package does NOT provide legal, financial, or compliance advice. Consult qualified legal counsel before deploying in production.
+
+## Related Packages
+
+- [`@ozskr/agent-wallet-sdk`](https://npmjs.com/package/@ozskr/agent-wallet-sdk) — SPL token delegation, encrypted keypair storage, budget tracking (peer dependency)
+- [`@ozskr/x402-solana-mcp`](https://npmjs.com/package/@ozskr/x402-solana-mcp) — MCP server for AI agent x402 payments (use this facilitator as `X402_FACILITATOR_URL`)
+
+**Repository**: https://github.com/daftpixie/ozskr
+**Package**: https://www.npmjs.com/package/@ozskr/x402-facilitator
 
 ## License
 

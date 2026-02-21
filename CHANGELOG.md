@@ -5,7 +5,57 @@ All notable changes to ozskr.ai will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - Phase 7: Go-to-Market
+## [Unreleased] - Phase 7: Go-to-Market + Open-Source Packages
+
+### @ozskr/x402-facilitator v0.1.0-beta
+#### Added
+- Self-hosted x402 payment facilitator for Solana with 8 governance hooks
+- OFAC SDN screening with `ScreeningProvider` interface (static baseline + Chainalysis integration point)
+- SPL delegation validation: on-chain delegation status check before every settlement
+- Budget enforcement: settlement amount vs. remaining delegation cap
+- Circuit breaker: blocks after 5 consecutive failures with 60-second cooldown
+- Blockhash freshness validation (max 150 slots)
+- Simulate-before-submit: full RPC simulation prevents Bug 7 fund loss
+- Audit logging: every settlement attempt logged with tx signature, payer, payee, amount
+- Gas manager: fee payer balance monitoring with configurable alert threshold
+- Replay guard: duplicate transaction detection (in-memory, resets on restart)
+- REST API: `POST /settle`, `POST /verify`, `GET /supported`, `GET /health`
+- Hono + @hono/node-server HTTP server on configurable port (default 4020)
+- CLI entrypoint: `npx x402-facilitator`
+- 128 tests across governance hooks, settlement flow, and devnet integration
+- 9 devnet integration tests passing
+- Production checklist in README
+
+### @ozskr/x402-solana-mcp v0.2.0-beta
+#### Added
+- 8 MCP tools: `x402_setup_agent`, `x402_check_delegation`, `x402_check_balance`,
+  `x402_revoke_delegation`, `x402_pay`, `x402_transaction_history`,
+  `x402_discover_services`, `x402_estimate_cost`
+- x402 V1 and V2 header format support (auto-detected)
+- CDP primary + PayAI fallback facilitator chain
+- 3-layer budget enforcement: per-request `maxAmount`, session `BudgetTracker`, on-chain SPL cap
+- Local transaction history in `.x402-history.json` with pagination and URL/date filtering
+- Service discovery: probe URLs for x402 support, query service registries
+- Cost estimation without payment
+- CLI entrypoint: `npx @ozskr/x402-solana-mcp`
+- 88 tests
+
+### @ozskr/agent-wallet-sdk v0.1.2-beta
+#### Added
+- `TurnkeyKeyManager`: production key management via Turnkey AWS Nitro Enclaves
+- `createTurnkeyWallet()`: helper to provision new Turnkey wallet and return private key ID
+- `validateTokenMint()`: prevents spoofed token mint attacks
+- `USDC_MINT_MAINNET`, `USDC_DECIMALS`, `TOKEN_PROGRAM_ID`, `TOKEN_2022_PROGRAM_ID` constants
+- `KeyManager` interface + `createKeyManager()` factory for pluggable key management
+- `EncryptedJsonKeyManager`: dev-only encrypted JSON key management
+- x402 V2 payment header support (in addition to V1)
+
+### Phase 7.D: Development Workflow Memory
+#### Added
+- `tools/mem0-mcp/`: Internal MCP server for persistent dev workflow memory via Mem0
+- 5 tools: `store_memory`, `search_memory`, `get_agent_context`, `store_handoff`, `delete_memory`
+- Memory seeded with project architecture, phase history, security decisions, and agent patterns
+- `.mcp.json` configuration (gitignored, `.mcp.json.example` provided)
 
 ### Added
 - AI compliance infrastructure:

@@ -1,10 +1,15 @@
 # @ozskr/agent-wallet-sdk
 
+[![npm version](https://img.shields.io/npm/v/@ozskr/agent-wallet-sdk)](https://npmjs.com/package/@ozskr/agent-wallet-sdk)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-20%2B-brightgreen)](https://nodejs.org)
+[![Built with Claude Code](https://img.shields.io/badge/Built_with-Claude_Code-D4A574?logo=anthropic)](https://claude.com/claude-code)
+
 Non-custodial AI agent wallets on Solana. Enables AI agents to execute on-chain payments via SPL token delegation without holding owner private keys.
 
-**Status**: Beta
+**Status**: Beta (`0.1.2-beta`)
 **License**: MIT
-**Requires**: Node.js 20+, `@solana/kit` peer dependency
+**Requires**: Node.js 20+
 
 ## What It Does
 
@@ -344,7 +349,44 @@ const address = await keyManager.getPublicKey();
 const health = await keyManager.healthCheck();
 ```
 
-**Production providers**: Implement the `KeyManager` interface with your preferred key management service. The SDK ships with `encrypted-json` only — production integrations (Turnkey, Privy) are left to the consumer.
+**Production providers**: Implement the `KeyManager` interface with your preferred key management service. The SDK ships with `encrypted-json` and `turnkey` built-in — other providers (Privy, Fireblocks) are left to the consumer.
+
+---
+
+#### `TurnkeyKeyManager`
+
+Built-in `KeyManager` implementation backed by [Turnkey](https://turnkey.com) (AWS Nitro Enclave-based TEE). Agent keypairs are stored in hardware-isolated enclaves — the platform cannot extract private keys.
+
+```typescript
+import { TurnkeyKeyManager } from '@ozskr/agent-wallet-sdk';
+
+const km = new TurnkeyKeyManager({
+  apiPublicKey: process.env.TURNKEY_API_PUBLIC_KEY,
+  apiPrivateKey: process.env.TURNKEY_API_PRIVATE_KEY,
+  organizationId: process.env.TURNKEY_ORG_ID,
+  privateKeyId: process.env.TURNKEY_PRIVATE_KEY_ID,
+});
+
+const pubkey = await km.getPublicKey();
+const health = await km.healthCheck(); // { healthy: true, provider: 'turnkey' }
+```
+
+---
+
+#### `createTurnkeyWallet(config)`
+
+Helper that creates a new Turnkey wallet and returns the public key and private key ID for use with `TurnkeyKeyManager`.
+
+**Parameters:**
+- `config: CreateTurnkeyWalletOptions`
+  - `apiPublicKey: string` - Turnkey API public key
+  - `apiPrivateKey: string` - Turnkey API private key
+  - `organizationId: string` - Turnkey organization ID
+  - `walletName: string` - Human-readable wallet name
+
+**Returns:** `Promise<TurnkeyWalletResult>`
+- `privateKeyId: string` - Turnkey private key ID (use with `TurnkeyKeyManager`)
+- `publicKey: string` - Solana address (base58)
 
 ---
 
@@ -620,6 +662,27 @@ const loadedSigner = await loadEncryptedKeypair(
 );
 ```
 
+## Development
+
+```bash
+# Clone the repo
+git clone https://github.com/daftpixie/ozskr.git
+cd ozskr
+
+# Install dependencies
+pnpm install
+
+# Build this package
+cd packages/agent-wallet-sdk
+pnpm build
+
+# Run tests
+pnpm test
+
+# Type check
+pnpm typecheck
+```
+
 ## Legal & Compliance
 
 This software is provided "as-is" without warranty. Users are responsible for:
@@ -630,6 +693,13 @@ This software is provided "as-is" without warranty. Users are responsible for:
 - **Key management**: Agent keypairs encrypted at rest are only as secure as the passphrase — use strong, unique passphrases and never commit keypair files to version control
 
 This package does NOT provide legal, financial, or compliance advice. Consult qualified legal counsel before deploying in production.
+
+## Related Packages
+
+- [`@ozskr/x402-solana-mcp`](https://npmjs.com/package/@ozskr/x402-solana-mcp) — MCP server for AI agent x402 payments on Solana (uses this SDK)
+- [`@ozskr/x402-facilitator`](https://npmjs.com/package/@ozskr/x402-facilitator) — Self-hosted x402 payment facilitator with governance hooks (uses this SDK)
+
+**Repository**: https://github.com/daftpixie/ozskr
 
 ## License
 
