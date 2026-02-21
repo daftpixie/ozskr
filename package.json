@@ -91,7 +91,7 @@
     "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
-    "jsdom": "^28.0.0",
+    "jsdom": "^28.1.0",
     "pg": "^8.18.0",
     "satori": "^0.19.2",
     "shadcn": "^3.8.4",
