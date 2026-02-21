@@ -80,7 +80,7 @@ const STEPS = [
   { icon: Rocket, label: 'Publish', description: 'Share your magic with the world' },
 ] as const;
 
-const TECH_STACK = ['Claude AI', 'Solana', 'Next.js', 'TypeScript', 'Supabase', 'Jupiter'] as const;
+const TECH_STACK = ['Claude AI', 'Solana', 'Next.js', 'TypeScript', 'Supabase'] as const;
 
 export default function Home() {
   return (
@@ -232,7 +232,7 @@ function HomeContent() {
           </div>
           <h2 className="font-display mb-2 text-2xl font-bold">Whitepaper</h2>
           <p className="mb-6 text-sm text-muted-foreground">
-            The full technical specification. Architecture, tokenomics, and the road ahead.
+            The full technical specification. Architecture, market analysis, and the road ahead.
           </p>
           <a
             href="/ozskr-whitepaper-v1.pdf"
