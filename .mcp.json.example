@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "mem0": {
+      "command": "node",
+      "args": ["tools/mem0-mcp/dist/index.js"],
+      "env": {
+        "MEM0_API_KEY": "your-mem0-api-key-here"
+      }
+    }
+  }
+}

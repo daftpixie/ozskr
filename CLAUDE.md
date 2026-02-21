@@ -43,6 +43,8 @@ packages/                       # Open-source packages (MIT license)
 ├── agent-wallet-sdk/           # SPL delegation, KeyManager interface, USDC validation
 ├── x402-solana-mcp/            # MCP server for x402 payments (V1+V2 headers)
 └── x402-facilitator/           # Governance-aware settlement (OFAC, circuit breaker, delegation)
+tools/                              # Development tooling (private)
+└── mem0-mcp/                       # MCP server for persistent dev workflow memory via Mem0
 ```
 
 ## Deployment
@@ -240,6 +242,56 @@ All agents MUST follow this language guide when generating content mentioning $H
 - E2E tests in `tests/e2e/` via Playwright
 - Mock fal.ai, Mem0, and Trigger.dev in unit tests
 
+## Memory Protocol (Mem0 MCP)
+
+Development workflow memory persists across sessions via Mem0. The MCP server at `tools/mem0-mcp/` provides 5 tools:
+
+| Tool | Purpose |
+|------|---------|
+| `store_memory` | Store architecture decisions, patterns, bugs, config notes |
+| `search_memory` | Search memories by natural language query |
+| `get_agent_context` | Load all memories for a specific agent domain at session start |
+| `store_handoff` | Store session handoff context (state, pending work, blockers, next steps) |
+| `delete_memory` | Remove outdated or incorrect memories |
+
+### When to Use Memory
+
+- **Session start**: Call `get_agent_context` for the relevant agent domain
+- **Architecture decisions**: Store with category `architecture-decision`
+- **Completed milestones**: Store with category `completed-task`
+- **Discovered bugs**: Store with category `known-bug`
+- **Reusable patterns**: Store with category `pattern`
+- **Session end**: Call `store_handoff` with current state and next steps
+
+### Memory Categories
+
+`architecture-decision` | `completed-task` | `known-bug` | `pattern` | `dependency` | `config` | `handoff-context`
+
+### Namespace Isolation
+
+- Development memory: `user_id: "ozskr-dev"` (shared across all dev sessions)
+- Production user memory: `user_id: "ozskr-prod-{userId}"` (isolated per user, in `src/lib/ai/`)
+
+### Agent Memory Usage
+
+All subagents should use memory tools when available:
+
+| Agent | Memory Focus |
+|-------|-------------|
+| `solana-dev` | @solana/kit patterns, transaction pitfalls, RPC quirks, SPL delegation patterns |
+| `frontend-dev` | Component patterns, Next.js App Router gotchas, design system decisions |
+| `ai-agent-dev` | Pipeline patterns, Mem0 integration, Claude API patterns, prompt caching |
+| `api-architect` | Hono patterns, Supabase schema decisions, RLS patterns, Zod schemas |
+| `test-writer` | Mock patterns (Vitest 4 constructor mocks), test utilities, coverage gaps |
+| `security-auditor` | Vulnerability patterns, audit findings, security decisions |
+| `code-reviewer` | Code quality patterns, naming conventions, recurring issues |
+
+Subagents should call `search_memory` before making decisions that may have been previously resolved, and `store_memory` after discovering patterns or making architectural choices.
+
+### Setup
+
+Configure `MEM0_API_KEY` in `.mcp.json` (not committed — in `.gitignore`). Build the server: `cd tools/mem0-mcp && pnpm build`.
+
 ## Workflow
 
 - Conventional Commits: `feat:`, `fix:`, `chore:`, `docs:`, `test:`, `security:`
@@ -267,8 +319,11 @@ All agents MUST follow this language guide when generating content mentioning $H
 | Marketing Content | `docs/marketing/*.md` |
 | Community Docs | `docs/community/*.md` |
 | Funding Materials | `docs/funding/*.md` |
-| PRD v2.3 Amendment | `docs/prd_v2_3_amendment.md` |
-| Master Plan v3.2 | `docs/master_plan_v3_2_amendment.md` |
+| PRD v2.4 Amendment | `docs/prd_v2_4_amendment.md` |
+| PRD v2.5 Amendment | `docs/amendments/prd_v2_5_amendment.md` |
+| Master Plan v3.3 | `docs/master_plan_v3_3_amendment.md` |
+| Master Plan v3.4 | `docs/amendments/master_plan_v3_4_amendment.md` |
+| Memory Protocol | `docs/development/memory-protocol.md` |
 | Changelog | `CHANGELOG.md` |
 
 ## Phase Status
@@ -301,6 +356,8 @@ All agents MUST follow this language guide when generating content mentioning $H
   - [x] 7.M.7: Facilitator devnet integration testing (9 devnet tests passing)
   - [x] 7.M.8: Facilitator documentation + npm publication prep (npm token refresh needed)
   - [x] 7.M.9: Mainnet readiness hardening (KeyManager, ScreeningProvider, V2 headers, USDC validation)
+- [x] Phase 7.D: Development Workflow Memory (Mem0 MCP integration)
+  - [x] 7.D.1: MCP server, configuration, documentation
 - [ ] Phase 8: Agentic Commerce Layer (activation-gated: 100+ users, attorney sign-off, x402 recovery)
 - [ ] Phase 9: Agent Marketplace (activation-gated: Phase 8 stable 3+ months, 500+ agents)
 - [ ] Deferred: Auto-Stake Smart Contract (pending security audit budget $15-30K)
