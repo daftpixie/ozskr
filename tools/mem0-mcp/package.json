@@ -1,0 +1,21 @@
+{
+  "name": "@ozskr/mem0-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP server for persistent development workflow memory via Mem0",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "mem0ai": "^2.2.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
