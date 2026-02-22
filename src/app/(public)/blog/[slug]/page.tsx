@@ -19,9 +19,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const post = getBlogPost(slug);
   if (!post) return { title: 'Not Found | ozskr.ai' };
 
-  const ogImage = slug === 'the-ozskr-livepaper'
-    ? '/og/og-livepaper.png'
-    : '/og/og-default.png';
+  const ogImage = '/og/og-default.png';
 
   return {
     title: post.title,
