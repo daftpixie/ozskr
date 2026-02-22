@@ -11,9 +11,6 @@ import {
   WalletProvider,
 } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
-import { SolflareWalletAdapter } from '@solana/wallet-adapter-solflare';
-import { BackpackWalletAdapter } from '@solana/wallet-adapter-backpack';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Import wallet adapter CSS
@@ -39,17 +36,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       : 'https://api.devnet.solana.com';
   }, []);
 
-  // Explicit adapters for wallets that support SPL token delegation and mobile
-  // deep-link / universal-link flows. Wallet Standard auto-discovery still runs
-  // for any installed browser extension not in this list.
-  const wallets = useMemo(
-    () => [
-      new PhantomWalletAdapter(),
-      new SolflareWalletAdapter(),
-      new BackpackWalletAdapter(),
-    ],
-    []
-  );
+  // Wallets auto-register via Wallet Standard — no manual adapters needed
+  const wallets = useMemo(() => [], []);
 
   return (
     <QueryClientProvider client={queryClient}>
