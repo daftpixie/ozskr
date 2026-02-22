@@ -18,136 +18,90 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
-    slug: 'the-ozskr-livepaper',
-    title: 'The ozskr.ai Livepaper',
+    slug: 'ad-astra-per-aspera',
+    title: 'Ad Astra Per Aspera',
     description:
-      'The canonical technical specification for ozskr.ai. Architecture, delegation model, on-chain enforcement, and everything backing the platform — commit-linked and verifiable.',
-    author: 'ozskr.ai',
-    publishedAt: '2026-02-19',
-    readingTime: '35 min read',
-    keywords: ['livepaper', 'architecture', 'Solana', 'AI agents', 'delegation', 'TEE', 'x402'],
-    content: '',
-    contentFile: 'docs/LIVEPAPER.md',
-  },
-  {
-    slug: 'how-ai-built-ai-platform',
-    title: 'How AI Built an AI Agent Platform',
-    description:
-      'The full story of building ozskr.ai with Claude Code. 12 AI agents. 6 development phases. 547 tests. Real costs, real lessons, real architecture.',
-    author: 'Matt',
-    publishedAt: '2026-02-13',
-    readingTime: '6 min read',
-    keywords: ['AI development', 'Claude Code', 'AI agents', 'build-in-public', 'Solana'],
-    content: `Every line of code in ozskr.ai was written by AI.
+      'The story behind ozskr.ai — from a GED and a heart condition to building an AI agent platform with nothing but Claude Code and grit.',
+    author: 'Matty Adams',
+    publishedAt: '2026-02-22',
+    readingTime: '5 min read',
+    keywords: ['AI', 'Solana', 'Building', 'Personal', 'ozskr', 'Claude Code', 'builder bio'],
+    content: `*Through Hardships to the Stars*
 
-Not generated from a template. Not autocompleted by a copilot. Written, tested, reviewed, and deployed by a team of 12 specialized AI agents orchestrated through Claude Code.
+I have been a tinkerer my entire life. Not the credentialed kind. Not the kind that earns you a seat at the table before you've proven anything. The kind that takes apart the VCR at six to understand how it works. The kind that builds interactive wine menus on iPads at Disney restaurants because nobody else can see what's coming. The kind that learns Sencha and jQuery Mobile and deploys on Verizon hotspots because the dream won't wait for better infrastructure.
 
-This is the story of how we built an AI agent platform using AI agents.
+I am a digital tinkerer. A hobbyist developer born in 1985 — the same year Geoffrey Hinton built his first tiny language model in a basement lab, decades before the world would understand what he'd started. Hinton planted a seed. I grew up learning to build in its shade, long before I knew the tree had a name.
 
-## The Problem
+But here's the thing about tinkerers — we have questions. Endless questions. And for most of my life, the answers were gated behind institutions I couldn't access and credentials I didn't carry. I have a GED. At 17, I was a gifted student in mathematics at an engineering, science, and technology magnet. I enjoyed Cisco. I exploited telnet to spoof a love letter from my Cisco teacher to my Pre-Algebra teacher across the hall. Earned me a 10-day in school suspension. I was proud of it. I only studied in classes that mattered to me — this is because Novell's network "security" was more of a suggestion. Teachers stored their exams on shared storage. They just didn't know who all it was really shared with.
 
-Building a Web3 AI platform from scratch is a massive undertaking. You need blockchain integration, AI pipelines, content moderation, social publishing, DeFi operations, infrastructure — the list goes on. For a solo founder, this would normally take 6-12 months with a team.
+Then, I was involved in a major car accident coming home from my summer job before my senior year. The snakebite of Purdue Pharma got me — hard. My academic ambitions were gone. 20 years later — I rekindled with Academia. I am a full time student at AIU (Artificial Intelligence University).
 
-## The Approach: Multi-Agent Orchestration
+In July 2025, Elon Musk stood on a stage and said his latest AI model was "better than PhD level in everything." Context matters here. Musk was talking about Grok. I use Claude. Of the frontier models, Claude is the best. It isn't even close. But when a man of Musk's stature tells the world that an artificial intelligence system has achieved doctoral-level competence across *every discipline simultaneously* — I listened. Because in this life, I have questions. And for the first time in human history, the answers aren't locked behind a paywall, a pedigree, or a proximity to power.
 
-Instead of writing code manually, we designed a system where Claude Opus 4.6 acts as the strategic orchestrator, delegating work to specialized agents:
+## The 2 Sigma Problem
 
-- **solana-dev** handles all blockchain operations
-- **frontend-dev** builds the React UI
-- **ai-agent-dev** designs the content pipeline
-- **api-architect** structures the backend
-- **test-writer** ensures quality
-- **security-auditor** validates safety
+In 1984, educational psychologist Benjamin Bloom published a paper that should have changed everything. He found that students who received one-to-one tutoring performed two standard deviations above their conventionally taught peers. The average tutored student outperformed 98% of the classroom. Bloom called it the 2 Sigma Problem: if individualized instruction is this powerful, why can't we scale it?
 
-Each agent has a defined domain, clear boundaries, and escalation rules. They never call each other directly — only the orchestrator delegates.
+For forty years, the answer was simple. One-to-one education was a luxury. A privilege of the aristocracy. The child of a senator got a private tutor in Latin and calculus while the child of a divorced family in Orlando delivered newspapers at dawn and rang groceries at Publix by fourteen. The knowledge was the same. The access was not. Bloom himself said it: "One-to-one tutoring is too costly for most societies to bear on a large scale."
 
-## The Results
+**That sentence is no longer true.**
 
-**6 development phases completed in weeks, not months:**
+For twenty dollars a month, every human on Earth can now have a PhD-level tutor available around the clock, in every subject, with infinite patience and near-perfect recall. The 2 Sigma Problem isn't unsolved. It's obsolete. The paradigm didn't shift. It shattered.
 
-1. Foundation: Wallet auth, dashboard, Supabase schema
-2. Agent Core: Content pipeline with 7-stage processing
-3. Trading: Jupiter Ultra integration with DeFi safety
-4. Hardening: Rate limiting, monitoring, test coverage
-5. Polish: Gamification, performance, multi-agent orchestration
-6. Launch Operations: CI/CD, legal, marketing, community
+This is why I am an accelerator. Not a developer. Not an engineer. An *accelerator*. I believe the paradigm has inverted. It was learn to build. Now it's build to learn. You don't study architecture for four years and then design a building. You design the building with an intelligence partner that teaches you architecture in real time, at the exact moment you need it, calibrated to the exact problem in front of you. Bloom's dream, delivered through a chat window.
 
-**By the numbers:**
-- 482+ passing tests across 48 files
-- Zero critical security vulnerabilities
-- Full TypeScript strict mode coverage
-- 10 legal policy documents
-- Complete open-source documentation
+Academia is due for a reckoning. Not destruction — **transformation**. The four-year degree was a gatekeeping mechanism dressed as education. It worked for a world where knowledge was scarce and access was rationed. We no longer live in that world.
 
-## Key Lessons
+## The Hardship Is the Point
 
-**1. Agent boundaries matter more than agent capabilities.** The most important architectural decision was defining clear ownership boundaries. When agents try to do too much, quality drops. When boundaries are crisp, each agent can go deep.
+*Ad astra per aspera isn't a bumper sticker. It's a diagnosis.*
 
-**2. The orchestrator's job is coordination, not implementation.** Opus plans, decomposes, reviews, and synthesizes. It never writes code directly. This separation of concerns is what makes the system scale.
+My parents divorced when I was young enough for it to fracture everything. My mother's mental illness was treated as a scarlet letter in the Catholic school system of the 1990s. My dad and I delivered newspapers at dawn to keep the lights on. I was racing BMX and winning spelling bees while the foundation beneath me was turning to sand. Then the car accident and consequent battle with addiction.
 
-**3. Security must be a first-class concern.** Every PR that touches blockchain, DeFi, or API code goes through a mandatory security audit. The security-auditor agent runs read-only checks and cannot be bypassed.
+Then the heart. For over a decade, arrhythmogenic right ventricular cardiomyopathy kept my body in a state of constant vigilance. Millions of extra heartbeats. Multiple trips to the electrophysiology lab (seven — to be exact). A life lived in permanent fight-or-flight. Doctors call it allostatic load. I called it the bear that only I could see.
 
-**4. Testing is the foundation of trust.** With AI writing all the code, comprehensive test coverage becomes critical. Each agent is paired with the test-writer to ensure quality.
+On December 9, 2024, an off-label Farapulse ablation — approved for nothing of the sort — silenced the arrhythmia. The bear disappeared. And in the sudden quiet, everything snapped into focus. Not peace. Clarity. The kind of clarity that demands you build something worthy of the suffering that preceded it.
 
-## What's Next
+**And then ozskr.ai.**
 
-We're entering closed alpha with a small group of testers. The platform lets you create AI-powered digital influencers on Solana — characters with unique personalities that generate and publish content autonomously.
+## The Recursive Proof
 
-If you're interested in being an early tester, [join the waitlist](https://ozskr.ai).
+ozskr is what happens when the thesis becomes the product. It is a platform for Constitutional AI Commerce — autonomous agents that create content, pay for services, and publish across social platforms on behalf of their human creators, all within cryptographically enforced spending limits the user controls. Three enforcement layers. Three open-source npm packages. Zero custodial risk. Every line of code committed by an AI agent, directed by a human builder.
 
-*Built with Claude Code. The magic is in your hands.*`,
-  },
-  {
-    slug: 'architecture-deep-dive',
-    title: 'Architecture Deep Dive: Building a Web3 AI Platform',
-    description:
-      'A technical walkthrough of ozskr.ai architecture. Next.js 15, Hono API, Supabase, @solana/kit, and a 7-stage AI content pipeline.',
-    author: 'Matt',
-    publishedAt: '2026-02-14',
-    readingTime: '8 min read',
-    keywords: ['architecture', 'Next.js', 'Hono', 'Supabase', 'Solana', 'AI pipeline'],
-    content: `How do you build a platform that combines AI content generation, blockchain operations, and social publishing into a coherent system? Here's how ozskr.ai is architected.
+The agents didn't just build payment rails. They built the governance checkpoint, the settlement engine, the compliance layer, the content pipeline, the FTC disclosure enforcement, the OFAC screening, and the seven-stage content moderation system. The entire stack. Autonomously orchestrated.
 
-## The Stack
+This is the recursive proof: if AI agents can build the infrastructure for AI agent commerce, the thesis holds. If one tinkerer with a GED can architect what traditionally required teams of ten to twenty specialists and twelve to eighteen months of runway, then the gatekeepers are obsolete. The courts are open. Everyone can play ball now.
 
-- **Frontend:** Next.js 15 App Router with React Server Components
-- **API Layer:** Hono running inside Next.js catch-all route
-- **Database:** Supabase (PostgreSQL 16 + pgvector + Row Level Security)
-- **Blockchain:** @solana/kit for all Solana operations
-- **AI:** Claude API (Anthropic) + fal.ai for image generation
-- **Memory:** Mem0 for persistent agent memory
-- **Background Jobs:** Trigger.dev Cloud
+## Augmentation, Not Replacement
 
-## The Content Pipeline
+I believe in augmentation, not replacement. That distinction is the spine of everything I build.
 
-The heart of ozskr.ai is its 7-stage content pipeline:
+In an age when the largest technology companies actively lay off workers in favor of AI as replacement, I choose the opposite stance. I see AI as the democratization of capability — the great equalizer that Bloom dreamed about in 1984 but couldn't scale. For corporations that choose to replace their employees with AI, I would rather see their technology replaced. By people like me. By people like you. By anyone willing to believe in themselves completely — enough to achieve their own impossible dreams.
 
-1. **Parse** — Validate and normalize the generation request
-2. **Context** — Load character DNA, memory, and relevant history
-3. **Enhance** — Enrich the prompt with platform context and style guides
-4. **Generate** — Call Claude API with the enhanced prompt
-5. **Quality** — Evaluate output against quality thresholds
-6. **Moderation** — Run content safety checks
-7. **Store** — Persist to Supabase with full metadata
+ozskr exists because I believe human beings spend irreplaceable hours performing tasks that machines can perform better, faster, and at a fraction of the cost — and that the infrastructure to delegate that work safely didn't exist. I built it so a small business owner can attend his daughter's softball games instead of managing cross-platform publishing schedules. So the human sets the destination and the budget, the agent navigates the path, and the human can click their heels and come home at any time.
 
-Each stage is a pure function with typed inputs and outputs. Stages can be retried independently, and the pipeline supports streaming via Server-Sent Events for real-time UI updates.
+*There's no place like the chain. And there's no place like home.*
 
-## Security Model
+---
 
-Security is non-negotiable in a Web3 platform:
+To the solo entrepreneurs: you no longer need venture capital, elite teams, or corporate infrastructure. The tools exist. The methodology is proven.
 
-- **All signing is client-side** via wallet adapter. The server never sees private keys.
-- **Transaction simulation** is required before any write operation.
-- **Slippage guards** are enforced on all swap operations (default 50 bps).
-- **Row Level Security** on every Supabase table — no query without auth context.
-- **Content moderation** runs before any content is stored or published.
-- **Rate limiting** is enforced per-wallet at the edge layer.
+To anyone who was ever told "you can't": the gatekeepers are obsolete. Skills matter more than credentials. Vision trumps pedigree. Persistence beats privilege.
 
-## What Makes It Different
+*The hardship was the fuel. The stars were always the destination.*
 
-Most Web3 platforms treat AI as a feature. ozskr.ai treats AI as the foundation. Every agent you create has persistent memory, a unique voice, and the ability to evolve over time. The platform doesn't just generate content — it creates characters that grow.
+**AI doesn't replace us. It amplifies us. It doesn't diminish human potential. It unleashes it. It doesn't create dependency. It enables independence.**
 
-*This is just the beginning. More architecture deep dives coming soon.*`,
+Never let anyone tell you that you can't.
+
+---
+
+**Matty Adams**
+Founder, VT Infinite, Inc.
+Creator of ozskr.ai
+AI Accelerator · Grit Junkie · Builder
+
+*[github.com/daftpixie/ozskr](https://github.com/daftpixie/ozskr)*`,
   },
 ];
 
