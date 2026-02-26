@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Users,
   Zap,
@@ -21,6 +22,10 @@ import {
   Trash2,
   RefreshCw,
   AlertTriangle,
+  Copy,
+  Check,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 interface PlatformSummary {
@@ -52,11 +57,22 @@ export default function AdminPage() {
   const [errorAlerts, setErrorAlerts] = useState<ErrorAlert[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Whitelist form state
+  // Whitelist single-add form state
   const [newWallet, setNewWallet] = useState('');
   const [newTier, setNewTier] = useState<'ALPHA' | 'BETA' | 'EARLY_ACCESS'>('ALPHA');
   const [newNotes, setNewNotes] = useState('');
   const [addingWallet, setAddingWallet] = useState(false);
+
+  // Whitelist batch-add state
+  const [showBatch, setShowBatch] = useState(false);
+  const [batchText, setBatchText] = useState('');
+  const [batchTier, setBatchTier] = useState<'ALPHA' | 'BETA' | 'EARLY_ACCESS'>('ALPHA');
+  const [batchNotes, setBatchNotes] = useState('');
+  const [batchResult, setBatchResult] = useState<{ added: number; skipped: number } | null>(null);
+  const [batchLoading, setBatchLoading] = useState(false);
+
+  // Copy-address state
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -135,6 +151,49 @@ export default function AdminPage() {
       headers: { Authorization: `Bearer ${token}` },
     });
     await fetchData();
+  };
+
+  const handleBatchAdd = async () => {
+    const wallets = batchText
+      .split(/[\n,\s]+/)
+      .map((w) => w.trim())
+      .filter((w) => w.length >= 32 && w.length <= 44);
+    if (wallets.length === 0) return;
+
+    setBatchLoading(true);
+    setBatchResult(null);
+    try {
+      const token = localStorage.getItem('ozskr_auth_token');
+      const res = await fetch('/api/admin-whitelist/batch', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          wallets: wallets.map((w) => ({
+            walletAddress: w,
+            accessTier: batchTier,
+            notes: batchNotes || undefined,
+          })),
+        }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { added: number; skipped: number };
+        setBatchResult(data);
+        setBatchText('');
+        setBatchNotes('');
+        await fetchData();
+      }
+    } finally {
+      setBatchLoading(false);
+    }
+  };
+
+  const handleCopyAddress = (id: string, address: string) => {
+    void navigator.clipboard.writeText(address);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 1500);
   };
 
   // Non-admin: show 404
@@ -245,7 +304,7 @@ export default function AdminPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Add Form */}
+          {/* Single Add Form */}
           <div className="flex flex-col gap-2 sm:flex-row">
             <Input
               placeholder="Wallet address"
@@ -279,6 +338,67 @@ export default function AdminPage() {
             </Button>
           </div>
 
+          {/* Batch Add Toggle */}
+          <button
+            onClick={() => setShowBatch((v) => !v)}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-white"
+          >
+            {showBatch ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            Batch add (paste multiple addresses)
+          </button>
+
+          {/* Batch Add Form */}
+          {showBatch && (
+            <div className="space-y-2 rounded-md border border-white/5 bg-white/[0.01] p-3">
+              <p className="text-xs text-muted-foreground">
+                One address per line, or comma/space-separated. Up to 100 wallets.
+              </p>
+              <Textarea
+                placeholder="7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU&#10;So11111111111111111111111111111111111111112&#10;..."
+                value={batchText}
+                onChange={(e) => setBatchText(e.target.value)}
+                className="min-h-24 font-mono text-xs"
+                rows={5}
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  value={batchTier}
+                  onChange={(e) => setBatchTier(e.target.value as typeof batchTier)}
+                  className="rounded-md border border-white/10 bg-transparent px-3 py-1.5 text-xs"
+                >
+                  <option value="ALPHA">ALPHA</option>
+                  <option value="BETA">BETA</option>
+                  <option value="EARLY_ACCESS">EARLY_ACCESS</option>
+                </select>
+                <Input
+                  placeholder="Notes (optional)"
+                  value={batchNotes}
+                  onChange={(e) => setBatchNotes(e.target.value)}
+                  className="w-40 text-xs"
+                />
+                <span className="text-xs text-muted-foreground">
+                  {batchText.split(/[\n,\s]+/).filter((w) => w.trim().length >= 32).length} valid
+                </span>
+                <Button
+                  size="sm"
+                  onClick={handleBatchAdd}
+                  disabled={
+                    batchLoading ||
+                    batchText.split(/[\n,\s]+/).filter((w) => w.trim().length >= 32).length === 0
+                  }
+                  className="bg-solana-green text-black hover:bg-solana-green/90"
+                >
+                  {batchLoading ? 'Adding…' : 'Batch Add'}
+                </Button>
+              </div>
+              {batchResult && (
+                <p className="text-xs text-solana-green">
+                  Added {batchResult.added}, skipped {batchResult.skipped} (already whitelisted)
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Whitelist Table */}
           {whitelist.length === 0 ? (
             <p className="py-4 text-center text-sm text-muted-foreground">
@@ -292,9 +412,18 @@ export default function AdminPage() {
                   className="flex items-center justify-between rounded-md border border-white/5 bg-white/[0.01] px-3 py-2"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="font-mono text-xs text-muted-foreground">
-                      {entry.wallet_address.slice(0, 8)}...{entry.wallet_address.slice(-4)}
-                    </span>
+                    <button
+                      onClick={() => handleCopyAddress(entry.id, entry.wallet_address)}
+                      className="flex items-center gap-1 font-mono text-xs text-muted-foreground hover:text-white"
+                      title="Copy full address"
+                    >
+                      {copiedId === entry.id ? (
+                        <Check className="h-3 w-3 text-solana-green" />
+                      ) : (
+                        <Copy className="h-3 w-3" />
+                      )}
+                      {entry.wallet_address.slice(0, 8)}…{entry.wallet_address.slice(-4)}
+                    </button>
                     <Badge
                       variant="outline"
                       className={
