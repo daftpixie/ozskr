@@ -72,3 +72,23 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
           NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+  deploy-trigger:
+    name: Deploy Trigger.dev Tasks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [lint, typecheck, test, build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+      - run: pnpm install --frozen-lockfile
+      - name: Build workspace packages
+        run: pnpm --filter './packages/*' build
+      - name: Deploy to Trigger.dev
+        run: pnpm dlx trigger.dev@4.3.3 deploy --env prod
+        env:
+          TRIGGER_ACCESS_TOKEN: ${{ secrets.TRIGGER_ACCESS_TOKEN }}
