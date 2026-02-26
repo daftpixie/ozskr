@@ -52,9 +52,9 @@ describe('Blog Posts', () => {
 
   describe('getBlogPost', () => {
     it('returns post by slug', () => {
-      const post = getBlogPost('how-ai-built-ai-platform');
+      const post = getBlogPost('ad-astra-per-aspera');
       expect(post).toBeDefined();
-      expect(post?.title).toBe('How AI Built an AI Agent Platform');
+      expect(post?.title).toBe('Ad Astra Per Aspera');
     });
 
     it('returns undefined for unknown slug', () => {
@@ -66,9 +66,7 @@ describe('Blog Posts', () => {
   describe('getAllBlogSlugs', () => {
     it('returns all slugs', () => {
       const slugs = getAllBlogSlugs();
-      expect(slugs).toContain('how-ai-built-ai-platform');
-      expect(slugs).toContain('architecture-deep-dive');
-      expect(slugs).toContain('the-ozskr-livepaper');
+      expect(slugs).toContain('ad-astra-per-aspera');
     });
   });
 });
