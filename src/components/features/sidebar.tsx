@@ -19,6 +19,7 @@ import {
   Share2,
   Trophy,
   Crown,
+  Network,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -36,6 +37,7 @@ const navigationItems: NavItem[] = [
   { label: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
   { label: 'Trade', href: '/dashboard/trade', icon: ArrowLeftRight },
   { label: 'Portfolio', href: '/dashboard/portfolio', icon: Wallet },
+  { label: 'Social Graph', href: '/social', icon: Network },
   { label: 'Analytics', href: '/analytics', icon: BarChart3 },
   { label: 'Achievements', href: '/dashboard/achievements', icon: Trophy },
   { label: 'Leaderboard', href: '/dashboard/leaderboard', icon: Crown },

@@ -239,6 +239,42 @@ ai.post('/characters', zValidator('json', CharacterCreateSchema), async (c) => {
       .then(({ updateStreak }) => updateStreak(auth.walletAddress))
       .catch(() => {});
 
+    // Provision Tapestry social profile (async, fire-and-forget)
+    void (async () => {
+      try {
+        const { isTapestryConfigured } = await import('@/lib/tapestry/client');
+        if (!isTapestryConfigured()) return;
+        const { tapestryService } = await import('@/lib/tapestry/service');
+        const slug = character.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '_')
+          .replace(/^_|_$/g, '')
+          .slice(0, 43); // ozskr_ prefix + 43 = 50 max
+        const username = `ozskr_${slug}`;
+        const bio = character.persona.slice(0, 200);
+        const result = await tapestryService.createOrFindProfile(
+          character.wallet_address,
+          username,
+          bio
+        );
+        if ('error' in result) return;
+        const serviceClient = createAuthenticatedClient(auth.jwtToken);
+        await serviceClient
+          .from('characters')
+          .update({ tapestry_profile_id: result.data.id, tapestry_username: result.data.username })
+          .eq('id', character.id);
+        const { onAgentCreated } = await import('@/lib/tapestry/hooks');
+        void onAgentCreated(
+          character.id,
+          result.data.id,
+          { name: character.name, persona: character.persona, topic_affinity: character.topic_affinity as string[] | undefined },
+          serviceClient
+        ).catch(() => {});
+      } catch {
+        // Fire-and-forget: never surface Tapestry errors to the user
+      }
+    })();
+
     // Merge agentPubkey into response (character was fetched before keypair gen)
     const response = mapCharacterToResponse(character);
     if (agentPubkey) {

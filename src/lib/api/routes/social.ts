@@ -368,6 +368,30 @@ social.post(
         );
       }
 
+      // Mirror content to Tapestry social graph (fire-and-forget)
+      void (async () => {
+        try {
+          const { isTapestryConfigured } = await import('@/lib/tapestry/client');
+          if (!isTapestryConfigured()) return;
+          const { data: character } = await supabase
+            .from('characters')
+            .select('tapestry_profile_id')
+            .eq('id', generation.character_id)
+            .single();
+          if (!character?.tapestry_profile_id) return;
+          const { mirrorContentToTapestry } = await import('@/lib/tapestry/hooks');
+          const platform = accounts[0]?.platform ?? 'unknown';
+          await mirrorContentToTapestry({
+            tapestryProfileId: character.tapestry_profile_id,
+            sourcePlatform: platform,
+            sourcePostId: input.contentGenerationId,
+            contentText: typeof generation.content === 'string' ? generation.content.slice(0, 500) : undefined,
+          });
+        } catch {
+          // Fire-and-forget: never surface Tapestry errors
+        }
+      })();
+
       return c.json(
         {
           success: true,
