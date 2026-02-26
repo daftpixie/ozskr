@@ -358,8 +358,16 @@ Configure `MEM0_API_KEY` in `.mcp.json` (not committed — in `.gitignore`). Bui
   - [x] 7.M.9: Mainnet readiness hardening (KeyManager, ScreeningProvider, V2 headers, USDC validation)
 - [x] Phase 7.D: Development Workflow Memory (Mem0 MCP integration)
   - [x] 7.D.1: MCP server, configuration, documentation
+- [x] Phase 7.T: Tapestry Social Graph Integration
+  - [x] 7.T.1: tapestry/ library (client, schemas, service, types) + socialfi SDK
+  - [x] 7.T.2: Supabase migration (tapestry_profile_id, tapestry_username, tapestry_content_mirror)
+  - [x] 7.T.3: 8 Hono API routes under /api/tapestry/
+  - [x] 7.T.4: Agent creation hook (auto-provision Tapestry profile + topical alignment follows)
+  - [x] 7.T.5: Content publish mirror hook (fire-and-forget to Tapestry)
+  - [x] 7.T.6: Social dashboard UI (/social page, AgentSocialProfileCard, SocialContentFeed, SocialGraphDisplay)
+  - [x] 7.T.7: Sidebar nav update + database type additions
 - [ ] Phase 8: Agentic Commerce Layer (activation-gated: 100+ users, attorney sign-off, x402 recovery)
 - [ ] Phase 9: Agent Marketplace (activation-gated: Phase 8 stable 3+ months, 500+ agents)
 - [ ] Deferred: Auto-Stake Smart Contract (pending security audit budget $15-30K)
 
-Phase 6 engineering complete. Phase 7 Sprints 1-3 complete. 292 tests across 3 packages (76 SDK + 88 MCP + 128 facilitator) + 659 app tests. SDK v0.1.2-beta + MCP v0.2.0-beta published. Facilitator v0.1.0-beta ready (npm token refresh needed). Remaining: Product Hunt launch, mainnet prep, MCP directory submissions.
+Phase 6 engineering complete. Phase 7 Sprints 1-3 complete + 7.T (Tapestry) complete. 292 tests across 3 packages (76 SDK + 88 MCP + 128 facilitator) + 659 app tests. SDK v0.1.2-beta + MCP v0.2.0-beta published. Facilitator v0.1.0-beta ready (npm token refresh needed). Remaining: Product Hunt launch, mainnet prep, MCP directory submissions.

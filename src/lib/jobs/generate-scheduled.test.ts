@@ -127,6 +127,8 @@ describe('generate-scheduled', () => {
         delegation_token_mint: null,
         delegation_token_account: null,
         delegation_tx_signature: null,
+        tapestry_profile_id: null,
+        tapestry_username: null,
       };
 
       const insertSpy = vi.fn().mockReturnThis();
@@ -219,6 +221,8 @@ describe('generate-scheduled', () => {
         delegation_token_mint: null,
         delegation_token_account: null,
         delegation_tx_signature: null,
+        tapestry_profile_id: null,
+        tapestry_username: null,
       };
 
       mockFrom.mockImplementation((tableName: string) => {
@@ -306,6 +310,8 @@ describe('generate-scheduled', () => {
         delegation_token_mint: null,
         delegation_token_account: null,
         delegation_tx_signature: null,
+        tapestry_profile_id: null,
+        tapestry_username: null,
       };
 
       const updateSpy = vi.fn().mockReturnThis();
@@ -390,6 +396,8 @@ describe('generate-scheduled', () => {
         delegation_token_mint: null,
         delegation_token_account: null,
         delegation_tx_signature: null,
+        tapestry_profile_id: null,
+        tapestry_username: null,
       };
 
       const nextRunTime = new Date('2024-01-16T09:00:00Z');
@@ -477,6 +485,8 @@ describe('generate-scheduled', () => {
         delegation_token_mint: null,
         delegation_token_account: null,
         delegation_tx_signature: null,
+        tapestry_profile_id: null,
+        tapestry_username: null,
       };
 
       const updateSpy = vi.fn().mockReturnThis();
@@ -560,6 +570,8 @@ describe('generate-scheduled', () => {
         delegation_token_mint: null,
         delegation_token_account: null,
         delegation_tx_signature: null,
+        tapestry_profile_id: null,
+        tapestry_username: null,
       };
 
       mockRunPipeline.mockRejectedValue(new Error('Pipeline failed'));
@@ -642,6 +654,8 @@ describe('generate-scheduled', () => {
         delegation_token_mint: null,
         delegation_token_account: null,
         delegation_tx_signature: null,
+        tapestry_profile_id: null,
+        tapestry_username: null,
       };
 
       mockFrom.mockImplementation((tableName: string) => {

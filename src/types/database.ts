@@ -172,6 +172,10 @@ export interface Character {
   delegation_token_mint: string | null;
   delegation_token_account: string | null;
   delegation_tx_signature: string | null;
+  /** Tapestry social graph profile ID. Null until profile is provisioned. */
+  tapestry_profile_id: string | null;
+  /** Tapestry username (e.g. "ozskr_my_agent"). Null until profile is provisioned. */
+  tapestry_username: string | null;
 }
 
 export interface AgentRun {
@@ -577,7 +581,19 @@ export type UserUpdate = Partial<Pick<User, 'display_name' | 'avatar_url'>>;
 export type CharacterUpdate = Partial<
   Pick<
     Character,
-    'name' | 'persona' | 'visual_style' | 'voice_tone' | 'guardrails' | 'topic_affinity' | 'status' | 'visual_style_params' | 'social_accounts' | 'generation_count' | 'last_generated_at'
+    | 'name'
+    | 'persona'
+    | 'visual_style'
+    | 'voice_tone'
+    | 'guardrails'
+    | 'topic_affinity'
+    | 'status'
+    | 'visual_style_params'
+    | 'social_accounts'
+    | 'generation_count'
+    | 'last_generated_at'
+    | 'tapestry_profile_id'
+    | 'tapestry_username'
   >
 >;
 

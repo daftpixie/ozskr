@@ -26,6 +26,7 @@ import { adminWhitelist } from './routes/admin-whitelist';
 import { adminIssues } from './routes/admin-issues';
 import { adminReport } from './routes/admin-report';
 import { delegation } from './routes/delegation';
+import { tapestry } from './routes/tapestry';
 
 // App context variables type
 type AppVariables = {
@@ -110,6 +111,7 @@ app.route('/admin-whitelist', adminWhitelist);
 app.route('/admin-issues', adminIssues);
 app.route('/admin-report', adminReport);
 app.route('/delegation', delegation);
+app.route('/tapestry', tapestry);
 
 // Global error handler with AppError support
 app.onError((err, c) => {
