@@ -96,7 +96,6 @@ export type AgentDelegationAccount = z.infer<typeof agentDelegationAccountSchema
  * version and timestamps are set by the database.
  */
 export const createDelegationAccountSchema = z.object({
-  characterId: z.string().uuid(),
   tokenMint: solanaAddressSchema,
   tokenAccountAddress: solanaAddressSchema,
   delegatePubkey: solanaAddressSchema,

@@ -460,6 +460,7 @@ delegation.post(
         .from('agent_delegation_accounts' as 'characters')
         .insert({
           character_id: characterId,
+          wallet_address: auth.walletAddress,
           token_mint: input.tokenMint,
           token_account_address: input.tokenAccountAddress,
           delegate_pubkey: input.delegatePubkey,
@@ -594,12 +595,13 @@ delegation.patch(
 
       const newStatus = remaining === 0n ? 'depleted' : existingAccount.delegation_status;
 
-      // Update with version increment
+      // Update with version increment; reset drift flag on confirmed spend
       const { data: rawUpdated, error: updateError } = await supabase
         .from('agent_delegation_accounts' as 'characters')
         .update({
           remaining_amount: input.remainingAmount,
           delegation_status: newStatus,
+          reconciliation_status: 'ok',
           version: input.expectedVersion + 1,
           updated_at: new Date().toISOString(),
         } as unknown as Record<string, unknown>)
@@ -1122,9 +1124,10 @@ delegation.post(
     try {
       const supabase = createAuthenticatedClient(auth.jwtToken);
 
+      // Verify character ownership and get agent pubkey
       const { data: character, error: verifyError } = await supabase
         .from('characters')
-        .select('id, agent_pubkey, delegation_status, delegation_token_mint, delegation_token_account, delegation_remaining, wallet_address')
+        .select('id, agent_pubkey, wallet_address')
         .eq('id', characterId)
         .eq('wallet_address', auth.walletAddress)
         .single();
@@ -1133,19 +1136,30 @@ delegation.post(
         return c.json({ error: 'Character not found', code: 'NOT_FOUND' }, 404);
       }
 
-      if (character.delegation_status !== 'active') {
-        return c.json({ error: 'No active delegation', code: 'DELEGATION_INACTIVE' }, 400);
-      }
-
       if (!character.agent_pubkey) {
         return c.json({ error: 'Agent has no keypair', code: 'NO_AGENT_KEY' }, 400);
       }
 
-      // Guard: transfer amount must not exceed delegation remaining.
-      if (character.delegation_remaining !== null && character.delegation_remaining !== undefined) {
-        if (BigInt(input.amount) > BigInt(character.delegation_remaining)) {
-          return c.json({ error: 'Transfer amount exceeds delegation remaining', code: 'EXCEEDS_LIMIT' }, 400);
-        }
+      // Look up the active delegation account for this character + token mint
+      const { data: rawDelegation } = await supabase
+        .from('agent_delegation_accounts' as 'characters')
+        .select('*')
+        .eq('character_id', characterId)
+        .eq('token_mint', input.tokenMint)
+        .eq('delegation_status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!rawDelegation) {
+        return c.json({ error: 'No active delegation', code: 'DELEGATION_INACTIVE' }, 400);
+      }
+
+      const delegationAccount = castRow<AgentDelegationAccount>(rawDelegation);
+
+      // Guard: transfer amount must not exceed remaining balance
+      if (BigInt(input.amount) > BigInt(delegationAccount.remaining_amount)) {
+        return c.json({ error: 'Transfer amount exceeds delegation remaining', code: 'EXCEEDS_LIMIT' }, 400);
       }
 
       const { executeAgentTransfer } = await import('@/lib/agent-wallet/transfer');
@@ -1170,17 +1184,19 @@ delegation.post(
         status: 'confirmed',
       });
 
-      const currentRemaining = character.delegation_remaining
-        ? BigInt(character.delegation_remaining)
-        : null;
-      if (currentRemaining !== null) {
-        const spent = BigInt(input.amount);
-        const newRemaining = currentRemaining > spent ? currentRemaining - spent : 0n;
-        await supabase
-          .from('characters')
-          .update({ delegation_remaining: newRemaining.toString() })
-          .eq('id', characterId);
-      }
+      // Decrement remaining_amount in agent_delegation_accounts
+      const spent = BigInt(input.amount);
+      const newRemaining = BigInt(delegationAccount.remaining_amount) - spent;
+      const newStatus = newRemaining <= 0n ? 'depleted' : 'active';
+      await supabase
+        .from('agent_delegation_accounts' as 'characters')
+        .update({
+          remaining_amount: newRemaining.toString(),
+          delegation_status: newStatus,
+          reconciliation_status: 'ok',
+          version: delegationAccount.version + 1,
+        } as unknown as Record<string, unknown>)
+        .eq('id', delegationAccount.id);
 
       logger.info('Agent transfer executed', {
         characterId,

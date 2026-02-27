@@ -181,6 +181,19 @@ export async function executeAgentTransfer(
     tokenMint: params.tokenMint,
   });
 
+  // Pre-flight: agent must have SOL to pay transaction fees.
+  // A freshly provisioned wallet has 0 lamports and doesn't exist on-chain,
+  // which causes an opaque "AccountNotFound" simulation error.
+  const MIN_SOL_LAMPORTS = 5_000_000n; // 0.005 SOL — enough for ~1000 txs
+  const balanceResult = await rpc.getBalance(agentAddress, { commitment: 'confirmed' }).send();
+  if (balanceResult.value < MIN_SOL_LAMPORTS) {
+    throw new Error(
+      `Agent wallet has insufficient SOL to pay fees ` +
+      `(${balanceResult.value} lamports). ` +
+      `Fund the agent wallet: ${agentAddress}`
+    );
+  }
+
   const mint = address(params.tokenMint);
   const ownerAddr = address(params.ownerAddress);
   const destination = address(params.destinationTokenAccount);

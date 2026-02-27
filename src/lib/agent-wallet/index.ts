@@ -94,12 +94,16 @@ async function createAgentKeypairLocal(characterId: string): Promise<string> {
 async function createAgentKeypairTurnkey(characterId: string): Promise<string> {
   const { createTurnkeyWallet } = await import('@ozskr/agent-wallet-sdk/key-management');
 
+  // Label must be unique within the Turnkey organization.
+  // Include a short timestamp suffix so re-provisioning (force=true) never
+  // collides with a previously-created wallet that still exists in Turnkey.
+  const labelSuffix = Date.now().toString(36).slice(-6);
   const wallet = await createTurnkeyWallet({
     organizationId: process.env.TURNKEY_ORGANIZATION_ID!,
     apiPublicKey: process.env.TURNKEY_API_PUBLIC_KEY!,
     apiPrivateKey: process.env.TURNKEY_API_PRIVATE_KEY!,
     baseUrl: process.env.TURNKEY_BASE_URL,
-    walletName: `agent-${characterId}`,
+    walletName: `agent-${characterId}-${labelSuffix}`,
   });
 
   // Store mapping in Supabase (service role)
@@ -200,21 +204,13 @@ async function storeTurnkeyMapping(
  * Look up a character's Turnkey wallet mapping.
  *
  * Resolution order:
- * 1. Env vars TURNKEY_AGENT_WALLET_ID + TURNKEY_AGENT_SOLANA_ADDRESS (demo shortcut)
- * 2. Supabase agent_turnkey_mapping table (production)
+ * 1. Supabase agent_turnkey_mapping table (per-character, preferred)
+ * 2. Env vars TURNKEY_AGENT_WALLET_ID + TURNKEY_AGENT_SOLANA_ADDRESS (single-agent demo fallback)
  */
 async function getTurnkeyMapping(
   characterId: string,
 ): Promise<{ turnkeyWalletId: string; turnkeyPublicKey: string } | null> {
-  // Fast path: env var override for demo / single-agent deployments
-  const envWalletId = process.env.TURNKEY_AGENT_WALLET_ID;
-  const envAddress = process.env.TURNKEY_AGENT_SOLANA_ADDRESS;
-  if (envWalletId && envAddress) {
-    logger.debug('Using env var Turnkey mapping', { characterId, address: envAddress });
-    return { turnkeyWalletId: envWalletId, turnkeyPublicKey: envAddress };
-  }
-
-  // Production path: Supabase mapping table
+  // Production path: Supabase per-character mapping table (checked first)
   const { createClient } = await import('@supabase/supabase-js');
 
   const supabase = createClient(
@@ -228,14 +224,23 @@ async function getTurnkeyMapping(
     .eq('character_id', characterId)
     .single();
 
-  if (error || !data) {
-    return null;
+  if (!error && data) {
+    return {
+      turnkeyWalletId: data.turnkey_wallet_id,
+      turnkeyPublicKey: data.turnkey_public_key,
+    };
   }
 
-  return {
-    turnkeyWalletId: data.turnkey_wallet_id,
-    turnkeyPublicKey: data.turnkey_public_key,
-  };
+  // Fallback: env var override for single-agent demo deployments
+  // Only used when no per-character DB row exists
+  const envWalletId = process.env.TURNKEY_AGENT_WALLET_ID;
+  const envAddress = process.env.TURNKEY_AGENT_SOLANA_ADDRESS;
+  if (envWalletId && envAddress) {
+    logger.debug('Using env var Turnkey mapping fallback', { characterId, address: envAddress });
+    return { turnkeyWalletId: envWalletId, turnkeyPublicKey: envAddress };
+  }
+
+  return null;
 }
 
 /**
