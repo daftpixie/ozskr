@@ -68,14 +68,22 @@ const generateTextContent = async (
   });
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(new Error('Text generation timed out after 60s')), 60_000);
+
     const result = await traceClaudeCall(trace, 'generate-text', async () => {
-      return await generateText({
-        model,
-        system: context.dna.systemPrompt,
-        prompt: enhancedPrompt,
-        maxTokens: config.maxTokens,
-        temperature: config.temperature,
-      } as never);
+      try {
+        return await generateText({
+          model,
+          system: context.dna.systemPrompt,
+          prompt: enhancedPrompt,
+          maxTokens: config.maxTokens,
+          temperature: config.temperature,
+          abortSignal: controller.signal,
+        } as never);
+      } finally {
+        clearTimeout(timeoutId);
+      }
     });
 
     const latencyMs = Date.now() - startTime;

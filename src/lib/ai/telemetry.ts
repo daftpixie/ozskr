@@ -109,7 +109,9 @@ export const traceGeneration = async (params: {
     },
   });
 
-  await getLangfuse().flushAsync();
+  // Fire-and-forget: do not block the pipeline on telemetry flushing.
+  // The runPipeline orchestrator calls flushAsync() once at the end.
+  void getLangfuse().flushAsync().catch(() => {});
 };
 
 /**
@@ -157,6 +159,7 @@ export const traceClaudeCall = async <T>(
 
     throw error;
   } finally {
-    await getLangfuse().flushAsync();
+    // Fire-and-forget: don't block the caller on telemetry flushing.
+    void getLangfuse().flushAsync().catch(() => {});
   }
 };

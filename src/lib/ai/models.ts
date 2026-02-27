@@ -27,17 +27,17 @@ export interface ModelConfig {
  */
 export const MODEL_REGISTRY: Record<string, ModelConfig> = {
   'text-generation': {
-    modelId: 'claude-sonnet-4-20250514',
+    modelId: 'claude-sonnet-4-6',
     provider: 'anthropic',
     purpose: 'Character text/tweet/thread generation',
-    maxTokens: 4096,
+    maxTokens: 1024,
     temperature: 0.8,
   },
   'text-enhancement': {
-    modelId: 'claude-sonnet-4-20250514',
+    modelId: 'claude-sonnet-4-6',
     provider: 'anthropic',
     purpose: 'Prompt enhancement and expansion',
-    maxTokens: 1024,
+    maxTokens: 512,
     temperature: 0.3,
   },
   'image-generation': {

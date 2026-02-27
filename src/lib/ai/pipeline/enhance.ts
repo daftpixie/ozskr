@@ -58,23 +58,31 @@ export const enhancePrompt = async (
       characterName: context.dna.name,
     });
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(new Error('Prompt enhancement timed out after 30s')), 30_000);
+
     const result = await traceClaudeCall(
       trace,
       'enhance-prompt',
       async () => {
-        return await generateText({
-          model,
-          system: context.dna.systemPrompt,
-          prompt: `Enhance this prompt to match your character's voice and style. Keep the core intent but make it authentic to your persona.
+        try {
+          return await generateText({
+            model,
+            system: context.dna.systemPrompt,
+            prompt: `Enhance this prompt to match your character's voice and style. Keep the core intent but make it authentic to your persona.
 
 <user_input>
 ${inputPrompt}
 </user_input>
 
 Enhanced prompt:`,
-          maxTokens: 1024,
-          temperature: 0.3,
-        } as never);
+            maxTokens: 1024,
+            temperature: 0.3,
+            abortSignal: controller.signal,
+          } as never);
+        } finally {
+          clearTimeout(timeoutId);
+        }
       }
     );
 

@@ -832,11 +832,77 @@ ai.get('/generations/:id/stream', async (c) => {
       .single();
 
     if (claimError || !claimed) {
-      // Race condition — another connection claimed it
-      return c.json(
-        { error: 'Generation already in progress', code: 'CONFLICT' },
-        409
-      );
+      // Concurrent connection claimed the generation (common during HMR/Fast Refresh).
+      // Re-fetch current state and return the appropriate SSE response instead of 409.
+      const { data: currentGen } = await supabase
+        .from('content_generations')
+        .select('*')
+        .eq('id', generationId)
+        .single();
+
+      if (!currentGen) {
+        return c.json({ error: 'Generation not found', code: 'NOT_FOUND' }, 404);
+      }
+
+      c.header('Content-Type', 'text/event-stream');
+      c.header('Cache-Control', 'no-cache');
+      c.header('Connection', 'keep-alive');
+
+      // Already finished — send the result immediately
+      if (
+        currentGen.moderation_status === ModerationStatus.APPROVED ||
+        currentGen.moderation_status === ModerationStatus.REJECTED ||
+        currentGen.moderation_status === ModerationStatus.FLAGGED
+      ) {
+        return stream(c, async (sseStream) => {
+          const stage =
+            currentGen.moderation_status === ModerationStatus.APPROVED ? 'complete' : 'error';
+          await sseStream.write(
+            `data: ${JSON.stringify({
+              stage,
+              message: 'Generation already completed',
+              result: mapGenerationToResponse(currentGen),
+            })}\n\n`
+          );
+        });
+      }
+
+      // Still processing — poll until done (same logic as the PROCESSING branch above)
+      return stream(c, async (sseStream) => {
+        await sseStream.write(
+          `data: ${JSON.stringify({
+            stage: 'generating_content',
+            message: 'Generation already in progress',
+          })}\n\n`
+        );
+        const startTime = Date.now();
+        const maxDuration = 5 * 60 * 1000;
+        while (Date.now() - startTime < maxDuration) {
+          await new Promise((r) => setTimeout(r, 2000));
+          const { data: polledGen } = await supabase
+            .from('content_generations')
+            .select('*')
+            .eq('id', generationId)
+            .single();
+          if (!polledGen) break;
+          if (
+            polledGen.moderation_status === ModerationStatus.APPROVED ||
+            polledGen.moderation_status === ModerationStatus.REJECTED ||
+            polledGen.moderation_status === ModerationStatus.FLAGGED
+          ) {
+            const endStage =
+              polledGen.moderation_status === ModerationStatus.APPROVED ? 'complete' : 'error';
+            await sseStream.write(
+              `data: ${JSON.stringify({
+                stage: endStage,
+                message: 'Generation complete',
+                result: mapGenerationToResponse(polledGen),
+              })}\n\n`
+            );
+            return;
+          }
+        }
+      });
     }
 
     // Run pipeline and stream progress via SSE

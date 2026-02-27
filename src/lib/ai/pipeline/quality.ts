@@ -48,10 +48,14 @@ const checkTextQuality = async (
     characterId: context.dna.id,
   });
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(new Error('Quality check timed out after 30s')), 30_000);
+
   const result = await traceClaudeCall(trace, 'score-quality', async () => {
-    return await generateText({
-      model,
-      system: `You are a quality evaluator for AI-generated content. Evaluate on three dimensions:
+    try {
+      return await generateText({
+        model,
+        system: `You are a quality evaluator for AI-generated content. Evaluate on three dimensions:
 1. Persona consistency: Does this match the character's voice and style?
 2. Engagement: Is this compelling and likely to resonate with an audience?
 3. Creativity: Is this original and interesting?
@@ -63,14 +67,18 @@ Voice & tone:
 ${context.dna.voiceTone}
 
 Respond with ONLY a JSON object: {"score": 0.X, "reasoning": "brief explanation"}`,
-      prompt: `Evaluate this content:
+        prompt: `Evaluate this content:
 
 "${text}"
 
 Score (0.0-1.0):`,
-      maxTokens: 256,
-      temperature: 0,
-    } as never);
+        maxTokens: 256,
+        temperature: 0,
+        abortSignal: controller.signal,
+      } as never);
+    } finally {
+      clearTimeout(timeoutId);
+    }
   });
 
   try {

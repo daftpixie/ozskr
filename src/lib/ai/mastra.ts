@@ -9,8 +9,8 @@ import { anthropic } from '@ai-sdk/anthropic';
 /**
  * Model configuration for Mastra agents
  */
-const PRIMARY_MODEL = anthropic('claude-sonnet-4-20250514');
-const FALLBACK_MODEL = anthropic('claude-3-haiku-20240307');
+const PRIMARY_MODEL = anthropic('claude-sonnet-4-6');
+const FALLBACK_MODEL = anthropic('claude-haiku-4-5-20251001');
 
 /**
  * Initialize Mastra instance with Claude provider
