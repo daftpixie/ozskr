@@ -25,6 +25,8 @@ import {
   setTransactionMessageFeePayer,
   setTransactionMessageLifetimeUsingBlockhash,
   appendTransactionMessageInstruction,
+  compileTransaction,
+  getTransactionEncoder,
 } from '@solana/kit';
 import type { TransactionMessage, TransactionMessageWithBlockhashLifetime } from '@solana/kit';
 import { TOKEN_PROGRAM_ID } from './types';
@@ -104,6 +106,47 @@ export async function closeAgentTokenAccount(
     (tx) => setTransactionMessageLifetimeUsingBlockhash(blockhash, tx),
     (tx) => appendTransactionMessageInstruction(closeInstruction, tx),
   );
+
+  // Simulate before returning — sigVerify: false since unsigned.
+  // Non-fatal: network or RPC errors do not prevent the transaction from being built.
+  const rpcEndpoint = process.env.NEXT_PUBLIC_HELIUS_RPC_URL ?? '';
+  if (rpcEndpoint) {
+    try {
+      const compiled = compileTransaction(txMessage);
+      const txBytes = getTransactionEncoder().encode(compiled);
+      const txBase64 = Buffer.from(txBytes as Uint8Array).toString('base64');
+
+      const simResponse = await fetch(rpcEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'simulateTransaction',
+          params: [
+            txBase64,
+            { encoding: 'base64', sigVerify: false, replaceRecentBlockhash: true },
+          ],
+        }),
+      });
+
+      if (simResponse.ok) {
+        const simBody = await simResponse.json() as {
+          result?: { value?: { err?: unknown } };
+        };
+        if (simBody.result?.value?.err) {
+          throw new Error(
+            `closeAccount simulation failed: ${JSON.stringify(simBody.result.value.err)}`,
+          );
+        }
+      }
+    } catch (err) {
+      if (err instanceof Error && err.message.startsWith('closeAccount simulation failed')) {
+        throw err;
+      }
+      // Network/RPC errors during simulation are non-fatal.
+    }
+  }
 
   return txMessage;
 }

@@ -22,8 +22,11 @@ import { logger } from '@/lib/utils/logger';
 /** Batch size for processing active delegation accounts */
 const BATCH_SIZE = 100;
 
-/** Percentage threshold (1%) below which an amount difference is considered drift */
-const DRIFT_THRESHOLD_PCT = 0.01;
+/**
+ * Drift threshold: 1 percent.
+ * Used as: diff * 100n > dbRemaining  (avoids Number() precision loss on large u64 values)
+ */
+const DRIFT_THRESHOLD_SCALE = 100n; // reciprocal of 1%
 
 export interface ReconciliationStats {
   checked: number;
@@ -69,9 +72,10 @@ async function fetchOnChainDelegations(
     results.set(addr, { exists: true, delegatedAmount: undefined, delegate: undefined });
   }
 
-  const rpcUrl = process.env.NEXT_PUBLIC_HELIUS_RPC_URL;
+  // Prefer the server-side env var; fall back to the public one for dev parity.
+  const rpcUrl = process.env.HELIUS_RPC_URL ?? process.env.NEXT_PUBLIC_HELIUS_RPC_URL;
   if (!rpcUrl) {
-    logger.warn('delegation-reconciliation: NEXT_PUBLIC_HELIUS_RPC_URL not set, skipping on-chain checks');
+    logger.warn('delegation-reconciliation: HELIUS_RPC_URL not set, skipping on-chain checks');
     return results;
   }
 
@@ -145,9 +149,8 @@ function classifyDrift(
 
     if (dbRemaining > 0n) {
       const diff = dbRemaining > onChainAmount ? dbRemaining - onChainAmount : onChainAmount - dbRemaining;
-      const pctDiff = Number(diff) / Number(dbRemaining);
-
-      if (onChainAmount < dbRemaining && pctDiff > DRIFT_THRESHOLD_PCT) {
+      // Integer comparison: diff / dbRemaining > 0.01 ⟺ diff * 100 > dbRemaining
+      if (onChainAmount < dbRemaining && diff * DRIFT_THRESHOLD_SCALE > dbRemaining) {
         return {
           driftType: 'amount_drift',
           actionTaken: 'flagged',
@@ -266,21 +269,29 @@ export async function reconcileDelegations(): Promise<ReconciliationStats> {
 
   const supabase = createSupabaseServerClient(serviceRoleKey);
 
-  let offset = 0;
+  // Cursor-based pagination on `id` avoids skipping accounts when status changes
+  // during iteration (offset-based pagination is unsafe for mutable result sets).
+  let lastId: string | null = null;
   let checked = 0;
   let totalDrifts = 0;
   let totalAutoRevoked = 0;
 
   // Paginate through all active accounts in batches
   while (true) {
-    const { data: accounts, error } = await supabase
+    let pageQuery = supabase
       .from('agent_delegation_accounts')
       .select(
         'id, character_id, token_account_address, delegate_pubkey, remaining_amount, delegation_status, version'
       )
       .eq('delegation_status', 'active')
-      .order('created_at', { ascending: true })
-      .range(offset, offset + BATCH_SIZE - 1);
+      .order('id', { ascending: true })
+      .limit(BATCH_SIZE);
+
+    if (lastId !== null) {
+      pageQuery = pageQuery.gt('id', lastId);
+    }
+
+    const { data: accounts, error } = await pageQuery;
 
     if (error) {
       throw new Error(`Failed to fetch delegation accounts for reconciliation: ${error.message}`);
@@ -298,12 +309,11 @@ export async function reconcileDelegations(): Promise<ReconciliationStats> {
     checked += accounts.length;
     totalDrifts += batchStats.driftsDetected;
     totalAutoRevoked += batchStats.autoRevoked;
+    lastId = accounts[accounts.length - 1].id;
 
     if (accounts.length < BATCH_SIZE) {
       break;
     }
-
-    offset += BATCH_SIZE;
   }
 
   logger.info('delegation-reconciliation: run complete', {

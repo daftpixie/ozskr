@@ -531,10 +531,13 @@ delegation.patch(
 
     const input = c.req.valid('json');
 
-    // Service-role guard: only requests using the service role key are accepted.
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!serviceRoleKey) {
-      return c.json({ error: 'Service configuration error', code: 'INTERNAL_ERROR' }, 500);
+    // Internal service authentication: X-Internal-Secret must match INTERNAL_API_SECRET.
+    // This endpoint is only callable by trusted internal services (e.g., Trigger.dev jobs),
+    // not by arbitrary authenticated users.
+    const internalSecret = c.req.header('X-Internal-Secret');
+    const expectedSecret = process.env.INTERNAL_API_SECRET;
+    if (!expectedSecret || internalSecret !== expectedSecret) {
+      return c.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, 401);
     }
 
     try {
@@ -766,10 +769,15 @@ delegation.post(
         return c.json({ error: 'Character not found', code: 'NOT_FOUND' }, 404);
       }
 
-      // Fetch current account state
+      // Acquire advisory lock BEFORE reading account state to prevent TOCTOU races.
+      await supabase.rpc('pg_advisory_xact_lock_delegation', {
+        p_account_id: input.delegationAccountId,
+      } as unknown as Record<string, unknown>);
+
+      // Fetch current account state (inside the advisory lock)
       const { data: rawAccount, error: accError } = await supabase
         .from('agent_delegation_accounts' as 'characters')
-        .select('id, delegation_status, remaining_amount, version')
+        .select('id, delegation_status, remaining_amount, approved_amount, version')
         .eq('id', input.delegationAccountId)
         .eq('character_id', characterId)
         .single();
@@ -778,11 +786,19 @@ delegation.post(
         return c.json({ error: 'Delegation account not found', code: 'NOT_FOUND' }, 404);
       }
 
-      const account = castRow<Pick<AgentDelegationAccount, 'id' | 'delegation_status' | 'remaining_amount' | 'version'>>(rawAccount);
+      const account = castRow<Pick<AgentDelegationAccount, 'id' | 'delegation_status' | 'remaining_amount' | 'approved_amount' | 'version'>>(rawAccount);
 
       if (account.delegation_status === 'revoked' || account.delegation_status === 'closed') {
         return c.json(
           { error: 'Cannot top up a revoked or closed delegation account', code: 'DELEGATION_INACTIVE' },
+          400
+        );
+      }
+
+      // Guard: newApprovedAmount must be >= current approved amount (no cap reduction).
+      if (BigInt(input.newApprovedAmount) < BigInt(account.approved_amount)) {
+        return c.json(
+          { error: 'newApprovedAmount must be greater than or equal to current approved amount', code: 'VALIDATION_ERROR' },
           400
         );
       }
@@ -794,11 +810,6 @@ delegation.post(
 
       const newStatus =
         account.delegation_status === 'depleted' ? 'active' : account.delegation_status;
-
-      // Advisory lock for top-up
-      await supabase.rpc('pg_advisory_xact_lock_delegation', {
-        p_account_id: input.delegationAccountId,
-      } as unknown as Record<string, unknown>);
 
       const { data: rawUpdated, error: updateError } = await supabase
         .from('agent_delegation_accounts' as 'characters')
@@ -950,11 +961,11 @@ delegation.post(
 
 const DelegationUpdateSchema = z.object({
   status: z.enum(['pending', 'active', 'revoked']),
-  amount: z.string().optional(),
-  remaining: z.string().optional(),
-  tokenMint: z.string().optional(),
-  tokenAccount: z.string().optional(),
-  txSignature: z.string().optional(),
+  amount: z.string().regex(/^\d+$/, 'Must be a non-negative integer string').optional(),
+  remaining: z.string().regex(/^\d+$/, 'Must be a non-negative integer string').optional(),
+  tokenMint: z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/, 'Invalid base58 Solana address').optional(),
+  tokenAccount: z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/, 'Invalid base58 Solana address').optional(),
+  txSignature: z.string().min(1).max(200).optional(),
 });
 
 /**
@@ -1128,6 +1139,13 @@ delegation.post(
 
       if (!character.agent_pubkey) {
         return c.json({ error: 'Agent has no keypair', code: 'NO_AGENT_KEY' }, 400);
+      }
+
+      // Guard: transfer amount must not exceed delegation remaining.
+      if (character.delegation_remaining !== null && character.delegation_remaining !== undefined) {
+        if (BigInt(input.amount) > BigInt(character.delegation_remaining)) {
+          return c.json({ error: 'Transfer amount exceeds delegation remaining', code: 'EXCEEDS_LIMIT' }, 400);
+        }
       }
 
       const { executeAgentTransfer } = await import('@/lib/agent-wallet/transfer');
