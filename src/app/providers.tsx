@@ -9,6 +9,8 @@ import { useMemo } from 'react';
 import {
   ConnectionProvider,
   WalletProvider,
+  WalletContext,
+  useWallet,
 } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
@@ -18,6 +20,31 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Import wallet adapter CSS
 import '@solana/wallet-adapter-react-ui/styles.css';
+
+/**
+ * Deduplicates the wallet list by adapter name before the modal renders it.
+ * MetaMask (and occasionally other wallets) can register twice via both the
+ * legacy window.navigator.wallets path and the Wallet Standard event, producing
+ * two objects with the same name and causing React key warnings.
+ */
+function WalletDeduplicator({ children }: { children: React.ReactNode }) {
+  const ctx = useWallet();
+  const dedupedCtx = useMemo(() => {
+    const seen = new Set<string>();
+    const uniqueWallets = ctx.wallets.filter((w) => {
+      if (seen.has(w.adapter.name)) return false;
+      seen.add(w.adapter.name);
+      return true;
+    });
+    return { ...ctx, wallets: uniqueWallets };
+  }, [ctx]);
+
+  return (
+    <WalletContext.Provider value={dedupedCtx}>
+      {children}
+    </WalletContext.Provider>
+  );
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,7 +82,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <ConnectionProvider endpoint={endpoint}>
         <WalletProvider wallets={wallets} autoConnect>
-          <WalletModalProvider>{children}</WalletModalProvider>
+          <WalletDeduplicator>
+            <WalletModalProvider>{children}</WalletModalProvider>
+          </WalletDeduplicator>
         </WalletProvider>
       </ConnectionProvider>
     </QueryClientProvider>

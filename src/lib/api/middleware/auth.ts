@@ -22,7 +22,16 @@ import { createSupabaseServerClient } from '../supabase';
 export const authMiddleware = createMiddleware(async (c: Context, next) => {
   const authHeader = c.req.header('Authorization');
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  // SSE endpoints (EventSource) cannot set custom headers — accept token via
+  // query param as a fallback. Session validation still runs against this token.
+  let token: string | undefined;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.substring(7);
+  } else {
+    token = c.req.query('token');
+  }
+
+  if (!token) {
     return c.json(
       {
         error: 'Missing or invalid Authorization header',
@@ -31,8 +40,6 @@ export const authMiddleware = createMiddleware(async (c: Context, next) => {
       401
     );
   }
-
-  const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
   const jwtSecret = process.env.JWT_SECRET;
   if (!jwtSecret) {

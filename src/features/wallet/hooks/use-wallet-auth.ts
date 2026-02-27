@@ -20,7 +20,7 @@ const API_BASE = '/api/auth';
 
 export function useWalletAuth() {
   const { publicKey, signMessage, connected, disconnect } = useWallet();
-  const { token, user, isAuthenticated, isWhitelisted, setAuth, clearAuth } = useAuthStore();
+  const { token, user, isAuthenticated, isWhitelisted, isAdmin, setAuth, clearAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,15 +78,19 @@ export function useWalletAuth() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Authentication failed');
+        const detail = (errorData as Record<string, unknown>).detail;
+        const msg = errorData.error || 'Authentication failed';
+        throw new Error(detail ? `${msg}: ${detail}` : msg);
       }
 
       // Step 5: Parse and store session
       const rawData = await response.json();
       const session = SessionResponseSchema.parse(rawData);
-      const whitelisted = !!(rawData as Record<string, unknown>).isWhitelisted;
+      const raw = rawData as Record<string, unknown>;
+      const whitelisted = !!raw.isWhitelisted;
+      const admin = !!raw.isAdmin;
 
-      setAuth(session.token, session.user, whitelisted);
+      setAuth(session.token, session.user, whitelisted, admin);
       setError(null);
     } catch (err) {
       const errorMessage =
@@ -172,9 +176,11 @@ export function useWalletAuth() {
 
         const rawData = await response.json();
         const session = SessionResponseSchema.parse(rawData);
-        const whitelisted = !!(rawData as Record<string, unknown>).isWhitelisted;
+        const raw = rawData as Record<string, unknown>;
+        const whitelisted = !!raw.isWhitelisted;
+        const admin = !!raw.isAdmin;
 
-        setAuth(session.token, session.user, whitelisted);
+        setAuth(session.token, session.user, whitelisted, admin);
       } catch {
         // Session validation failed - clear auth
         clearAuth();
@@ -200,6 +206,7 @@ export function useWalletAuth() {
   return {
     isAuthenticated,
     isWhitelisted,
+    isAdmin,
     isLoading,
     user,
     token,

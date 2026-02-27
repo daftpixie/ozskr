@@ -98,10 +98,18 @@ auth.post('/verify', zValidator('json', SiwsVerifyRequestSchema), async (c) => {
       .single();
 
     if (upsertError || !user) {
+      logger.error('auth/verify: users upsert failed', {
+        walletAddress,
+        supabaseError: upsertError?.message,
+        supabaseCode: upsertError?.code,
+        supabaseDetails: upsertError?.details,
+        supabaseHint: upsertError?.hint,
+      });
       return c.json(
         {
           error: 'Failed to create or update user',
           code: 'DATABASE_ERROR',
+          detail: upsertError?.message ?? 'no user returned',
         },
         500
       );
@@ -139,6 +147,7 @@ auth.post('/verify', zValidator('json', SiwsVerifyRequestSchema), async (c) => {
     const token = await new SignJWT({
       wallet_address: walletAddress,
       is_whitelisted: isWhitelisted || isAdmin,
+      is_admin: isAdmin,
     })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
@@ -174,7 +183,7 @@ auth.post('/verify', zValidator('json', SiwsVerifyRequestSchema), async (c) => {
       },
     });
 
-    return c.json({ ...response, isWhitelisted: isWhitelisted || isAdmin }, 200);
+    return c.json({ ...response, isWhitelisted: isWhitelisted || isAdmin, isAdmin }, 200);
   } catch (error) {
     // Log full error server-side, return generic message to client
     logger.error('Authentication failed', {
@@ -296,17 +305,19 @@ auth.get('/session', authMiddleware, async (c: Context) => {
       );
     }
 
-    // Decode JWT to extract whitelist claim
+    // Decode JWT to extract whitelist + admin claims
     let isWhitelisted = false;
+    let isAdmin = false;
     try {
       const jwtSecret = process.env.JWT_SECRET;
       if (jwtSecret) {
         const secret = new TextEncoder().encode(jwtSecret);
         const { payload } = await jwtVerify(jwtToken, secret);
         isWhitelisted = !!payload.is_whitelisted;
+        isAdmin = !!payload.is_admin;
       }
     } catch {
-      // JWT decode failed — default to not whitelisted
+      // JWT decode failed — default to not whitelisted / not admin
     }
 
     return c.json(
@@ -319,6 +330,7 @@ auth.get('/session', authMiddleware, async (c: Context) => {
           avatarUrl: user.avatar_url ?? null,
         },
         isWhitelisted,
+        isAdmin,
       },
       200
     );

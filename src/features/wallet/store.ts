@@ -14,6 +14,7 @@ export interface AuthState {
   } | null;
   isAuthenticated: boolean;
   isWhitelisted: boolean;
+  isAdmin: boolean;
   setAuth: (
     token: string,
     user: {
@@ -21,7 +22,8 @@ export interface AuthState {
       displayName: string | null;
       avatarUrl: string | null;
     },
-    isWhitelisted?: boolean
+    isWhitelisted?: boolean,
+    isAdmin?: boolean
   ) => void;
   setIsWhitelisted: (isWhitelisted: boolean) => void;
   clearAuth: () => void;
@@ -39,8 +41,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
   isWhitelisted: false,
+  isAdmin: false,
 
-  setAuth: (token, user, isWhitelisted = false) => {
+  setAuth: (token, user, isWhitelisted = false, isAdmin = false) => {
     // Persist token to localStorage + set JWT as session cookie for middleware
     if (typeof window !== 'undefined') {
       localStorage.setItem(AUTH_STORAGE_KEY, token);
@@ -52,6 +55,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       user,
       isAuthenticated: true,
       isWhitelisted,
+      isAdmin,
     });
   },
 
@@ -71,6 +75,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       user: null,
       isAuthenticated: false,
       isWhitelisted: false,
+      isAdmin: false,
     });
   },
 }));
