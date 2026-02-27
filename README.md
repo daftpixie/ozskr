@@ -11,7 +11,7 @@
 [![Solana](https://img.shields.io/badge/Solana-@solana/kit-9945FF?logo=solana)](https://solana.com)
 [![Built with Claude Code](https://img.shields.io/badge/Built_with-Claude_Code-D4A574?logo=anthropic)](https://claude.com/claude-code)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x_strict-3178C6?logo=typescript)](https://typescriptlang.org)
-[![Tests](https://img.shields.io/badge/Tests-659_passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/Tests-670_passing-brightgreen)]()
 
 </div>
 
@@ -44,6 +44,8 @@ The platform is open source and built entirely with Claude Code's multi-agent or
 **Alpha Access System** — Token-gated access via `$HOPE` balance tiers, whitelist management, batch conversion pipeline, and feedback micro-surveys.
 
 **Admin Dashboard** — Platform metrics, error tracking, cost tracking, whitelist CRUD, alpha issue tracker, and metrics report export.
+
+**Tapestry Social Graph** — Decentralized social graph integration via Tapestry. Each agent auto-provisions a Tapestry profile on creation, follows topically aligned accounts, and mirrors published content. The `/social` dashboard displays the agent's social graph, followers/following, and a live content feed synced from Tapestry.
 
 **Blog** — Static-generated `/blog` with SEO, OpenGraph, and Twitter cards. Two launch posts included.
 
@@ -80,10 +82,12 @@ graph TB
     subgraph "Social Providers"
         Ayrshare[Ayrshare]
         Twitter[Twitter Direct API]
+        Tapestry[Tapestry Social Graph]
     end
 
     Social --> Ayrshare
     Social --> Twitter
+    Social --> Tapestry
 
     subgraph "Infrastructure"
         Trigger[Trigger.dev Jobs]
@@ -120,7 +124,7 @@ This repository is a pnpm monorepo. The open-source packages live in `packages/`
 | API | Hono 4.x, Zod 4.x validation |
 | State | React Query 5 (server), Zustand 5 (client) |
 | Auth | Sign-In with Solana (SIWS) + JWT |
-| Social | SocialPublisher (Ayrshare + Twitter direct API) |
+| Social | SocialPublisher (Ayrshare + Twitter direct API), Tapestry social graph |
 | Jobs | Trigger.dev 4.x |
 | Observability | Langfuse 3.x (AI tracing) |
 | Rate Limiting | Upstash Redis |
@@ -167,7 +171,7 @@ pnpm test:coverage # Coverage report
 src/
 ├── app/                    # Next.js App Router
 │   ├── (dashboard)/        # Authenticated routes: /dashboard, /agents, /analytics,
-│   │                       #   /admin, /settings, /onboarding
+│   │                       #   /admin, /settings, /onboarding, /social
 │   ├── (public)/           # Public routes: / (landing), /blog, /legal, /livepaper
 │   └── api/[[...route]]/   # Hono catch-all API handler
 ├── components/
@@ -194,6 +198,7 @@ src/
 │   ├── monitoring/         # Cost tracker, error tracker
 │   ├── secrets/            # Infisical integration
 │   ├── social/             # SocialPublisher (Ayrshare + Twitter), AI disclosure
+│   ├── tapestry/           # Tapestry social graph (client, schemas, service, types)
 │   ├── x402/               # x402 payment protocol integration
 │   └── utils/              # Logger, formatters, errors, feature flags
 ├── hooks/                  # React hooks (useCharacters, useGenerations, useDelegation,
@@ -236,7 +241,7 @@ This project was built exclusively with [Claude Code](https://claude.com/claude-
 - **`test-writer`** ensures coverage across all domains
 - **`glinda-cmo`** and **`toto-funding`** handle go-to-market and funding strategy
 
-659 tests. 63 test files. Zero `any` types. Every line AI-generated, human-reviewed.
+670 tests. 64 test files. Zero `any` types. Every line AI-generated, human-reviewed.
 
 ## Contributing
 
