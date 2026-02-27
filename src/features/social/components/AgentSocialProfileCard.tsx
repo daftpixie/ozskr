@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTapestryProfile } from '../hooks/useTapestryProfile';
 import { useTapestryStats } from '../hooks/useTapestryStats';
+import { useAuthStore } from '@/features/wallet/store';
 import { cn } from '@/lib/utils';
 import { LinkIcon, Loader2, UserRound } from 'lucide-react';
 
@@ -64,6 +65,7 @@ export function AgentSocialProfileCard({
   walletAddress,
 }: AgentSocialProfileCardProps) {
   const queryClient = useQueryClient();
+  const token = useAuthStore((state) => state.token);
   const [provisioning, setProvisioning] = useState(false);
 
   const {
@@ -82,7 +84,10 @@ export function AgentSocialProfileCard({
     try {
       const res = await fetch('/api/tapestry/profiles', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ characterId }),
       });
       if (!res.ok) {

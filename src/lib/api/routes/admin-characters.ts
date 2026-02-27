@@ -42,12 +42,66 @@ adminCharacters.use('*', authMiddleware);
 adminCharacters.use('*', requireAdmin);
 
 /**
+ * GET /admin/characters
+ *
+ * Lists all characters with their current agent wallet state.
+ * Used by the admin dashboard to show wallet provisioning status.
+ *
+ * Response body:
+ *   { characters: Array<{ id, name, agent_pubkey, wallet: { walletId, publicKey } | null }> }
+ */
+adminCharacters.get('/', async (c: Context) => {
+  const supabase = getServiceClient();
+
+  const { data: characters, error: charError } = await supabase
+    .from('characters')
+    .select('id, name, agent_pubkey')
+    .order('created_at', { ascending: false });
+
+  if (charError) {
+    logger.error('admin-characters list: character query failed', { error: charError.message });
+    return c.json({ error: 'Database query failed', code: 'DATABASE_ERROR' }, 500);
+  }
+
+  if (!characters || characters.length === 0) {
+    return c.json({ characters: [] });
+  }
+
+  const characterIds = characters.map((ch: { id: string }) => ch.id);
+
+  const { data: mappings } = await supabase
+    .from('agent_turnkey_mapping')
+    .select('character_id, turnkey_wallet_id, turnkey_public_key')
+    .in('character_id', characterIds);
+
+  const mappingByCharacterId = new Map(
+    (mappings ?? []).map((m: { character_id: string; turnkey_wallet_id: string; turnkey_public_key: string }) => [
+      m.character_id,
+      { walletId: m.turnkey_wallet_id, publicKey: m.turnkey_public_key },
+    ]),
+  );
+
+  const result = characters.map((ch: { id: string; name: string; agent_pubkey: string | null }) => ({
+    id: ch.id,
+    name: ch.name,
+    agent_pubkey: ch.agent_pubkey,
+    wallet: mappingByCharacterId.get(ch.id) ?? null,
+  }));
+
+  return c.json({ characters: result });
+});
+
+/**
  * POST /admin/characters/:id/provision-wallet
  *
  * Provisions a Turnkey TEE wallet (or local encrypted keypair in dev) for an
  * existing character that was created without one. Idempotent — if a wallet
  * already exists in agent_turnkey_mapping the endpoint returns early with
  * { alreadyExisted: true } and does NOT call Turnkey a second time.
+ *
+ * Query params:
+ *   ?force=true  — Delete any existing mapping and provision a fresh wallet.
+ *                  Use when the stored key belongs to a different character.
  *
  * Response body:
  *   { walletId: string | null, publicKey: string, alreadyExisted: boolean }
@@ -60,6 +114,7 @@ adminCharacters.use('*', requireAdmin);
  */
 adminCharacters.post('/:id/provision-wallet', async (c: Context) => {
   const characterId = c.req.param('id');
+  const force = c.req.query('force') === 'true';
 
   // Validate UUID format before touching any external service
   const uuidPattern =
@@ -107,7 +162,7 @@ adminCharacters.post('/:id/provision-wallet', async (c: Context) => {
     return c.json({ error: 'Database query failed', code: 'DATABASE_ERROR' }, 500);
   }
 
-  if (existingMapping) {
+  if (existingMapping && !force) {
     logger.info('provision-wallet: wallet already exists, skipping', {
       characterId,
       walletId: existingMapping.turnkey_wallet_id,
@@ -119,10 +174,31 @@ adminCharacters.post('/:id/provision-wallet', async (c: Context) => {
     });
   }
 
+  // ?force=true — delete the stale mapping so createAgentKeypair can provision a fresh wallet.
+  if (existingMapping && force) {
+    logger.warn('provision-wallet: force=true — deleting existing mapping and re-provisioning', {
+      characterId,
+      oldWalletId: existingMapping.turnkey_wallet_id,
+      oldPublicKey: existingMapping.turnkey_public_key,
+    });
+    const { error: deleteError } = await supabase
+      .from('agent_turnkey_mapping')
+      .delete()
+      .eq('character_id', characterId);
+
+    if (deleteError) {
+      logger.error('provision-wallet: failed to delete existing mapping', {
+        characterId,
+        error: deleteError.message,
+      });
+      return c.json({ error: 'Failed to clear existing wallet mapping', code: 'DATABASE_ERROR' }, 500);
+    }
+  }
+
   // For local keypair mode (no Turnkey) we also check the characters.agent_pubkey
   // column — if it is already populated we consider the wallet already provisioned
-  // and return early without generating a second keypair file.
-  if (!process.env.TURNKEY_ORGANIZATION_ID && character.agent_pubkey) {
+  // and return early without generating a second keypair file (unless force=true).
+  if (!process.env.TURNKEY_ORGANIZATION_ID && character.agent_pubkey && !force) {
     logger.info('provision-wallet: local keypair already exists, skipping', { characterId });
     return c.json({
       walletId: null,

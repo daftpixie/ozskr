@@ -259,7 +259,24 @@ export function useApproveDelegation() {
       });
 
       if (!updateResponse.ok) {
-        throw new Error('Delegation approved on-chain but failed to update backend');
+        const errBody: unknown = await updateResponse.json().catch(() => null);
+        const errMessage =
+          errBody !== null &&
+          typeof errBody === 'object' &&
+          'error' in errBody &&
+          typeof (errBody as { error: unknown }).error === 'string'
+            ? (errBody as { error: string }).error
+            : `HTTP ${updateResponse.status}`;
+        const errCode =
+          errBody !== null &&
+          typeof errBody === 'object' &&
+          'code' in errBody &&
+          typeof (errBody as { code: unknown }).code === 'string'
+            ? ` (${(errBody as { code: string }).code})`
+            : '';
+        throw new Error(
+          `Delegation approved on-chain but failed to update backend: ${errMessage}${errCode}`,
+        );
       }
 
       return { signature, amount: amount.toString() };

@@ -26,6 +26,8 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  KeyRound,
+  RotateCcw,
 } from 'lucide-react';
 
 interface PlatformSummary {
@@ -50,6 +52,13 @@ interface ErrorAlert {
   message: string;
 }
 
+interface CharacterWallet {
+  id: string;
+  name: string;
+  agent_pubkey: string | null;
+  wallet: { walletId: string; publicKey: string } | null;
+}
+
 export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [summary, setSummary] = useState<PlatformSummary | null>(null);
@@ -70,6 +79,11 @@ export default function AdminPage() {
   const [batchNotes, setBatchNotes] = useState('');
   const [batchResult, setBatchResult] = useState<{ added: number; skipped: number } | null>(null);
   const [batchLoading, setBatchLoading] = useState(false);
+
+  // Character wallets state
+  const [characters, setCharacters] = useState<CharacterWallet[]>([]);
+  const [reprovisioningId, setReprovisioningId] = useState<string | null>(null);
+  const [reprovisionResult, setReprovisionResult] = useState<Record<string, string>>({});
 
   // Copy-address state
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -95,15 +109,17 @@ export default function AdminPage() {
 
       setIsAdmin(true);
 
-      const [summaryData, whitelistRes, errorsRes] = await Promise.all([
+      const [summaryData, whitelistRes, errorsRes, charactersRes] = await Promise.all([
         summaryRes.json() as Promise<PlatformSummary>,
         fetch('/api/admin-whitelist', { headers }).then(r => r.ok ? r.json() : { entries: [] }),
         fetch('/api/admin/metrics/errors', { headers }).then(r => r.ok ? r.json() : { alerts: [] }),
+        fetch('/api/admin/characters', { headers }).then(r => r.ok ? r.json() : { characters: [] }),
       ]);
 
       setSummary(summaryData);
       setWhitelist((whitelistRes as { entries: WhitelistEntry[] }).entries ?? []);
       setErrorAlerts((errorsRes as { alerts: ErrorAlert[] }).alerts ?? []);
+      setCharacters((charactersRes as { characters: CharacterWallet[] }).characters ?? []);
     } catch {
       setIsAdmin(false);
     } finally {
@@ -194,6 +210,40 @@ export default function AdminPage() {
     void navigator.clipboard.writeText(address);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 1500);
+  };
+
+  const handleReprovisionWallet = async (characterId: string, force = false) => {
+    setReprovisioningId(characterId);
+    setReprovisionResult((prev) => ({ ...prev, [characterId]: '' }));
+    try {
+      const token = localStorage.getItem('ozskr_auth_token');
+      const url = `/api/admin/characters/${characterId}/provision-wallet${force ? '?force=true' : ''}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = (await res.json()) as { publicKey?: string; alreadyExisted?: boolean; error?: string; code?: string };
+      if (res.ok) {
+        const label = data.alreadyExisted ? 'Already existed' : 'Provisioned';
+        setReprovisionResult((prev) => ({
+          ...prev,
+          [characterId]: `${label}: ${data.publicKey?.slice(0, 8)}…${data.publicKey?.slice(-4)}`,
+        }));
+        await fetchData();
+      } else {
+        setReprovisionResult((prev) => ({
+          ...prev,
+          [characterId]: `Error: ${data.error ?? 'Unknown'} (${data.code ?? res.status})`,
+        }));
+      }
+    } catch (err) {
+      setReprovisionResult((prev) => ({
+        ...prev,
+        [characterId]: `Error: ${err instanceof Error ? err.message : String(err)}`,
+      }));
+    } finally {
+      setReprovisioningId(null);
+    }
   };
 
   // Non-admin: show 404
@@ -293,6 +343,82 @@ export default function AdminPage() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Character Wallets */}
+      {characters.length > 0 && (
+        <Card className="border-white/5 bg-white/[0.02]">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <KeyRound className="h-4 w-4 text-solana-purple" />
+              Character Agent Wallets ({characters.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {characters.map((ch) => {
+                const hasMapping = ch.wallet !== null;
+                const pubkey = ch.wallet?.publicKey ?? ch.agent_pubkey;
+                const result = reprovisionResult[ch.id];
+                const isReprovisioning = reprovisioningId === ch.id;
+                return (
+                  <div
+                    key={ch.id}
+                    className="flex flex-col gap-1 rounded-md border border-white/5 bg-white/[0.01] px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-zinc-200">{ch.name}</span>
+                        <Badge
+                          variant="outline"
+                          className={hasMapping
+                            ? 'border-solana-green/30 text-solana-green text-[10px]'
+                            : 'border-red-500/30 text-red-400 text-[10px]'}
+                        >
+                          {hasMapping ? 'TEE' : pubkey ? 'local' : 'none'}
+                        </Badge>
+                      </div>
+                      {pubkey && (
+                        <span className="font-mono text-[11px] text-zinc-500">
+                          {pubkey.slice(0, 8)}…{pubkey.slice(-4)}
+                        </span>
+                      )}
+                      {result && (
+                        <span className={`text-[11px] ${result.startsWith('Error') ? 'text-red-400' : 'text-solana-green'}`}>
+                          {result}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {!hasMapping && (
+                        <Button
+                          size="sm"
+                          disabled={isReprovisioning}
+                          onClick={() => handleReprovisionWallet(ch.id)}
+                          className="h-7 bg-solana-purple text-white hover:bg-solana-purple/90 text-xs"
+                        >
+                          <KeyRound className="mr-1 h-3 w-3" />
+                          {isReprovisioning ? 'Provisioning…' : 'Provision'}
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={isReprovisioning}
+                        onClick={() => handleReprovisionWallet(ch.id, true)}
+                        className="h-7 border-white/10 text-zinc-400 hover:text-white text-xs"
+                        title="Delete existing mapping and provision a fresh wallet"
+                      >
+                        <RotateCcw className="mr-1 h-3 w-3" />
+                        {isReprovisioning ? '…' : 'Re-provision'}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Whitelist Management */}
