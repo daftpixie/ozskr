@@ -6,13 +6,15 @@
  * follower/following/post counts, and wallet address.
  */
 
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTapestryProfile } from '../hooks/useTapestryProfile';
 import { useTapestryStats } from '../hooks/useTapestryStats';
 import { cn } from '@/lib/utils';
-import { LinkIcon, UserRound } from 'lucide-react';
+import { LinkIcon, Loader2, UserRound } from 'lucide-react';
 
 interface AgentSocialProfileCardProps {
   characterId: string;
@@ -61,6 +63,9 @@ export function AgentSocialProfileCard({
   characterId,
   walletAddress,
 }: AgentSocialProfileCardProps) {
+  const queryClient = useQueryClient();
+  const [provisioning, setProvisioning] = useState(false);
+
   const {
     data: profile,
     isLoading: profileLoading,
@@ -71,6 +76,40 @@ export function AgentSocialProfileCard({
     data: stats,
     isLoading: statsLoading,
   } = useTapestryStats(characterId);
+
+  const handleProvision = async () => {
+    setProvisioning(true);
+    try {
+      const res = await fetch('/api/tapestry/profiles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ characterId }),
+      });
+      if (!res.ok) {
+        const body: unknown = await res.json().catch(() => null);
+        const message =
+          body !== null &&
+          typeof body === 'object' &&
+          'error' in body &&
+          typeof (body as { error: unknown }).error === 'string'
+            ? (body as { error: string }).error
+            : 'Failed to provision Tapestry profile';
+        throw new Error(message);
+      }
+      await queryClient.invalidateQueries({
+        queryKey: ['tapestry', 'profile', characterId],
+      });
+    } catch (err) {
+      // Structured error surfaced to the user via console in development;
+      // a toast integration can replace this when the toast provider is available.
+      if (process.env.NODE_ENV === 'development') {
+        // eslint-disable-next-line no-console
+        console.error('[AgentSocialProfileCard] provision error:', err);
+      }
+    } finally {
+      setProvisioning(false);
+    }
+  };
 
   // Loading state
   if (profileLoading) {
@@ -128,9 +167,18 @@ export function AgentSocialProfileCard({
           </div>
           <Button
             size="sm"
+            disabled={provisioning}
+            onClick={handleProvision}
             className="bg-gradient-to-r from-[#9945FF] to-[#14F195] text-white hover:opacity-90"
           >
-            Set up Tapestry Profile
+            {provisioning ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Setting up...
+              </>
+            ) : (
+              'Set up Tapestry Profile'
+            )}
           </Button>
         </CardContent>
       </Card>

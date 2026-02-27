@@ -25,6 +25,7 @@ import { adminMetrics } from './routes/admin-metrics';
 import { adminWhitelist } from './routes/admin-whitelist';
 import { adminIssues } from './routes/admin-issues';
 import { adminReport } from './routes/admin-report';
+import { adminCharacters } from './routes/admin-characters';
 import { delegation } from './routes/delegation';
 import { tapestry } from './routes/tapestry';
 
@@ -107,6 +108,7 @@ app.route('/gamification', gamification);
 app.route('/waitlist', waitlist);
 app.route('/feedback', feedback);
 app.route('/admin', adminMetrics);
+app.route('/admin/characters', adminCharacters);
 app.route('/admin-whitelist', adminWhitelist);
 app.route('/admin-issues', adminIssues);
 app.route('/admin-report', adminReport);

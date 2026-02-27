@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Content Generation Modal
  * Handles content generation with SSE streaming progress
@@ -31,6 +33,7 @@ import { useGenerateContent, useGenerationStream } from '@/hooks/use-generations
 import { GenerationType } from '@/types/database';
 import { cn } from '@/lib/utils';
 import type { GenerationStage } from '@/hooks/use-generations';
+import { PublishModal } from './publish-modal';
 
 interface GenerateModalProps {
   open: boolean;
@@ -67,6 +70,7 @@ export function GenerateModal({
   const [contentType, setContentType] = useState<GenerationType>(GenerationType.TEXT);
   const [prompt, setPrompt] = useState('');
   const [generationId, setGenerationId] = useState<string | null>(null);
+  const [publishOpen, setPublishOpen] = useState(false);
 
   const { mutate: generateContent, isPending: isSubmitting } = useGenerateContent(characterId);
   const { progress } = useGenerationStream(generationId);
@@ -115,6 +119,7 @@ export function GenerateModal({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -335,7 +340,11 @@ export function GenerateModal({
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Create More
               </Button>
-              <Button variant="outline" size="icon">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setPublishOpen(true)}
+              >
                 <Share2 className="h-4 w-4" />
               </Button>
             </div>
@@ -343,5 +352,16 @@ export function GenerateModal({
         )}
       </DialogContent>
     </Dialog>
+
+    {generationId && (
+      <PublishModal
+        open={publishOpen}
+        onOpenChange={setPublishOpen}
+        contentGenerationId={generationId}
+        outputText={progress?.result?.outputText ?? null}
+        outputUrl={progress?.result?.outputUrl ?? null}
+      />
+    )}
+    </>
   );
 }

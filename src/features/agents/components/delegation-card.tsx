@@ -193,6 +193,7 @@ export function DelegationCard({ characterId, characterName }: DelegationCardPro
       await revokeMutation.mutateAsync({
         characterId,
         tokenMint: delegation.delegationTokenMint,
+        delegationAccountId: delegation.activeDelegationAccountId ?? undefined,
       });
       setRevokeDialogOpen(false);
     } catch {
@@ -240,24 +241,44 @@ export function DelegationCard({ characterId, characterName }: DelegationCardPro
               <span className="text-xs text-muted-foreground">Agent Wallet</span>
               <CopyAddress address={delegation.agentPubkey!} />
             </div>
-            {isActive && delegation.delegationAmount && (
-              <>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Approved</span>
-                  <span className="text-sm font-medium">
-                    {formatTokenAmount(BigInt(delegation.delegationAmount), USDC_DECIMALS)} USDC
-                  </span>
-                </div>
-                {delegation.delegationRemaining && (
+            {isActive && (() => {
+              // Prefer the first active delegation account; fall back to legacy fields
+              const activeAccount = delegation.delegationAccounts.find(
+                (a) => a.delegationStatus === 'active',
+              );
+              const approvedAmount = activeAccount
+                ? activeAccount.approvedAmount
+                : delegation.delegationAmount;
+              const remainingAmount = activeAccount
+                ? activeAccount.remainingAmount
+                : delegation.delegationRemaining;
+              const hasDrift = activeAccount?.reconciliationStatus === 'drift_detected';
+
+              return approvedAmount ? (
+                <>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">Remaining</span>
+                    <span className="text-xs text-muted-foreground">Approved</span>
                     <span className="text-sm font-medium">
-                      {formatTokenAmount(BigInt(delegation.delegationRemaining), USDC_DECIMALS)} USDC
+                      {formatTokenAmount(BigInt(approvedAmount), USDC_DECIMALS)} USDC
                     </span>
                   </div>
-                )}
-              </>
-            )}
+                  {remainingAmount && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">Remaining</span>
+                      <span className="text-sm font-medium">
+                        {formatTokenAmount(BigInt(remainingAmount), USDC_DECIMALS)} USDC
+                      </span>
+                    </div>
+                  )}
+                  {hasDrift && (
+                    <div className="flex items-center gap-1 pt-0.5">
+                      <AlertTriangle className="h-3 w-3 text-yellow-500" />
+                      <span className="text-xs text-yellow-500">On-chain drift detected</span>
+                    </div>
+                  )}
+                </>
+              ) : null;
+            })()}
             {delegation.delegationTxSignature && (
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">Tx</span>

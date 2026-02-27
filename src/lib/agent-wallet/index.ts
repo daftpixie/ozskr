@@ -46,11 +46,29 @@ function getKeypairPath(characterId: string): string {
  * Generate and store an agent keypair for a character.
  * Uses Turnkey TEE when TURNKEY_ORGANIZATION_ID is set, otherwise local encrypted JSON.
  * Returns the agent's public key (address).
+ *
+ * Throws explicitly if Turnkey is configured but provisioning fails — no silent fallback.
+ * When falling back to local JSON (Turnkey not configured), logs a warning so operators
+ * can distinguish the active backend from logs.
  */
 export async function createAgentKeypair(characterId: string): Promise<string> {
   if (process.env.TURNKEY_ORGANIZATION_ID) {
-    return createAgentKeypairTurnkey(characterId);
+    try {
+      return await createAgentKeypairTurnkey(characterId);
+    } catch (err) {
+      // Re-throw with explicit context so callers know it was the Turnkey path that failed,
+      // not a local I/O or passphrase error.
+      const message = err instanceof Error ? err.message : String(err);
+      throw new Error(`Turnkey wallet provisioning failed for character ${characterId}: ${message}`);
+    }
   }
+
+  // Turnkey not configured — using local encrypted JSON keypair.
+  // Log at warn level so operators can tell which backend is active.
+  logger.warn('TURNKEY_ORGANIZATION_ID not set — falling back to local encrypted JSON keypair', {
+    characterId,
+    note: 'Set TURNKEY_ORGANIZATION_ID to use Turnkey TEE in production',
+  });
   return createAgentKeypairLocal(characterId);
 }
 
