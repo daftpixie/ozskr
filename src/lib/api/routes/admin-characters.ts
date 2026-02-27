@@ -225,16 +225,28 @@ adminCharacters.post('/:id/provision-wallet', async (c: Context) => {
     );
   }
 
-  // Update characters.agent_pubkey so the live record reflects the new wallet
+  // Update characters.agent_pubkey so the live record reflects the new wallet.
+  // When force=true also reset the 6 deprecated delegation columns so the character
+  // record is clean for a fresh delegation setup.
+  const characterUpdate: Record<string, string | null> = { agent_pubkey: publicKey };
+  if (force) {
+    characterUpdate.delegation_status = 'none'; // NOT NULL — must use string default
+    characterUpdate.delegation_amount = null;
+    characterUpdate.delegation_remaining = null;
+    characterUpdate.delegation_token_mint = null;
+    characterUpdate.delegation_token_account = null;
+    characterUpdate.delegation_tx_signature = null;
+  }
+
   const { error: updateError } = await supabase
     .from('characters')
-    .update({ agent_pubkey: publicKey })
+    .update(characterUpdate)
     .eq('id', characterId);
 
   if (updateError) {
     // The wallet was provisioned but we failed to write agent_pubkey.
     // Log as error with full context so an operator can reconcile manually.
-    logger.error('provision-wallet: failed to update agent_pubkey — wallet was created', {
+    logger.error('provision-wallet: failed to update character record — wallet was created', {
       characterId,
       publicKey,
       error: updateError.message,
@@ -247,6 +259,36 @@ adminCharacters.post('/:id/provision-wallet', async (c: Context) => {
       },
       500,
     );
+  }
+
+  // When force=true, mark any stale agent_delegation_accounts as revoked.
+  // This unblocks the partial-unique index (character_id, token_mint) for active rows
+  // so a fresh delegation can be created for the same mint.
+  let revokedDelegationCount = 0;
+  if (force) {
+    const { data: revokedRows, error: revokeError } = await supabase
+      .from('agent_delegation_accounts')
+      .update({
+        delegation_status: 'revoked',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('character_id', characterId)
+      .not('delegation_status', 'in', '("revoked","depleted","closed")')
+      .select('id');
+
+    if (revokeError) {
+      // Non-fatal — log and continue. The wallet was provisioned successfully.
+      logger.warn('provision-wallet: failed to revoke stale delegation accounts', {
+        characterId,
+        error: revokeError.message,
+      });
+    } else {
+      revokedDelegationCount = revokedRows?.length ?? 0;
+      logger.info('provision-wallet: revoked stale delegation accounts', {
+        characterId,
+        count: revokedDelegationCount,
+      });
+    }
   }
 
   // Retrieve the Turnkey wallet ID from the mapping table so we can return it
@@ -266,6 +308,7 @@ adminCharacters.post('/:id/provision-wallet', async (c: Context) => {
     characterId,
     publicKey,
     walletId,
+    revokedDelegationCount,
     backend: process.env.TURNKEY_ORGANIZATION_ID ? 'turnkey' : 'local',
   });
 
@@ -274,6 +317,7 @@ adminCharacters.post('/:id/provision-wallet', async (c: Context) => {
       walletId,
       publicKey,
       alreadyExisted: false,
+      revokedDelegationCount,
     },
     201,
   );

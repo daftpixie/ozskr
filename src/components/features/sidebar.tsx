@@ -20,9 +20,11 @@ import {
   Trophy,
   Crown,
   Network,
+  ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { useWalletAuth } from '@/features/wallet/hooks/use-wallet-auth';
 
 interface NavItem {
   label: string;
@@ -50,6 +52,7 @@ const settingsItems: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { isAdmin } = useWalletAuth();
 
   return (
     <aside className="flex h-full w-64 flex-col border-r border-border bg-card">
@@ -110,6 +113,25 @@ export function Sidebar() {
             </Link>
           );
         })}
+
+        {isAdmin && (
+          <>
+            <Separator className="my-4" />
+            <Link
+              href="/admin"
+              className={cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                'hover:bg-accent hover:text-accent-foreground',
+                pathname === '/admin'
+                  ? 'border-l-2 border-brick-gold bg-brick-gold/10 text-brick-gold'
+                  : 'text-brick-gold/70'
+              )}
+            >
+              <ShieldCheck className="h-5 w-5" />
+              Admin
+            </Link>
+          </>
+        )}
       </nav>
 
       {/* Footer */}

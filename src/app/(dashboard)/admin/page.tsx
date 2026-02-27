@@ -61,6 +61,7 @@ interface CharacterWallet {
 
 export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [adminDeniedReason, setAdminDeniedReason] = useState<string | null>(null);
   const [summary, setSummary] = useState<PlatformSummary | null>(null);
   const [whitelist, setWhitelist] = useState<WhitelistEntry[]>([]);
   const [errorAlerts, setErrorAlerts] = useState<ErrorAlert[]>([]);
@@ -93,9 +94,20 @@ export default function AdminPage() {
     try {
       const token = localStorage.getItem('ozskr_auth_token');
       if (!token) {
+        setAdminDeniedReason('No auth token in localStorage — connect your wallet first.');
         setIsAdmin(false);
         return;
       }
+
+      // Decode the JWT payload (base64url, no verification needed client-side)
+      let walletFromToken: string | null = null;
+      try {
+        const payloadB64 = token.split('.')[1];
+        if (payloadB64) {
+          const decoded = JSON.parse(atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'))) as Record<string, unknown>;
+          walletFromToken = typeof decoded.wallet_address === 'string' ? decoded.wallet_address : null;
+        }
+      } catch { /* ignore decode errors */ }
 
       const headers = { Authorization: `Bearer ${token}` };
 
@@ -103,6 +115,11 @@ export default function AdminPage() {
       const summaryRes = await fetch('/api/admin/metrics/summary', { headers });
 
       if (summaryRes.status === 403 || summaryRes.status === 401) {
+        setAdminDeniedReason(
+          walletFromToken
+            ? `Wallet ${walletFromToken.slice(0, 8)}…${walletFromToken.slice(-4)} is not in ADMIN_WALLETS.`
+            : `HTTP ${summaryRes.status} — token may be expired or wallet not in ADMIN_WALLETS.`,
+        );
         setIsAdmin(false);
         return;
       }
@@ -120,7 +137,8 @@ export default function AdminPage() {
       setWhitelist((whitelistRes as { entries: WhitelistEntry[] }).entries ?? []);
       setErrorAlerts((errorsRes as { alerts: ErrorAlert[] }).alerts ?? []);
       setCharacters((charactersRes as { characters: CharacterWallet[] }).characters ?? []);
-    } catch {
+    } catch (err) {
+      setAdminDeniedReason(`Unexpected error: ${err instanceof Error ? err.message : String(err)}`);
       setIsAdmin(false);
     } finally {
       setLoading(false);
@@ -254,6 +272,11 @@ export default function AdminPage() {
         <p className="mt-2 text-sm text-muted-foreground">
           The page you&apos;re looking for doesn&apos;t exist.
         </p>
+        {process.env.NODE_ENV === 'development' && adminDeniedReason && (
+          <p className="mt-4 rounded-md border border-yellow-500/20 bg-yellow-500/5 px-4 py-2 font-mono text-xs text-yellow-400">
+            [dev] {adminDeniedReason}
+          </p>
+        )}
       </div>
     );
   }
