@@ -93,16 +93,16 @@ function mapGenerationToResponse(gen: ContentGeneration) {
     inputPrompt: gen.input_prompt,
     enhancedPrompt: gen.enhanced_prompt,
     modelUsed: gen.model_used,
-    modelParams: gen.model_params,
+    modelParams: gen.model_params ?? {},
     outputUrl: gen.output_url,
     outputText: gen.output_text,
     qualityScore: gen.quality_score,
     moderationStatus: gen.moderation_status,
     moderationDetails: gen.moderation_details,
-    tokenUsage: gen.token_usage,
+    tokenUsage: gen.token_usage ?? {},
     costUsd: gen.cost_usd,
     latencyMs: gen.latency_ms,
-    cacheHit: gen.cache_hit,
+    cacheHit: gen.cache_hit ?? false,
     createdAt: gen.created_at,
   };
 }
@@ -524,7 +524,7 @@ ai.get(
 
       const totalPages = Math.ceil((count || 0) / limit);
 
-      const response = paginatedResponse(ContentGenerationResponseSchema).parse({
+      const parseResult = paginatedResponse(ContentGenerationResponseSchema).safeParse({
         data: generations?.map(mapGenerationToResponse) || [],
         pagination: {
           page,
@@ -534,8 +534,25 @@ ai.get(
         },
       });
 
-      return c.json(response, 200);
-    } catch {
+      if (!parseResult.success) {
+        const { logger } = await import('@/lib/utils/logger');
+        logger.error('Generations parse failure', {
+          characterId,
+          error: parseResult.error.issues,
+        });
+        return c.json(
+          { error: 'Failed to parse generation data', code: 'INTERNAL_ERROR' },
+          500
+        );
+      }
+
+      return c.json(parseResult.data, 200);
+    } catch (err) {
+      const { logger } = await import('@/lib/utils/logger');
+      logger.error('GET /characters/:id/generations error', {
+        characterId,
+        error: err instanceof Error ? err.message : String(err),
+      });
       return c.json(
         { error: 'Failed to fetch generations', code: 'INTERNAL_ERROR' },
         500
