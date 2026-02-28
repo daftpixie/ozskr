@@ -100,7 +100,7 @@ function mapGenerationToResponse(gen: ContentGeneration) {
     moderationStatus: gen.moderation_status,
     moderationDetails: gen.moderation_details,
     tokenUsage: gen.token_usage ?? {},
-    costUsd: gen.cost_usd,
+    costUsd: gen.cost_usd !== null ? String(gen.cost_usd) : null,
     latencyMs: gen.latency_ms,
     cacheHit: gen.cache_hit ?? false,
     createdAt: gen.created_at,
