@@ -12,6 +12,7 @@ import {
   ContentGenerationResponse,
   ContentGenerationResponseSchema,
   GenerationAcceptedResponseSchema,
+  paginatedResponse,
 } from '@/types/schemas';
 
 const API_BASE = '/api/ai';
@@ -99,6 +100,52 @@ export interface GenerationProgress {
   progress?: number;
   error?: string;
   result?: ContentGenerationResponse;
+}
+
+const PaginatedGenerationsSchema = paginatedResponse(ContentGenerationResponseSchema);
+
+interface CharacterGenerationsParams {
+  page?: number;
+  limit?: number;
+  type?: 'text' | 'image' | 'video';
+}
+
+/**
+ * Get paginated list of content generations for a specific character
+ */
+export function useCharacterGenerations(
+  characterId: string,
+  params?: CharacterGenerationsParams
+) {
+  const token = useAuthStore((state) => state.token);
+
+  return useQuery({
+    queryKey: ['character-generations', characterId, params],
+    queryFn: async () => {
+      const searchParams = new URLSearchParams();
+      if (params?.page) searchParams.set('page', params.page.toString());
+      if (params?.limit) searchParams.set('limit', params.limit.toString());
+      if (params?.type) searchParams.set('type', params.type);
+
+      const url = `${API_BASE}/characters/${characterId}/generations?${searchParams.toString()}`;
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to fetch generations');
+      }
+
+      const data: unknown = await response.json();
+      return PaginatedGenerationsSchema.parse(data);
+    },
+    enabled: !!token && !!characterId,
+    staleTime: QUERY_STALE_TIMES.GENERATIONS,
+  });
 }
 
 /**

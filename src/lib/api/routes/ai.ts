@@ -13,6 +13,7 @@ import {
   CharacterUpdateSchema,
   CharacterResponseSchema,
   CharacterWithStatsSchema,
+  ContentGenerationResponseSchema,
   GenerateContentRequestSchema,
   GenerationAcceptedResponseSchema,
   UuidSchema,
@@ -428,6 +429,122 @@ ai.get('/characters/:id', async (c) => {
 });
 
 /**
+ * GET /api/ai/characters/:id/generations
+ * Paginated list of content generations for a specific character
+ */
+ai.get(
+  '/characters/:id/generations',
+  zValidator(
+    'query',
+    z.object({
+      page: z.string().optional().default('1').transform(Number),
+      limit: z.string().optional().default('20').transform(Number),
+      type: z.enum(['text', 'image', 'video']).optional(),
+    })
+  ),
+  async (c) => {
+    const auth = getAuthContext(c);
+    if (!auth) {
+      return c.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, 401);
+    }
+
+    const characterId = c.req.param('id');
+
+    // Validate UUID format
+    const validationResult = UuidSchema.safeParse(characterId);
+    if (!validationResult.success) {
+      return c.json(
+        { error: 'Invalid character ID format', code: 'VALIDATION_ERROR' },
+        400
+      );
+    }
+
+    const { page, limit: rawLimit, type } = c.req.valid('query');
+    const limit = Math.min(rawLimit, 50);
+
+    try {
+      const supabase = createAuthenticatedClient(auth.jwtToken);
+
+      // Verify character exists and belongs to the authenticated wallet
+      const { data: character, error: characterError } = await supabase
+        .from('characters')
+        .select('id')
+        .eq('id', characterId)
+        .eq('wallet_address', auth.walletAddress)
+        .single();
+
+      if (characterError || !character) {
+        return c.json(
+          { error: 'Character not found', code: 'NOT_FOUND' },
+          404
+        );
+      }
+
+      const offset = (page - 1) * limit;
+
+      // Build count query
+      let countQuery = supabase
+        .from('content_generations')
+        .select('*', { count: 'exact', head: true })
+        .eq('character_id', characterId);
+
+      if (type) {
+        countQuery = countQuery.eq('generation_type', type);
+      }
+
+      const { count, error: countError } = await countQuery;
+
+      if (countError) {
+        return c.json(
+          { error: 'Failed to count generations', code: 'DATABASE_ERROR' },
+          500
+        );
+      }
+
+      // Build paginated data query
+      let dataQuery = supabase
+        .from('content_generations')
+        .select('*')
+        .eq('character_id', characterId)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (type) {
+        dataQuery = dataQuery.eq('generation_type', type);
+      }
+
+      const { data: generations, error: selectError } = await dataQuery;
+
+      if (selectError) {
+        return c.json(
+          { error: 'Failed to fetch generations', code: 'DATABASE_ERROR' },
+          500
+        );
+      }
+
+      const totalPages = Math.ceil((count || 0) / limit);
+
+      const response = paginatedResponse(ContentGenerationResponseSchema).parse({
+        data: generations?.map(mapGenerationToResponse) || [],
+        pagination: {
+          page,
+          limit,
+          total: count || 0,
+          totalPages,
+        },
+      });
+
+      return c.json(response, 200);
+    } catch {
+      return c.json(
+        { error: 'Failed to fetch generations', code: 'INTERNAL_ERROR' },
+        500
+      );
+    }
+  }
+);
+
+/**
  * PUT /api/ai/characters/:id
  * Update character (non-DNA fields only)
  */
@@ -832,8 +949,16 @@ ai.get('/generations/:id/stream', async (c) => {
       .single();
 
     if (claimError || !claimed) {
-      // Concurrent connection claimed the generation (common during HMR/Fast Refresh).
-      // Re-fetch current state and return the appropriate SSE response instead of 409.
+      // Log claim failure for diagnostics (common causes: CHECK constraint missing
+      // 'processing' value, concurrent HMR connection, or RLS issue).
+      const { logger } = await import('@/lib/utils/logger');
+      logger.error('Generation claim failed', {
+        generationId,
+        claimError: claimError?.message ?? claimError,
+        claimErrorCode: (claimError as { code?: string } | null)?.code,
+      });
+
+      // Re-fetch current state and return the appropriate SSE response.
       const { data: currentGen } = await supabase
         .from('content_generations')
         .select('*')
@@ -842,6 +967,23 @@ ai.get('/generations/:id/stream', async (c) => {
 
       if (!currentGen) {
         return c.json({ error: 'Generation not found', code: 'NOT_FOUND' }, 404);
+      }
+
+      // If the claim failed AND the generation is still PENDING, the pipeline
+      // never ran (most likely cause: DB CHECK constraint missing 'processing').
+      // Surface this as an error immediately rather than polling forever.
+      if (currentGen.moderation_status === ModerationStatus.PENDING) {
+        const errorMsg = claimError
+          ? `Failed to claim generation: ${claimError.message}`
+          : 'Generation claim failed — check that migration 20260212000001 has been applied in Supabase (adds processing to moderation_status CHECK constraint)';
+        c.header('Content-Type', 'text/event-stream');
+        c.header('Cache-Control', 'no-cache');
+        c.header('Connection', 'keep-alive');
+        return stream(c, async (sseStream) => {
+          await sseStream.write(
+            `data: ${JSON.stringify({ stage: 'error', message: errorMsg, error: errorMsg })}\n\n`
+          );
+        });
       }
 
       c.header('Content-Type', 'text/event-stream');

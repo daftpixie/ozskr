@@ -132,7 +132,24 @@ const moderateText = async (
       },
     };
   } catch (error) {
+    // If OpenAI is rate-limited or unavailable, fall back to auto-approve.
+    // Endorsement guardrails (synchronous) already ran before this stage.
     const message = error instanceof Error ? error.message : 'Unknown error';
+    const isRateLimited =
+      message.includes('429') ||
+      message.toLowerCase().includes('rate limit') ||
+      message.toLowerCase().includes('too many requests');
+    if (isRateLimited) {
+      return {
+        status: ModerationStatus.APPROVED,
+        details: {
+          stage: 'text-moderation',
+          provider: 'openai-unavailable',
+          note: 'OpenAI rate limited — endorsement guardrails passed, auto-approved',
+          originalError: message,
+        },
+      };
+    }
     throw new ModerationError(`Text moderation failed: ${message}`);
   }
 };

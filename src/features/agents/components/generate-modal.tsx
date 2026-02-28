@@ -28,6 +28,7 @@ import {
   RefreshCw,
   Image as ImageIcon,
   FileText,
+  Library,
 } from 'lucide-react';
 import { useGenerateContent, useGenerationStream } from '@/hooks/use-generations';
 import { GenerationType } from '@/types/database';
@@ -348,6 +349,18 @@ export function GenerateModal({
                 <Share2 className="h-4 w-4" />
               </Button>
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-muted-foreground"
+              onClick={() => {
+                handleClose();
+                // The library is on the same page — closing the modal reveals it
+              }}
+            >
+              <Library className="mr-2 h-4 w-4" />
+              View in Library
+            </Button>
           </div>
         )}
       </DialogContent>

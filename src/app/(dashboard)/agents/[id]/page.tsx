@@ -15,7 +15,6 @@ import {
   Calendar,
   Sparkles,
   BarChart3,
-  CheckCircle,
   Plus,
   Play,
   Trash2,
@@ -26,6 +25,7 @@ import { useCharacter, useUpdateCharacter } from '@/hooks/use-characters';
 import { GenerateModal } from '@/features/agents/components/generate-modal';
 import { ScheduleModal } from '@/features/agents/components/schedule-modal';
 import { DelegationCard } from '@/features/agents/components/delegation-card';
+import { ContentLibrary } from '@/features/agents/components/content-library';
 import { useContentSchedules, useDeleteSchedule, useTriggerSchedule } from '@/hooks/use-schedules';
 import { timeAgo, formatDate } from '@/lib/utils/time';
 import { CharacterStatus, ScheduleContentType } from '@/types/database';
@@ -229,6 +229,9 @@ export default function AgentDetailPage({ params }: AgentDetailPageProps) {
         characterName={character.name}
       />
 
+      {/* Content Library — primary hub for this agent's created content */}
+      <ContentLibrary characterId={id} characterName={character.name} />
+
       {/* Character DNA */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* Persona */}
@@ -399,38 +402,6 @@ export default function AgentDetailPage({ params }: AgentDetailPageProps) {
                 <Plus className="mr-2 h-4 w-4" />
                 Create Schedule
               </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Generation History */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Generations</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {character.recentGenerations && character.recentGenerations.length > 0 ? (
-            <div className="space-y-2">
-              {character.recentGenerations.map((gen, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between rounded-lg border border-border p-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-4 w-4 text-solana-green" />
-                    <span className="text-sm">Generation #{idx + 1}</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">Recently</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-8">
-              <Bot className="h-10 w-10 text-muted-foreground" />
-              <p className="mt-3 text-sm text-muted-foreground">
-                No creations yet. The canvas is blank.
-              </p>
             </div>
           )}
         </CardContent>

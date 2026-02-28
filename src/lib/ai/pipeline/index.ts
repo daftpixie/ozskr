@@ -173,8 +173,8 @@ export const runPipeline = async (
       onProgress
     );
 
-    // Flush Langfuse telemetry
-    await getLangfuse().flushAsync();
+    // Flush Langfuse telemetry (fire-and-forget — don't block the response)
+    void getLangfuse().flushAsync().catch(() => {});
 
     return result;
   } catch (error) {
@@ -232,8 +232,8 @@ export const runPipeline = async (
       // Ignore errors in error handling
     }
 
-    // Flush Langfuse
-    await getLangfuse().flushAsync();
+    // Flush Langfuse (fire-and-forget)
+    void getLangfuse().flushAsync().catch(() => {});
 
     throw new PipelineError(message, stage, error);
   }

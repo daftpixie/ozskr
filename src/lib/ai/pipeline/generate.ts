@@ -151,15 +151,27 @@ const generateImageContent = async (
   try {
     configureFal();
 
-    // Build fal.ai request with visual style params
+    // Build nano-banana-2 request.
+    // Parameters differ from FLUX: no guidance_scale/num_inference_steps/image_size.
+    // Uses aspect_ratio + resolution instead. visualStyleParams may contain FLUX
+    // overrides; only forward nano-banana-2 compatible fields.
+    const allowedNanoBananaParams = new Set([
+      'aspect_ratio', 'resolution', 'output_format', 'safety_tolerance',
+      'seed', 'enable_web_search',
+    ]);
+    const visualOverrides = Object.fromEntries(
+      Object.entries(context.dna.visualStyleParams ?? {}).filter(([k]) =>
+        allowedNanoBananaParams.has(k)
+      )
+    );
     const falRequest = {
       prompt: `${enhancedPrompt}. ${context.dna.visualStyle}`,
-      image_size: modelParams.imageSize || 'square',
-      num_inference_steps: modelParams.inferenceSteps || 28,
-      guidance_scale: modelParams.guidanceScale || 3.5,
+      aspect_ratio: (modelParams.aspectRatio as string) || '1:1',
+      resolution: (modelParams.resolution as string) || '1K',
       num_images: 1,
-      enable_safety_checker: true,
-      ...context.dna.visualStyleParams,
+      output_format: 'png',
+      safety_tolerance: '4',
+      ...visualOverrides,
     };
 
     onProgress({
@@ -175,7 +187,7 @@ const generateImageContent = async (
 
     const latencyMs = Date.now() - startTime;
 
-    // fal.ai subscribe() returns untyped result; narrow to expected FLUX response shape
+    // fal.ai subscribe() returns untyped result; narrow to expected nano-banana-2 response shape
     const response = result as { images?: Array<{ url: string }> };
     const outputUrl = response.images?.[0]?.url;
 
@@ -183,8 +195,8 @@ const generateImageContent = async (
       throw new ContentGenerationError('No image URL in fal.ai response');
     }
 
-    // fal.ai FLUX pricing (approx): $0.05 per image
-    const costUsd = 0.05;
+    // fal.ai Nano Banana 2 pricing: $0.08 per image at 1K resolution
+    const costUsd = 0.08;
 
     return {
       outputUrl,

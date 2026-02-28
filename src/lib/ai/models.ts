@@ -41,7 +41,7 @@ export const MODEL_REGISTRY: Record<string, ModelConfig> = {
     temperature: 0.3,
   },
   'image-generation': {
-    modelId: 'fal-ai/flux-lora',
+    modelId: 'fal-ai/nano-banana-2',
     provider: 'fal',
     purpose: 'Character visual content generation',
   },
