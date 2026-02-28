@@ -5,8 +5,9 @@
  * Handles content generation with SSE streaming progress
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
   DialogContent,
@@ -73,11 +74,22 @@ export function GenerateModal({
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [publishOpen, setPublishOpen] = useState(false);
 
+  const queryClient = useQueryClient();
   const { mutate: generateContent, isPending: isSubmitting } = useGenerateContent(characterId);
   const { progress } = useGenerationStream(generationId);
 
   const isComplete = progress?.stage === 'complete';
   const hasError = progress?.stage === 'error';
+
+  // Invalidate the content library cache as soon as generation finishes
+  // so the library is already refreshed by the time the user closes the modal.
+  useEffect(() => {
+    if (isComplete) {
+      void queryClient.invalidateQueries({
+        queryKey: ['character-generations', characterId],
+      });
+    }
+  }, [isComplete, queryClient, characterId]);
 
   // Submit generation
   const handleSubmit = () => {
@@ -281,52 +293,47 @@ export function GenerateModal({
         {/* Result Display */}
         {isComplete && progress?.result && (
           <div className="space-y-4">
-            <Card className="border-solana-green/20 bg-solana-green/5 p-6">
-              <div className="flex items-start gap-3">
-                <Check className="h-5 w-5 text-solana-green" />
-                <div className="flex-1">
-                  <h3 className="font-medium text-solana-green">
-                    Your creation is ready
-                  </h3>
-                </div>
+            {/* Success banner */}
+            <div className="flex items-center gap-2 rounded-lg border border-solana-green/20 bg-solana-green/5 px-4 py-3">
+              <Check className="h-4 w-4 shrink-0 text-solana-green" />
+              <p className="text-sm font-medium text-solana-green">
+                Your creation is ready — saved to your library
+              </p>
+            </div>
+
+            {/* Image Output — full-bleed, no extra card padding */}
+            {progress.result.outputUrl && (
+              <div className="relative w-full overflow-hidden rounded-xl">
+                <Image
+                  src={progress.result.outputUrl}
+                  alt="Generated image"
+                  width={600}
+                  height={600}
+                  className="w-full object-contain"
+                  priority
+                />
               </div>
-            </Card>
+            )}
 
             {/* Text Output */}
             {progress.result.outputText && (
-              <Card className="p-6">
+              <Card className="p-4">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Badge variant="secondary">Text</Badge>
+                    <Badge variant="secondary" className="text-xs">Text</Badge>
                     <Button
                       variant="ghost"
                       size="sm"
+                      className="h-7 gap-1 text-xs"
                       onClick={handleCopy}
                     >
-                      <Copy className="h-4 w-4" />
+                      <Copy className="h-3 w-3" />
+                      Copy
                     </Button>
                   </div>
-                  <p className="whitespace-pre-wrap text-sm">
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed">
                     {progress.result.outputText}
                   </p>
-                </div>
-              </Card>
-            )}
-
-            {/* Image Output */}
-            {progress.result.outputUrl && (
-              <Card className="p-6">
-                <div className="space-y-3">
-                  <Badge variant="secondary">Image</Badge>
-                  <div className="relative w-full aspect-square">
-                    <Image
-                      src={progress.result.outputUrl}
-                      alt="Generated content"
-                      fill
-                      className="rounded-lg object-cover"
-                      sizes="(max-width: 768px) 100vw, 600px"
-                    />
-                  </div>
                 </div>
               </Card>
             )}
@@ -342,23 +349,20 @@ export function GenerateModal({
                 Create More
               </Button>
               <Button
-                variant="outline"
-                size="icon"
+                className="flex-1 bg-gradient-to-r from-solana-purple to-solana-green hover:opacity-90"
                 onClick={() => setPublishOpen(true)}
               >
-                <Share2 className="h-4 w-4" />
+                <Share2 className="mr-2 h-4 w-4" />
+                Publish
               </Button>
             </div>
             <Button
               variant="ghost"
               size="sm"
-              className="w-full text-muted-foreground"
-              onClick={() => {
-                handleClose();
-                // The library is on the same page — closing the modal reveals it
-              }}
+              className="w-full gap-2 text-muted-foreground hover:text-foreground"
+              onClick={handleClose}
             >
-              <Library className="mr-2 h-4 w-4" />
+              <Library className="h-4 w-4" />
               View in Library
             </Button>
           </div>

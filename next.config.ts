@@ -24,6 +24,15 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: '*.fal.media',
       },
+      // fal.ai Cloudflare Worker CDN (used by some models incl. Nano Banana 2)
+      {
+        protocol: 'https',
+        hostname: '*.fal.run',
+      },
+      {
+        protocol: 'https',
+        hostname: 'storage.googleapis.com',
+      },
     ],
   },
 };

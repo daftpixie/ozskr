@@ -47,6 +47,8 @@ export function useGenerateContent(characterId: string) {
     onSuccess: () => {
       // Invalidate character to update generation count
       queryClient.invalidateQueries({ queryKey: ['character', characterId] });
+      // Optimistically invalidate the library so it refetches once generation completes
+      queryClient.invalidateQueries({ queryKey: ['character-generations', characterId] });
     },
   });
 }
