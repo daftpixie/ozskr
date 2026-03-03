@@ -176,6 +176,14 @@ export interface Character {
   tapestry_profile_id: string | null;
   /** Tapestry username (e.g. "ozskr_my_agent"). Null until profile is provisioned. */
   tapestry_username: string | null;
+  /** NFT mint address for agent identity token. Null until minted. */
+  nft_mint_address: string | null;
+  /** R2 URL for NFT metadata JSON (Metaplex standard). Null until minted. */
+  nft_metadata_uri: string | null;
+  /** CAIP-2 agent ID: "solana:<genesis>/<mint-address>". Null until minted. */
+  registry_agent_id: string | null;
+  /** R2 URL for ERC-8004 agent registration file. Null until published. */
+  registry_url: string | null;
 }
 
 export interface AgentRun {
@@ -594,6 +602,10 @@ export type CharacterUpdate = Partial<
     | 'last_generated_at'
     | 'tapestry_profile_id'
     | 'tapestry_username'
+    | 'nft_mint_address'
+    | 'nft_metadata_uri'
+    | 'registry_agent_id'
+    | 'registry_url'
   >
 >;
 

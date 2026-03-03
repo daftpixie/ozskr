@@ -1130,4 +1130,392 @@ ai.get('/generations/:id/stream', async (c) => {
   }
 });
 
+// =============================================================================
+// AGENT NFT IDENTITY ROUTES
+// =============================================================================
+
+/**
+ * POST /api/ai/characters/:id/mint-nft
+ * Construct an NFT mint transaction for client-side signing.
+ *
+ * Returns a base64-encoded unsigned transaction, the pre-derived mint address,
+ * and the metadata URI. The client signs via wallet adapter and submits.
+ * After on-chain confirmation, the client calls /confirm-mint.
+ *
+ * SECURITY: The server NEVER signs transactions. The transaction is returned
+ * unsigned for the owner wallet to sign client-side.
+ */
+ai.post('/characters/:id/mint-nft', async (c) => {
+  const auth = getAuthContext(c);
+  if (!auth) {
+    return c.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, 401);
+  }
+
+  const characterId = c.req.param('id');
+
+  const validationResult = UuidSchema.safeParse(characterId);
+  if (!validationResult.success) {
+    return c.json(
+      { error: 'Invalid character ID format', code: 'VALIDATION_ERROR' },
+      400
+    );
+  }
+
+  try {
+    const supabase = createAuthenticatedClient(auth.jwtToken);
+
+    // Verify ownership
+    const { data: character, error: characterError } = await supabase
+      .from('characters')
+      .select('id, name, persona, topic_affinity, agent_pubkey, nft_mint_address, tapestry_profile_id')
+      .eq('id', characterId)
+      .eq('wallet_address', auth.walletAddress)
+      .single();
+
+    if (characterError || !character) {
+      return c.json({ error: 'Character not found', code: 'NOT_FOUND' }, 404);
+    }
+
+    // Block double-minting
+    if (character.nft_mint_address) {
+      return c.json(
+        {
+          error: 'Agent identity already minted',
+          code: 'ALREADY_MINTED',
+          mintAddress: character.nft_mint_address,
+        },
+        409
+      );
+    }
+
+    const { assertIsAddress } = await import('@solana/kit');
+    let ownerAddress;
+    try {
+      const { address } = await import('@solana/kit');
+      ownerAddress = address(auth.walletAddress);
+      assertIsAddress(ownerAddress);
+    } catch {
+      return c.json(
+        { error: 'Invalid wallet address', code: 'VALIDATION_ERROR' },
+        400
+      );
+    }
+
+    const { constructMintTransaction } = await import('@/lib/solana/agent-nft');
+
+    const capabilities: string[] = [
+      'content-generation',
+      'social-publishing',
+    ];
+    const topicAffinity = (character.topic_affinity as string[] | null) ?? [];
+    if (topicAffinity.length > 0) {
+      capabilities.push('topical-alignment');
+    }
+
+    const result = await constructMintTransaction({
+      characterId,
+      name: character.name,
+      description: character.persona,
+      imageUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/api/og/agent/${characterId}`,
+      capabilities,
+      ownerWallet: ownerAddress,
+    });
+
+    return c.json(
+      {
+        transactionBase64: result.transactionBase64,
+        mintAddress: result.mintAddress,
+        metadataUri: result.metadataUri,
+        costBreakdown: result.costBreakdown,
+      },
+      200
+    );
+  } catch (err) {
+    const { logger } = await import('@/lib/utils/logger');
+    logger.error('POST /characters/:id/mint-nft error', {
+      characterId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return c.json(
+      { error: 'Failed to construct mint transaction', code: 'INTERNAL_ERROR' },
+      500
+    );
+  }
+});
+
+/**
+ * POST /api/ai/characters/:id/confirm-mint
+ * After the client signs and submits the mint transaction, confirm on-chain
+ * and update the character record with NFT identity fields.
+ *
+ * Request body: { mintAddress, transactionSignature, metadataUri }
+ * Response: updated character object with nft_mint_address + registry_agent_id
+ */
+ai.post(
+  '/characters/:id/confirm-mint',
+  zValidator(
+    'json',
+    z.object({
+      mintAddress: z.string().min(32).max(44),
+      transactionSignature: z.string().min(32),
+      metadataUri: z.string().url(),
+    })
+  ),
+  async (c) => {
+    const auth = getAuthContext(c);
+    if (!auth) {
+      return c.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, 401);
+    }
+
+    const characterId = c.req.param('id');
+
+    const validationResult = UuidSchema.safeParse(characterId);
+    if (!validationResult.success) {
+      return c.json(
+        { error: 'Invalid character ID format', code: 'VALIDATION_ERROR' },
+        400
+      );
+    }
+
+    const { mintAddress, transactionSignature, metadataUri } =
+      c.req.valid('json');
+
+    try {
+      const supabase = createAuthenticatedClient(auth.jwtToken);
+
+      // Verify ownership and that NFT is not already confirmed
+      const { data: character, error: characterError } = await supabase
+        .from('characters')
+        .select(
+          'id, name, persona, topic_affinity, agent_pubkey, nft_mint_address, tapestry_profile_id, tapestry_username'
+        )
+        .eq('id', characterId)
+        .eq('wallet_address', auth.walletAddress)
+        .single();
+
+      if (characterError || !character) {
+        return c.json(
+          { error: 'Character not found', code: 'NOT_FOUND' },
+          404
+        );
+      }
+
+      if (character.nft_mint_address) {
+        return c.json(
+          {
+            error: 'Agent identity already confirmed',
+            code: 'ALREADY_MINTED',
+            mintAddress: character.nft_mint_address,
+          },
+          409
+        );
+      }
+
+      // Validate mint address format
+      const { assertIsAddress, address } = await import('@solana/kit');
+      let mintAddr;
+      try {
+        mintAddr = address(mintAddress);
+        assertIsAddress(mintAddr);
+      } catch {
+        return c.json(
+          { error: 'Invalid mint address format', code: 'VALIDATION_ERROR' },
+          400
+        );
+      }
+
+      // Step 1: Verify transaction is confirmed on-chain
+      const { verifyMintConfirmation } = await import('@/lib/solana/agent-nft');
+      try {
+        await verifyMintConfirmation(mintAddr, transactionSignature);
+      } catch (confirmErr) {
+        return c.json(
+          {
+            error:
+              confirmErr instanceof Error
+                ? confirmErr.message
+                : 'Transaction not yet confirmed',
+            code: 'NOT_CONFIRMED',
+          },
+          202
+        );
+      }
+
+      // Step 2: Generate CAIP-2 agent ID
+      const { buildAgentId, generateRegistrationFile, publishRegistrationFile } =
+        await import('@/lib/solana/agent-registry');
+
+      const agentId = buildAgentId(mintAddress);
+
+      // Step 3: Generate and publish registration file to R2
+      const capabilities: string[] = ['content-generation', 'social-publishing'];
+      const topicAffinity = (character.topic_affinity as string[] | null) ?? [];
+      if (topicAffinity.length > 0) capabilities.push('topical-alignment');
+
+      const registrationFile = generateRegistrationFile({
+        mintAddress,
+        characterId,
+        name: character.name,
+        persona: character.persona,
+        capabilities,
+        agentWalletPubkey: character.agent_pubkey ?? undefined,
+        tapestryProfile: character.tapestry_profile_id ?? undefined,
+        socialPlatforms: [],
+      });
+
+      let registryUrl = '';
+      try {
+        const published = await publishRegistrationFile(
+          characterId,
+          registrationFile
+        );
+        registryUrl = published.url;
+      } catch (publishErr) {
+        // Non-fatal: R2 upload failure should not block DB update
+        const { logger } = await import('@/lib/utils/logger');
+        logger.error('Failed to publish registration file', {
+          characterId,
+          error:
+            publishErr instanceof Error ? publishErr.message : String(publishErr),
+        });
+      }
+
+      // Step 4: Update characters table with NFT identity fields
+      const { data: updatedCharacter, error: updateError } = await supabase
+        .from('characters')
+        .update({
+          nft_mint_address: mintAddress,
+          nft_metadata_uri: metadataUri,
+          registry_agent_id: agentId,
+          registry_url: registryUrl || null,
+        })
+        .eq('id', characterId)
+        .select()
+        .single();
+
+      if (updateError || !updatedCharacter) {
+        const { logger } = await import('@/lib/utils/logger');
+        logger.error('Failed to update character with NFT fields', {
+          characterId,
+          mintAddress,
+          error: updateError?.message,
+        });
+        return c.json(
+          { error: 'Failed to update character record', code: 'DATABASE_ERROR' },
+          500
+        );
+      }
+
+      const { logger } = await import('@/lib/utils/logger');
+      logger.info('Agent NFT identity confirmed', {
+        characterId,
+        mintAddress,
+        agentId,
+        txSignature: transactionSignature,
+      });
+
+      return c.json(
+        {
+          ...mapCharacterToResponse(updatedCharacter),
+          nftMintAddress: mintAddress,
+          nftMetadataUri: metadataUri,
+          registryAgentId: agentId,
+          registryUrl: registryUrl || null,
+        },
+        200
+      );
+    } catch (err) {
+      const { logger } = await import('@/lib/utils/logger');
+      logger.error('POST /characters/:id/confirm-mint error', {
+        characterId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return c.json(
+        { error: 'Failed to confirm mint', code: 'INTERNAL_ERROR' },
+        500
+      );
+    }
+  }
+);
+
+/**
+ * GET /api/ai/characters/:id/registry
+ * Get agent registration file metadata (public endpoint — but auth required
+ * to prevent information leakage about unregistered agents).
+ *
+ * Returns the registry_agent_id and the registration file URL.
+ * Returns 404 if the agent identity has not been minted yet.
+ */
+ai.get('/characters/:id/registry', async (c) => {
+  const auth = getAuthContext(c);
+  if (!auth) {
+    return c.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, 401);
+  }
+
+  const characterId = c.req.param('id');
+
+  const validationResult = UuidSchema.safeParse(characterId);
+  if (!validationResult.success) {
+    return c.json(
+      { error: 'Invalid character ID format', code: 'VALIDATION_ERROR' },
+      400
+    );
+  }
+
+  try {
+    const supabase = createAuthenticatedClient(auth.jwtToken);
+
+    const { data: character, error: characterError } = await supabase
+      .from('characters')
+      .select(
+        'id, name, nft_mint_address, nft_metadata_uri, registry_agent_id, registry_url'
+      )
+      .eq('id', characterId)
+      .eq('wallet_address', auth.walletAddress)
+      .single();
+
+    if (characterError || !character) {
+      return c.json(
+        { error: 'Character not found', code: 'NOT_FOUND' },
+        404
+      );
+    }
+
+    if (!character.nft_mint_address || !character.registry_agent_id) {
+      return c.json(
+        {
+          error: 'Agent identity not minted yet',
+          code: 'NOT_MINTED',
+          message:
+            'Mint an NFT identity for this agent to register it with the Solana Agent Registry.',
+        },
+        404
+      );
+    }
+
+    return c.json(
+      {
+        characterId,
+        agentName: character.name,
+        mintAddress: character.nft_mint_address,
+        metadataUri: character.nft_metadata_uri,
+        registryAgentId: character.registry_agent_id,
+        registryUrl: character.registry_url ?? null,
+      },
+      200
+    );
+  } catch (err) {
+    const { logger } = await import('@/lib/utils/logger');
+    logger.error('GET /characters/:id/registry error', {
+      characterId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return c.json(
+      { error: 'Failed to fetch registry data', code: 'INTERNAL_ERROR' },
+      500
+    );
+  }
+});
+
 export { ai };
+
