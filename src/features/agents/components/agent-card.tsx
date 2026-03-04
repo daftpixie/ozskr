@@ -1,6 +1,7 @@
 /**
  * Agent Card Component
- * Displays a character card with status, stats, and actions
+ * Displays a character card with status, stats, and actions.
+ * Shows AgentIdentityBadge when the character has a minted NFT.
  */
 
 import Link from 'next/link';
@@ -11,13 +12,25 @@ import { cn } from '@/lib/utils';
 import { timeAgo } from '@/lib/utils/time';
 import type { CharacterResponse } from '@/types/schemas';
 import { CharacterStatus } from '@/types/database';
+import { AgentIdentityBadge } from '@/features/agents/components/agent-identity-badge';
+
+/**
+ * WP-A adds nftMintAddress and reputationScore to CharacterResponse.
+ * Typed locally here so AgentCard compiles independently until WP-A merges.
+ */
+type CharacterWithNFT = CharacterResponse & {
+  nftMintAddress?: string | null;
+  registryAgentId?: string | null;
+  reputationScore?: string | null;
+};
 
 interface AgentCardProps {
-  character: CharacterResponse;
+  character: CharacterWithNFT;
 }
 
 export function AgentCard({ character }: AgentCardProps) {
   const isActive = character.status === CharacterStatus.ACTIVE;
+  const hasMint = Boolean(character.nftMintAddress);
 
   const statusColors = {
     [CharacterStatus.ACTIVE]: 'bg-solana-green/10 text-solana-green border-solana-green/20',

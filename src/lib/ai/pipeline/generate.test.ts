@@ -62,10 +62,12 @@ describe('Pipeline Stage 4: Generate Content', () => {
 
   const mockContext: CharacterContext = {
     dna: createMockCharacterDNA(),
-    memories: [],
+    workingMemory: '',
+    relevantMemories: [],
     sessionContext: {
       generationType: 'text',
       timestamp: new Date().toISOString(),
+      threadId: crypto.randomUUID(),
     },
   };
 

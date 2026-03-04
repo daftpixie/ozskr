@@ -47,10 +47,12 @@ describe('Pipeline Stage 5: Quality Check', () => {
 
   const mockContext: CharacterContext = {
     dna: createMockCharacterDNA(),
-    memories: [],
+    workingMemory: '',
+    relevantMemories: [],
     sessionContext: {
       generationType: 'text',
       timestamp: new Date().toISOString(),
+      threadId: crypto.randomUUID(),
     },
   };
 

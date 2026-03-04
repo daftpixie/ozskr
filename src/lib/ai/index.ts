@@ -6,9 +6,10 @@
 // Mastra agent framework
 export { mastra, getPrimaryModel, getFallbackModel, getAgent } from './mastra';
 
-// Mem0 memory layer
-export { createAgentMemory } from './memory';
-export type { AgentMemory, MemoryResult } from './memory';
+// Mastra-native runtime agent memory (replaces Mem0 for production agents)
+// NOTE: Mem0 dev workflow memory lives in tools/mem0-mcp/ and is unaffected.
+export { createAgentMemory, DEFAULT_WORKING_MEMORY_TEMPLATE } from './memory';
+export type { AgentMemory } from './memory';
 
 // Character DNA loader
 export { loadCharacterDNA, CharacterNotFoundError } from './character-dna';

@@ -1,135 +1,204 @@
 /**
- * Mem0 Memory Layer Integration
- * Character memory isolation with namespace enforcement
+ * Mastra-native Runtime Agent Memory
+ * Replaces Mem0 for user-facing AI influencer agent memory.
+ *
+ * NOTE: Mem0 dev workflow memory (tools/mem0-mcp/) is completely separate
+ * and is NOT affected by this file. This is RUNTIME agent memory only.
+ *
+ * Architecture:
+ * - Working Memory: structured XML state that persists across all generation
+ *   threads per agent (resource-scoped via Mastra Memory)
+ * - Semantic Recall: TODO — requires embedder setup; returns [] for now
+ * - Thread History: per-session, managed externally via Mastra threadId
+ *
+ * Orchestration boundary: Mastra workflow (simple linear pipeline — this file).
+ * LangGraph is reserved for multi-step retry loops defined in pipeline/index.ts.
+ *
+ * Memory isolation: characterId is used as resourceId — server-side enforcement.
+ * SECURITY: Never accept resourceId/namespace from user input. Always load from DB.
  */
 
-import { MemoryClient } from 'mem0ai';
+import { Memory } from '@mastra/memory';
+import { InMemoryStore } from '@mastra/core/storage';
 import { z } from 'zod';
 
-/**
- * Namespace validation schema
- * CRITICAL: Must match char_<uuid> pattern for security isolation
- */
-const Mem0NamespaceSchema = z
+// ---------------------------------------------------------------------------
+// Default working memory XML template
+// ---------------------------------------------------------------------------
+export const DEFAULT_WORKING_MEMORY_TEMPLATE = `
+<agent_working_memory>
+  <audience_preferences>None learned yet</audience_preferences>
+  <top_performing_content>No data yet</top_performing_content>
+  <posting_patterns>No patterns detected</posting_patterns>
+  <topic_resonance>No data yet</topic_resonance>
+  <style_adaptations>Using default persona settings</style_adaptations>
+</agent_working_memory>
+`.trim();
+
+// ---------------------------------------------------------------------------
+// Security: characterId must be a valid UUID from the database
+// NEVER accept a raw user-supplied string without this validation.
+// ---------------------------------------------------------------------------
+const CharacterIdSchema = z
   .string()
-  .regex(
-    /^char_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
-    'Namespace must be in format: char_<uuid>'
-  );
+  .uuid('characterId must be a valid UUID — load from database, never from user input');
+
+// ---------------------------------------------------------------------------
+// AgentMemory interface
+// ---------------------------------------------------------------------------
 
 /**
- * Memory result from Mem0 recall operation
- */
-export interface MemoryResult {
-  id: string;
-  memory: string;
-  metadata?: Record<string, unknown>;
-  score?: number;
-  created_at?: string;
-  updated_at?: string;
-}
-
-/**
- * Agent memory interface
- * Provides isolated memory operations per character
+ * Isolated memory interface for a single AI influencer agent.
+ *
+ * Method contract:
+ * - getWorkingMemory(): returns current XML working memory (or the default template)
+ * - updateWorkingMemory(): overwrites working memory with new XML content
+ * - recallRelevant(): semantic recall placeholder — returns [] until pgvector embedder is wired
  */
 export interface AgentMemory {
   /**
-   * Recall memories matching a query
+   * Get the current working memory XML for this character.
+   * Returns the default template if no working memory has been stored yet.
    */
-  recall(query: string, options?: { limit?: number }): Promise<MemoryResult[]>;
+  getWorkingMemory(): Promise<string>;
 
   /**
-   * Store a new memory
+   * Overwrite the working memory with updated XML content.
+   * Called after each successful generation to capture learned insights.
    */
-  store(content: string, metadata?: Record<string, unknown>): Promise<void>;
+  updateWorkingMemory(content: string): Promise<void>;
 
   /**
-   * Forget (delete) a specific memory
+   * Semantic recall of relevant memories for a given query.
+   * TODO: Wire pgvector embedder for production semantic search.
+   * Currently returns empty array (non-blocking — callers must handle []).
    */
-  forget(memoryId: string): Promise<void>;
+  recallRelevant(query: string, limit?: number): Promise<string[]>;
 }
 
-/**
- * Create an isolated memory instance for a character
- *
- * SECURITY: The namespace parameter MUST come from database (characters.mem0_namespace),
- * NEVER from user input. This ensures character memory isolation.
- *
- * @param mem0Namespace - Character namespace from database (char_<uuid> format)
- * @returns AgentMemory instance with isolated namespace
- */
-export const createAgentMemory = (mem0Namespace: string): AgentMemory => {
-  // Validate namespace format for security
-  const validatedNamespace = Mem0NamespaceSchema.parse(mem0Namespace);
+// ---------------------------------------------------------------------------
+// Shared Memory instance (module-level singleton, per process)
+// Shared across all createAgentMemory() calls to reuse the storage pool.
+// ---------------------------------------------------------------------------
 
-  const apiKey = process.env.MEM0_API_KEY;
-  if (!apiKey) {
-    throw new Error('MEM0_API_KEY environment variable is required');
+let _sharedMemoryInstance: Memory | null = null;
+
+function getSharedMemory(workingMemoryTemplate: string): Memory {
+  if (!_sharedMemoryInstance) {
+    // InMemoryStore: fast, zero-config, no external dependency.
+    // Working memory is resource-scoped so it survives thread changes within a session.
+    // TODO(Phase 8): replace InMemoryStore with PostgresStore when @mastra/pg resolves
+    // its peer dependency on @mastra/core >=1.4.1. Track: feat/mem0-dev-memory.
+    const storage = new InMemoryStore();
+
+    _sharedMemoryInstance = new Memory({
+      storage,
+      options: {
+        workingMemory: {
+          enabled: true,
+          template: workingMemoryTemplate,
+          // resource scope: working memory shared across all threads for a character
+          scope: 'resource',
+        },
+        // Disable conversation history — the pipeline does not use Mastra message threads
+        lastMessages: false,
+        // Disable semantic recall until embedder is configured
+        semanticRecall: false,
+      },
+    });
   }
+  return _sharedMemoryInstance;
+}
 
-  const memClient = new MemoryClient({ apiKey });
+// ---------------------------------------------------------------------------
+// Thread ID convention
+// Working memory is resource-scoped so the canonical thread only needs to
+// exist once per character. We derive a deterministic ID from characterId.
+// ---------------------------------------------------------------------------
+function canonicalThreadId(characterId: string): string {
+  return `wm-${characterId}`;
+}
+
+// ---------------------------------------------------------------------------
+// createAgentMemory
+// ---------------------------------------------------------------------------
+
+/**
+ * Create an isolated AgentMemory instance for a character.
+ *
+ * SECURITY: characterId MUST come from the database (characters.id).
+ * It is validated as a UUID here. Never pass a user-supplied string directly.
+ *
+ * @param characterId - Character UUID loaded from the database
+ * @param workingMemoryTemplate - Optional XML template override (null = platform default)
+ * @returns AgentMemory instance isolated to this character
+ * @throws ZodError if characterId is not a valid UUID
+ */
+export function createAgentMemory(
+  characterId: string,
+  workingMemoryTemplate?: string | null
+): AgentMemory {
+  // SECURITY: validate UUID format before using as resourceId
+  const resourceId = CharacterIdSchema.parse(characterId);
+
+  const template = workingMemoryTemplate ?? DEFAULT_WORKING_MEMORY_TEMPLATE;
+  const memory = getSharedMemory(template);
+  const threadId = canonicalThreadId(resourceId);
+
+  // Ensure the canonical thread exists (idempotent)
+  let threadInitialized = false;
+  const ensureThread = async (): Promise<void> => {
+    if (threadInitialized) return;
+    try {
+      const existing = await memory.getThreadById({ threadId });
+      if (!existing) {
+        await memory.saveThread({
+          thread: {
+            id: threadId,
+            resourceId,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            metadata: { characterId: resourceId, purpose: 'working-memory' },
+          },
+        });
+      }
+      threadInitialized = true;
+    } catch {
+      // Non-fatal: thread creation failure degrades gracefully
+      threadInitialized = true;
+    }
+  };
 
   return {
-    async recall(query: string, options?: { limit?: number }): Promise<MemoryResult[]> {
+    async getWorkingMemory(): Promise<string> {
+      await ensureThread();
       try {
-        const result = await memClient.search(query, {
-          user_id: validatedNamespace,
-          limit: options?.limit ?? 10,
-        });
-
-        // Validate Mem0 API response structure with Zod
-        const Mem0ResponseSchema = z.object({
-          results: z.array(z.object({
-            id: z.string(),
-            memory: z.string(),
-            metadata: z.record(z.string(), z.unknown()).optional(),
-            score: z.number().optional(),
-            created_at: z.string().optional(),
-            updated_at: z.string().optional(),
-          })).optional(),
-        });
-
-        const parsed = Mem0ResponseSchema.safeParse(result);
-        const results = parsed.success ? (parsed.data.results ?? []) : [];
-
-        return results.map((item) => ({
-          id: item.id,
-          memory: item.memory,
-          metadata: item.metadata ?? {},
-          score: item.score,
-          created_at: item.created_at,
-          updated_at: item.updated_at,
-        }));
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        throw new Error(`Failed to recall memories: ${message}`);
+        const wm = await memory.getWorkingMemory({ threadId, resourceId });
+        return wm ?? template;
+      } catch {
+        // Non-fatal: return default template if storage is unavailable
+        return template;
       }
     },
 
-    async store(content: string, metadata?: Record<string, unknown>): Promise<void> {
+    async updateWorkingMemory(content: string): Promise<void> {
+      await ensureThread();
       try {
-        // Mem0 add expects messages array format
-        await memClient.add(
-          [{ role: 'user', content }] as never,
-          {
-            user_id: validatedNamespace,
-            metadata,
-          } as never
-        );
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        throw new Error(`Failed to store memory: ${message}`);
+        await memory.updateWorkingMemory({
+          threadId,
+          resourceId,
+          workingMemory: content,
+        });
+      } catch {
+        // Non-fatal: working memory update failure does not block content pipeline
       }
     },
 
-    async forget(memoryId: string): Promise<void> {
-      try {
-        await memClient.delete(memoryId);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        throw new Error(`Failed to forget memory: ${message}`);
-      }
+    async recallRelevant(_query: string, _limit?: number): Promise<string[]> {
+      // TODO(Phase 8): implement pgvector semantic recall.
+      // Requires: embedder configured in Memory constructor + PgVector adapter.
+      // See: https://mastra.ai/docs/memory/semantic-recall
+      return [];
     },
   };
-};
+}

@@ -197,6 +197,16 @@ export const CharacterResponseSchema = z.object({
   delegationTokenMint: z.string().nullable(),
   delegationTokenAccount: z.string().nullable(),
   delegationTxSignature: z.string().nullable(),
+  nftMintAddress: z.string().nullable(),
+  nftMetadataUri: z.string().nullable(),
+  registryAgentId: z.string().nullable(),
+  registryUrl: z.string().nullable(),
+  isTransferable: z.boolean().nullable(),
+  reputationScore: z.string().nullable(),
+  capabilities: z.array(z.string()).nullable(),
+  transferCount: z.number().nullable(),
+  lastTransferredAt: TimestampSchema.nullable(),
+  workingMemoryTemplate: z.string().nullable(),
 });
 
 export type CharacterResponse = z.infer<typeof CharacterResponseSchema>;

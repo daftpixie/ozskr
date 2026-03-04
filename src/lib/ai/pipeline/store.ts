@@ -1,6 +1,8 @@
 /**
  * Pipeline Stage 7: Store & Notify
- * Updates database with generation results and stores context in Mem0
+ * Updates database with generation results and updates Mastra working memory.
+ *
+ * Orchestration: Mastra workflow (simple linear stage — no branching).
  */
 
 import type { CharacterContext } from './context';
@@ -17,6 +19,49 @@ export class StorageError extends Error {
     super(message);
     this.name = 'StorageError';
   }
+}
+
+/**
+ * Build updated working memory XML from the current state and this generation's insights.
+ * Appends new content insights to the existing XML structure.
+ */
+export function buildUpdatedWorkingMemory(
+  currentWorkingMemory: string,
+  result: Partial<PipelineResult>,
+  sessionContext: CharacterContext['sessionContext']
+): string {
+  const qualityScore = result.qualityScore?.toFixed(2) ?? 'N/A';
+  const generationType = sessionContext.generationType;
+  const timestamp = sessionContext.timestamp;
+  const snippet = result.outputText?.slice(0, 120) || result.outputUrl || 'N/A';
+
+  // If there's no existing working memory or it's minimal, return a fresh record
+  if (!currentWorkingMemory || currentWorkingMemory.trim().length < 10) {
+    return `<agent_working_memory>
+  <audience_preferences>None learned yet</audience_preferences>
+  <top_performing_content>
+    <entry timestamp="${timestamp}" type="${generationType}" quality="${qualityScore}">${snippet}</entry>
+  </top_performing_content>
+  <posting_patterns>Generated ${generationType} content</posting_patterns>
+  <topic_resonance>No data yet</topic_resonance>
+  <style_adaptations>Using default persona settings</style_adaptations>
+</agent_working_memory>`;
+  }
+
+  // Append a new entry into top_performing_content if quality is reasonable
+  const qualityNum = result.qualityScore ?? 0;
+  if (qualityNum >= 0.6) {
+    const newEntry = `<entry timestamp="${timestamp}" type="${generationType}" quality="${qualityScore}">${snippet}</entry>`;
+    if (currentWorkingMemory.includes('</top_performing_content>')) {
+      return currentWorkingMemory.replace(
+        '</top_performing_content>',
+        `  ${newEntry}\n  </top_performing_content>`
+      );
+    }
+  }
+
+  // Return unchanged if quality was low or structure not recognized
+  return currentWorkingMemory;
 }
 
 /**
@@ -103,33 +148,32 @@ export const storeAndNotify = async (
 
     onProgress({
       stage: 'storing',
-      message: 'Storing generation context in Mem0',
+      message: 'Updating working memory with generation insights',
     });
 
-    // Store generation context in Mem0 for future recall
+    // Update Mastra working memory with insights from this generation
+    // SECURITY: use dna.id (from DB) — never user-supplied value
     try {
-      const memory = createAgentMemory(context.dna.mem0Namespace);
+      const memory = createAgentMemory(context.dna.id, context.dna.workingMemoryTemplate);
 
-      const memoryContent = `Generated ${context.sessionContext.generationType} content with quality score ${result.qualityScore?.toFixed(2) || 'N/A'}. Prompt: "${result.enhancedPrompt || 'N/A'}". Result: ${result.outputText?.slice(0, 200) || result.outputUrl || 'N/A'}.`;
+      const updatedWorkingMemory = buildUpdatedWorkingMemory(
+        context.workingMemory,
+        result,
+        context.sessionContext
+      );
 
-      await memory.store(memoryContent, {
-        generationId,
-        generationType: context.sessionContext.generationType,
-        qualityScore: result.qualityScore,
-        timestamp: context.sessionContext.timestamp,
-        moderationStatus: result.moderationStatus,
-      });
+      await memory.updateWorkingMemory(updatedWorkingMemory);
 
       onProgress({
         stage: 'storing',
-        message: 'Memory stored successfully',
+        message: 'Working memory updated successfully',
       });
     } catch (error) {
-      // Non-critical: log but don't fail
+      // Non-critical: memory update failure does not block pipeline completion
       const message = error instanceof Error ? error.message : 'Unknown error';
       onProgress({
         stage: 'storing',
-        message: `Warning: Memory storage failed (non-critical): ${message}`,
+        message: `Warning: Memory update failed (non-critical): ${message}`,
         metadata: { error: message },
       });
     }

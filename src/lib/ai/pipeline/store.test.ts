@@ -60,10 +60,12 @@ describe('Pipeline Stage 7: Store & Notify', () => {
 
   const mockContext: CharacterContext = {
     dna: createMockCharacterDNA(),
-    memories: [],
+    workingMemory: '',
+    relevantMemories: [],
     sessionContext: {
       generationType: 'text',
       timestamp: new Date().toISOString(),
+      threadId: crypto.randomUUID(),
     },
   };
 

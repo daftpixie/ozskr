@@ -129,6 +129,16 @@ describe('generate-scheduled', () => {
         delegation_tx_signature: null,
         tapestry_profile_id: null,
         tapestry_username: null,
+        nft_mint_address: null,
+        nft_metadata_uri: null,
+        registry_agent_id: null,
+        registry_url: null,
+        is_transferable: null,
+        reputation_score: null,
+        capabilities: null,
+        transfer_count: null,
+        last_transferred_at: null,
+        working_memory_template: null,
       };
 
       const insertSpy = vi.fn().mockReturnThis();
@@ -223,6 +233,16 @@ describe('generate-scheduled', () => {
         delegation_tx_signature: null,
         tapestry_profile_id: null,
         tapestry_username: null,
+        nft_mint_address: null,
+        nft_metadata_uri: null,
+        registry_agent_id: null,
+        registry_url: null,
+        is_transferable: null,
+        reputation_score: null,
+        capabilities: null,
+        transfer_count: null,
+        last_transferred_at: null,
+        working_memory_template: null,
       };
 
       mockFrom.mockImplementation((tableName: string) => {
@@ -312,6 +332,16 @@ describe('generate-scheduled', () => {
         delegation_tx_signature: null,
         tapestry_profile_id: null,
         tapestry_username: null,
+        nft_mint_address: null,
+        nft_metadata_uri: null,
+        registry_agent_id: null,
+        registry_url: null,
+        is_transferable: null,
+        reputation_score: null,
+        capabilities: null,
+        transfer_count: null,
+        last_transferred_at: null,
+        working_memory_template: null,
       };
 
       const updateSpy = vi.fn().mockReturnThis();
@@ -398,6 +428,16 @@ describe('generate-scheduled', () => {
         delegation_tx_signature: null,
         tapestry_profile_id: null,
         tapestry_username: null,
+        nft_mint_address: null,
+        nft_metadata_uri: null,
+        registry_agent_id: null,
+        registry_url: null,
+        is_transferable: null,
+        reputation_score: null,
+        capabilities: null,
+        transfer_count: null,
+        last_transferred_at: null,
+        working_memory_template: null,
       };
 
       const nextRunTime = new Date('2024-01-16T09:00:00Z');
@@ -487,6 +527,16 @@ describe('generate-scheduled', () => {
         delegation_tx_signature: null,
         tapestry_profile_id: null,
         tapestry_username: null,
+        nft_mint_address: null,
+        nft_metadata_uri: null,
+        registry_agent_id: null,
+        registry_url: null,
+        is_transferable: null,
+        reputation_score: null,
+        capabilities: null,
+        transfer_count: null,
+        last_transferred_at: null,
+        working_memory_template: null,
       };
 
       const updateSpy = vi.fn().mockReturnThis();
@@ -572,6 +622,16 @@ describe('generate-scheduled', () => {
         delegation_tx_signature: null,
         tapestry_profile_id: null,
         tapestry_username: null,
+        nft_mint_address: null,
+        nft_metadata_uri: null,
+        registry_agent_id: null,
+        registry_url: null,
+        is_transferable: null,
+        reputation_score: null,
+        capabilities: null,
+        transfer_count: null,
+        last_transferred_at: null,
+        working_memory_template: null,
       };
 
       mockRunPipeline.mockRejectedValue(new Error('Pipeline failed'));
@@ -656,6 +716,16 @@ describe('generate-scheduled', () => {
         delegation_tx_signature: null,
         tapestry_profile_id: null,
         tapestry_username: null,
+        nft_mint_address: null,
+        nft_metadata_uri: null,
+        registry_agent_id: null,
+        registry_url: null,
+        is_transferable: null,
+        reputation_score: null,
+        capabilities: null,
+        transfer_count: null,
+        last_transferred_at: null,
+        working_memory_template: null,
       };
 
       mockFrom.mockImplementation((tableName: string) => {

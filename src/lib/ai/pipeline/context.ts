@@ -1,24 +1,37 @@
 /**
  * Pipeline Stage 2: Load Character Context
- * Loads character DNA and relevant memories from Mem0
+ * Loads character DNA and working memory from Mastra-native memory layer.
+ *
+ * Orchestration: Mastra workflow (simple linear stage — no branching).
+ * For retry loops see pipeline/index.ts.
  */
 
 import type { ValidatedInput, ProgressCallback } from './types';
 import type { CharacterDNA } from '@/lib/ai/character-dna';
-import type { MemoryResult } from '@/lib/ai/memory';
 import { loadCharacterDNA } from '@/lib/ai/character-dna';
 import { createAgentMemory } from '@/lib/ai/memory';
 import { createAuthenticatedClient } from '@/lib/api/supabase';
 
 /**
- * Character context combining DNA, memories, and session info
+ * Character context combining DNA, working memory, and session info
  */
 export interface CharacterContext {
   dna: CharacterDNA;
-  memories: MemoryResult[];
+  /**
+   * Current XML working memory for this character (Mastra resource-scoped).
+   * Empty string if memory recall is unavailable.
+   */
+  workingMemory: string;
+  /**
+   * Semantically relevant memories from vector search.
+   * Empty array until pgvector embedder is wired (non-blocking).
+   */
+  relevantMemories: string[];
   sessionContext: {
     generationType: string;
     timestamp: string;
+    /** Unique ID for this generation session (for future thread history) */
+    threadId: string;
   };
 }
 
@@ -37,7 +50,7 @@ export class ContextLoadError extends Error {
  *
  * @param input - Validated pipeline input
  * @param onProgress - Progress callback
- * @returns Character context with DNA and memories
+ * @returns Character context with DNA and working memory
  * @throws ContextLoadError if loading fails
  */
 export const loadCharacterContext = async (
@@ -59,16 +72,18 @@ export const loadCharacterContext = async (
     onProgress({
       stage: 'loading_context',
       message: 'Recalling relevant memories',
-      metadata: { namespace: dna.mem0Namespace },
+      metadata: { characterId: dna.id },
     });
 
-    // Create memory client with character's namespace
-    const memory = createAgentMemory(dna.mem0Namespace);
+    // SECURITY: use dna.id (from DB) as characterId — never user-supplied input
+    const memory = createAgentMemory(dna.id, dna.workingMemoryTemplate);
 
-    // Recall memories relevant to the input prompt (limit 5 for context efficiency)
-    let memories: MemoryResult[] = [];
+    let workingMemory = '';
+    let relevantMemories: string[] = [];
+
     try {
-      memories = await memory.recall(input.inputPrompt, { limit: 5 });
+      workingMemory = await memory.getWorkingMemory();
+      relevantMemories = await memory.recallRelevant(input.inputPrompt, 5);
     } catch (error) {
       // Non-critical: proceed without memories if recall fails
       const message = error instanceof Error ? error.message : 'Unknown error';
@@ -84,16 +99,19 @@ export const loadCharacterContext = async (
       message: 'Character context loaded',
       metadata: {
         characterName: dna.name,
-        memoriesRecalled: memories.length,
+        memoriesRecalled: relevantMemories.length,
+        hasWorkingMemory: workingMemory.length > 0,
       },
     });
 
     return {
       dna,
-      memories,
+      workingMemory,
+      relevantMemories,
       sessionContext: {
         generationType: input.generationType,
         timestamp: new Date().toISOString(),
+        threadId: crypto.randomUUID(),
       },
     };
   } catch (error) {

@@ -4,6 +4,7 @@
  */
 
 import { Hono } from 'hono';
+import type { Address } from '@solana/kit';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { stream } from 'hono/streaming';
@@ -79,6 +80,16 @@ function mapCharacterToResponse(char: Character) {
     delegationTokenMint: char.delegation_token_mint ?? null,
     delegationTokenAccount: char.delegation_token_account ?? null,
     delegationTxSignature: char.delegation_tx_signature ?? null,
+    nftMintAddress: char.nft_mint_address ?? null,
+    nftMetadataUri: char.nft_metadata_uri ?? null,
+    registryAgentId: char.registry_agent_id ?? null,
+    registryUrl: char.registry_url ?? null,
+    isTransferable: char.is_transferable ?? null,
+    reputationScore: char.reputation_score != null ? String(char.reputation_score) : null,
+    capabilities: char.capabilities ?? null,
+    transferCount: char.transfer_count ?? null,
+    lastTransferredAt: char.last_transferred_at ?? null,
+    workingMemoryTemplate: char.working_memory_template ?? null,
   };
 }
 
@@ -1188,12 +1199,10 @@ ai.post('/characters/:id/mint-nft', async (c) => {
       );
     }
 
-    const { assertIsAddress } = await import('@solana/kit');
-    let ownerAddress;
+    let ownerAddress: Address;
     try {
       const { address } = await import('@solana/kit');
       ownerAddress = address(auth.walletAddress);
-      assertIsAddress(ownerAddress);
     } catch {
       return c.json(
         { error: 'Invalid wallet address', code: 'VALIDATION_ERROR' },
@@ -1312,11 +1321,10 @@ ai.post(
       }
 
       // Validate mint address format
-      const { assertIsAddress, address } = await import('@solana/kit');
-      let mintAddr;
+      let mintAddr: Address;
       try {
+        const { address } = await import('@solana/kit');
         mintAddr = address(mintAddress);
-        assertIsAddress(mintAddr);
       } catch {
         return c.json(
           { error: 'Invalid mint address format', code: 'VALIDATION_ERROR' },

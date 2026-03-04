@@ -26,18 +26,35 @@ import { GenerateModal } from '@/features/agents/components/generate-modal';
 import { ScheduleModal } from '@/features/agents/components/schedule-modal';
 import { DelegationCard } from '@/features/agents/components/delegation-card';
 import { ContentLibrary } from '@/features/agents/components/content-library';
+import { MintIdentityCard } from '@/features/agents/components/mint-identity-card';
+import { AgentIdentityBadge } from '@/features/agents/components/agent-identity-badge';
 import { useContentSchedules, useDeleteSchedule, useTriggerSchedule } from '@/hooks/use-schedules';
 import { timeAgo, formatDate } from '@/lib/utils/time';
 import { CharacterStatus, ScheduleContentType } from '@/types/database';
 import { cn } from '@/lib/utils';
+import type { CharacterWithStats } from '@/types/schemas';
 
 interface AgentDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
+/**
+ * WP-A adds these NFT identity fields to CharacterResponse.
+ * Defined here so the worktree compiles independently until WP-A merges.
+ */
+type CharacterWithNFT = CharacterWithStats & {
+  nftMintAddress: string | null;
+  nftMetadataUri: string | null;
+  registryAgentId: string | null;
+  isTransferable: boolean;
+  reputationScore: string | null;
+  capabilities: string[];
+  transferCount: number;
+};
+
 export default function AgentDetailPage({ params }: AgentDetailPageProps) {
   const { id } = use(params);
-  const { data: character, isLoading, error } = useCharacter(id);
+  const { data: characterRaw, isLoading, error } = useCharacter(id);
   const { mutate: updateCharacter } = useUpdateCharacter(id);
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
@@ -63,7 +80,7 @@ export default function AgentDetailPage({ params }: AgentDetailPageProps) {
   }
 
   // Error state
-  if (error || !character) {
+  if (error || !characterRaw) {
     return (
       <Card className="border-destructive/50 bg-destructive/10">
         <CardContent className="py-6">
@@ -74,6 +91,10 @@ export default function AgentDetailPage({ params }: AgentDetailPageProps) {
       </Card>
     );
   }
+
+  // Cast to augmented type — WP-A fields will be present at runtime after merge;
+  // they default gracefully (null / [] / false) if absent before merge.
+  const character = characterRaw as CharacterWithNFT;
 
   const isActive = character.status === CharacterStatus.ACTIVE;
   const isPaused = character.status === CharacterStatus.PAUSED;
@@ -114,6 +135,10 @@ export default function AgentDetailPage({ params }: AgentDetailPageProps) {
     [CharacterStatus.DRAFT]: 'bg-muted/10 text-muted-foreground border-border',
   };
 
+  // NFT-derived convenience flags (default-safe before WP-A merge)
+  const hasMint = Boolean(character.nftMintAddress);
+  const capabilities: string[] = Array.isArray(character.capabilities) ? character.capabilities : [];
+
   return (
     <div className="space-y-6">
       {/* Hero Section */}
@@ -127,18 +152,25 @@ export default function AgentDetailPage({ params }: AgentDetailPageProps) {
         <CardHeader>
           <div className="flex items-start justify-between">
             <div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <CardTitle className="text-2xl">{character.name}</CardTitle>
                 <Badge className={cn('text-xs', statusColors[character.status])}>
                   {character.status}
                 </Badge>
+                {hasMint && (
+                  <AgentIdentityBadge
+                    nftMintAddress={character.nftMintAddress!}
+                    registryAgentId={character.registryAgentId}
+                    reputationScore={character.reputationScore}
+                  />
+                )}
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
                 Created {formatDate(character.createdAt)}
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {/* Status Toggle Dropdown */}
+              {/* Status Toggle Buttons */}
               <div className="flex gap-1">
                 <Button
                   size="sm"
@@ -228,6 +260,29 @@ export default function AgentDetailPage({ params }: AgentDetailPageProps) {
         characterId={id}
         characterName={character.name}
       />
+
+      {/* Mint Identity (shown only when agent has no NFT mint yet) */}
+      {!hasMint && (
+        <MintIdentityCard characterId={id} characterName={character.name} />
+      )}
+
+      {/* Capabilities (shown after minting when the capabilities array is non-empty) */}
+      {hasMint && capabilities.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Capabilities</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {capabilities.map((cap) => (
+                <Badge key={cap} variant="secondary" className="text-xs">
+                  {cap.replace(/-/g, ' ')}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Content Library — primary hub for this agent's created content */}
       <ContentLibrary characterId={id} characterName={character.name} />

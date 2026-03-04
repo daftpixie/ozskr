@@ -8,7 +8,6 @@
 
 import { vi } from 'vitest';
 import type { CharacterDNA } from '@/lib/ai/character-dna';
-import type { MemoryResult } from '@/lib/ai/memory';
 import type { PipelineProgress } from '@/lib/ai/pipeline/types';
 
 // =============================================================================
@@ -95,6 +94,7 @@ export const createMockCharacterDNA = (
       colorPalette: ['#9945FF', '#14F195'],
       mood: 'energetic',
     },
+    workingMemoryTemplate: null,
     systemPrompt: `You are TestBot.
 
 PERSONA:
@@ -128,16 +128,23 @@ Remember: You are creating content as TestBot, not as an AI assistant.`,
 };
 
 /**
- * Create mock memory results
+ * Create mock relevant memories (string array — Mastra recallRelevant format)
  */
-export const createMockMemories = (count = 3): MemoryResult[] => {
-  return Array.from({ length: count }, (_, i) => ({
-    id: `mem-${String(i).padStart(3, '0')}`,
-    memory: `Memory content ${i + 1}`,
-    metadata: { index: i },
-    score: 0.9 - i * 0.1,
-    created_at: new Date(Date.now() - i * 86400000).toISOString(),
-  }));
+export const createMockRelevantMemories = (count = 3): string[] => {
+  return Array.from({ length: count }, (_, i) => `Memory content ${i + 1}`);
+};
+
+/**
+ * Create mock working memory XML string
+ */
+export const createMockWorkingMemory = (): string => {
+  return `<agent_working_memory>
+  <audience_preferences>Prefers cyberpunk aesthetics and DeFi content</audience_preferences>
+  <top_performing_content>No data yet</top_performing_content>
+  <posting_patterns>No patterns detected</posting_patterns>
+  <topic_resonance>No data yet</topic_resonance>
+  <style_adaptations>Using default persona settings</style_adaptations>
+</agent_working_memory>`;
 };
 
 // =============================================================================

@@ -1,117 +1,255 @@
 /**
- * Mem0 Memory Layer Integration Tests
- * Tests for character memory isolation and namespace enforcement
+ * Mastra-native Runtime Agent Memory Tests
+ * Tests for character memory isolation and UUID enforcement.
+ *
+ * NOTE: mem0ai (tools/mem0-mcp/) is NOT mocked here — this file tests the
+ * Mastra-based runtime memory layer only.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-// Hoisted mock references (available to vi.mock factories)
-const { mockSearch, mockAdd, mockDelete } = vi.hoisted(() => ({
-  mockSearch: vi.fn(),
-  mockAdd: vi.fn(),
-  mockDelete: vi.fn(),
-}));
+// ---------------------------------------------------------------------------
+// Hoisted mock references
+// ---------------------------------------------------------------------------
+const { mockGetWorkingMemory, mockUpdateWorkingMemory, mockSaveThread, mockGetThreadById } =
+  vi.hoisted(() => ({
+    mockGetWorkingMemory: vi.fn(),
+    mockUpdateWorkingMemory: vi.fn(),
+    mockSaveThread: vi.fn(),
+    mockGetThreadById: vi.fn(),
+  }));
 
-// Module mock (hoisted before imports)
-vi.mock('mem0ai', () => ({
-  MemoryClient: vi.fn(function () {
+// ---------------------------------------------------------------------------
+// Module mocks
+// ---------------------------------------------------------------------------
+
+// Mock @mastra/memory so tests don't require a database
+vi.mock('@mastra/memory', () => ({
+  Memory: vi.fn(function () {
     return {
-      search: mockSearch,
-      add: mockAdd,
-      delete: mockDelete,
+      getWorkingMemory: mockGetWorkingMemory,
+      updateWorkingMemory: mockUpdateWorkingMemory,
+      saveThread: mockSaveThread,
+      getThreadById: mockGetThreadById,
     };
   }),
 }));
 
-import { createAgentMemory } from './memory';
+// Mock InMemoryStore from @mastra/core/storage
+vi.mock('@mastra/core/storage', () => ({
+  InMemoryStore: vi.fn(function () {
+    return {};
+  }),
+}));
 
-describe('Mem0 Memory Layer', () => {
+// ---------------------------------------------------------------------------
+// Import under test (after mocks are established)
+// ---------------------------------------------------------------------------
+import { createAgentMemory, DEFAULT_WORKING_MEMORY_TEMPLATE } from './memory';
+
+// ---------------------------------------------------------------------------
+// Test suite
+// ---------------------------------------------------------------------------
+describe('Mastra Runtime Agent Memory', () => {
+  const validCharacterId = '550e8400-e29b-41d4-a716-446655440000';
+
   beforeEach(() => {
-    mockSearch.mockResolvedValue({
-      results: [
-        {
-          id: 'mem-001',
-          memory: 'Character prefers cyberpunk aesthetics',
-          score: 0.92,
-          created_at: '2024-01-01T00:00:00Z',
-        },
-      ],
+    vi.clearAllMocks();
+
+    // Default: thread not found (so it gets created)
+    mockGetThreadById.mockResolvedValue(null);
+    mockSaveThread.mockResolvedValue({
+      id: `wm-${validCharacterId}`,
+      resourceId: validCharacterId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      metadata: {},
     });
-    mockAdd.mockResolvedValue({ id: 'mem-123' });
-    mockDelete.mockResolvedValue({ success: true });
-    process.env.MEM0_API_KEY = 'mock-mem0-key';
+
+    // Default: return the platform default template
+    mockGetWorkingMemory.mockResolvedValue(DEFAULT_WORKING_MEMORY_TEMPLATE);
+    mockUpdateWorkingMemory.mockResolvedValue(undefined);
   });
 
-  const validNamespace = 'char_550e8400-e29b-41d4-a716-446655440000';
+  // -------------------------------------------------------------------------
+  // Security: ID validation
+  // -------------------------------------------------------------------------
 
-  it('should accept valid namespace (char_<uuid>)', () => {
-    expect(() => createAgentMemory(validNamespace)).not.toThrow();
+  it('should accept a valid UUID characterId', () => {
+    expect(() => createAgentMemory(validCharacterId)).not.toThrow();
   });
 
-  it('should reject invalid namespace (no prefix)', () => {
-    expect(() => createAgentMemory('550e8400-e29b-41d4-a716-446655440000')).toThrow();
+  it('should reject a non-UUID string (plain string)', () => {
+    expect(() => createAgentMemory('not-a-uuid')).toThrow();
   });
 
-  it('should reject user-supplied namespace without char_ prefix', () => {
+  it('should reject a Mem0-style namespace (char_ prefix)', () => {
+    expect(() => createAgentMemory('char_550e8400-e29b-41d4-a716-446655440000')).toThrow();
+  });
+
+  it('should reject an empty string', () => {
+    expect(() => createAgentMemory('')).toThrow();
+  });
+
+  it('should reject a user_id-style namespace', () => {
     expect(() => createAgentMemory('user_123e4567-e89b-12d3-a456-426614174000')).toThrow();
   });
 
-  it('should reject malformed UUID in namespace', () => {
-    expect(() => createAgentMemory('char_not-a-valid-uuid')).toThrow();
+  // -------------------------------------------------------------------------
+  // getWorkingMemory
+  // -------------------------------------------------------------------------
+
+  it('should return working memory from Mastra Memory', async () => {
+    const expectedXml = '<agent_working_memory><test>data</test></agent_working_memory>';
+    mockGetWorkingMemory.mockResolvedValueOnce(expectedXml);
+
+    const memory = createAgentMemory(validCharacterId);
+    const result = await memory.getWorkingMemory();
+
+    expect(result).toBe(expectedXml);
   });
 
-  it('should use validated namespace as user_id in recall', async () => {
-    const memory = createAgentMemory(validNamespace);
-    await memory.recall('test query', { limit: 5 });
+  it('should return the default template when Mastra returns null', async () => {
+    mockGetWorkingMemory.mockResolvedValueOnce(null);
 
-    expect(mockSearch).toHaveBeenCalledWith(
-      'test query',
+    const memory = createAgentMemory(validCharacterId);
+    const result = await memory.getWorkingMemory();
+
+    expect(result).toBe(DEFAULT_WORKING_MEMORY_TEMPLATE);
+    expect(result).toContain('<agent_working_memory>');
+  });
+
+  it('should return the default template when getWorkingMemory throws', async () => {
+    mockGetWorkingMemory.mockRejectedValueOnce(new Error('Storage unavailable'));
+
+    const memory = createAgentMemory(validCharacterId);
+    const result = await memory.getWorkingMemory();
+
+    expect(result).toBe(DEFAULT_WORKING_MEMORY_TEMPLATE);
+  });
+
+  it('should use custom template when provided', async () => {
+    const customTemplate = '<custom_memory><field>value</field></custom_memory>';
+    mockGetWorkingMemory.mockResolvedValueOnce(null); // null = use template
+
+    const memory = createAgentMemory(validCharacterId, customTemplate);
+    const result = await memory.getWorkingMemory();
+
+    // null → falls back to template
+    expect(result).toBe(customTemplate);
+  });
+
+  // -------------------------------------------------------------------------
+  // updateWorkingMemory
+  // -------------------------------------------------------------------------
+
+  it('should call Mastra updateWorkingMemory with the characterId as resourceId', async () => {
+    const memory = createAgentMemory(validCharacterId);
+    const newXml = '<agent_working_memory><updated>true</updated></agent_working_memory>';
+
+    await memory.updateWorkingMemory(newXml);
+
+    expect(mockUpdateWorkingMemory).toHaveBeenCalledWith(
       expect.objectContaining({
-        user_id: validNamespace,
-        limit: 5,
+        resourceId: validCharacterId,
+        workingMemory: newXml,
       })
     );
   });
 
-  it('should use validated namespace as user_id in store', async () => {
-    const memory = createAgentMemory(validNamespace);
-    await memory.store('New memory content', { key: 'value' });
+  it('should not throw when updateWorkingMemory fails (non-critical)', async () => {
+    mockUpdateWorkingMemory.mockRejectedValueOnce(new Error('Write failed'));
 
-    expect(mockAdd).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({
-          role: 'user',
-          content: 'New memory content',
+    const memory = createAgentMemory(validCharacterId);
+
+    // Should not throw — update failure is non-critical
+    await expect(memory.updateWorkingMemory('<test/>')).resolves.toBeUndefined();
+  });
+
+  // -------------------------------------------------------------------------
+  // recallRelevant (semantic recall stub)
+  // -------------------------------------------------------------------------
+
+  it('should return empty array from recallRelevant (semantic recall placeholder)', async () => {
+    const memory = createAgentMemory(validCharacterId);
+    const result = await memory.recallRelevant('create a tweet about Solana', 5);
+
+    expect(result).toEqual([]);
+    expect(Array.isArray(result)).toBe(true);
+  });
+
+  it('should accept any query string for recallRelevant', async () => {
+    const memory = createAgentMemory(validCharacterId);
+    await expect(memory.recallRelevant('some query')).resolves.toEqual([]);
+    await expect(memory.recallRelevant('')).resolves.toEqual([]);
+  });
+
+  // -------------------------------------------------------------------------
+  // Memory isolation — two different characterIds use different resourceIds
+  // -------------------------------------------------------------------------
+
+  it('should use characterId as the Mastra resourceId (isolation)', async () => {
+    const characterId1 = '550e8400-e29b-41d4-a716-446655440000';
+    const characterId2 = '660e8400-e29b-41d4-a716-446655440001';
+
+    const memory1 = createAgentMemory(characterId1);
+    const memory2 = createAgentMemory(characterId2);
+
+    const xml1 = '<agent_working_memory><agent>one</agent></agent_working_memory>';
+    const xml2 = '<agent_working_memory><agent>two</agent></agent_working_memory>';
+
+    mockUpdateWorkingMemory.mockResolvedValue(undefined);
+
+    await memory1.updateWorkingMemory(xml1);
+    await memory2.updateWorkingMemory(xml2);
+
+    // First call should use characterId1 as resourceId
+    expect(mockUpdateWorkingMemory).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ resourceId: characterId1, workingMemory: xml1 })
+    );
+
+    // Second call should use characterId2 as resourceId
+    expect(mockUpdateWorkingMemory).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ resourceId: characterId2, workingMemory: xml2 })
+    );
+  });
+
+  // -------------------------------------------------------------------------
+  // Thread initialization
+  // -------------------------------------------------------------------------
+
+  it('should create a canonical thread if none exists', async () => {
+    mockGetThreadById.mockResolvedValueOnce(null); // thread doesn't exist
+
+    const memory = createAgentMemory(validCharacterId);
+    await memory.getWorkingMemory();
+
+    // Should have checked for existing thread then created it
+    expect(mockGetThreadById).toHaveBeenCalled();
+    expect(mockSaveThread).toHaveBeenCalledWith(
+      expect.objectContaining({
+        thread: expect.objectContaining({
+          resourceId: validCharacterId,
+          id: `wm-${validCharacterId}`,
         }),
-      ]),
-      expect.objectContaining({
-        user_id: validNamespace,
-        metadata: { key: 'value' },
       })
     );
   });
 
-  it('should handle recall with default limit', async () => {
-    const memory = createAgentMemory(validNamespace);
-    await memory.recall('test query');
+  it('should not recreate the thread if it already exists', async () => {
+    mockGetThreadById.mockResolvedValueOnce({
+      id: `wm-${validCharacterId}`,
+      resourceId: validCharacterId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
-    expect(mockSearch).toHaveBeenCalledWith(
-      'test query',
-      expect.objectContaining({ limit: 10 })
-    );
-  });
+    const memory = createAgentMemory(validCharacterId);
+    await memory.getWorkingMemory();
 
-  it('should handle empty results from Mem0', async () => {
-    mockSearch.mockResolvedValueOnce({ results: [] });
-
-    const memory = createAgentMemory(validNamespace);
-    const results = await memory.recall('no matches');
-
-    expect(results).toEqual([]);
-  });
-
-  it('should throw error when MEM0_API_KEY is missing', () => {
-    delete process.env.MEM0_API_KEY;
-    expect(() => createAgentMemory(validNamespace)).toThrow('MEM0_API_KEY');
+    expect(mockGetThreadById).toHaveBeenCalled();
+    expect(mockSaveThread).not.toHaveBeenCalled();
   });
 });

@@ -29,7 +29,7 @@ import {
   generateKeyPair,
   getBase58Codec,
 } from '@solana/kit';
-import type { Address, IInstruction } from '@solana/kit';
+import type { Address, Instruction, Signature } from '@solana/kit';
 import { getSolanaRpc, getFallbackRpc } from '@/lib/solana/rpc';
 import { simulateTransaction } from '@/lib/solana/transactions';
 import { publishRegistrationFile } from '@/lib/solana/agent-registry';
@@ -404,7 +404,7 @@ function buildCreateAccountInstruction(params: {
   lamports: bigint;
   space: bigint;
   programId: Address;
-}): IInstruction {
+}): Instruction {
   const encoder = getAddressEncoder();
   const data = new Uint8Array(4 + 8 + 8 + 32);
   const view = new DataView(data.buffer);
@@ -439,7 +439,7 @@ function buildTransferInstruction(params: {
   fromPubkey: Address;
   toPubkey: Address;
   lamports: bigint;
-}): IInstruction {
+}): Instruction {
   const data = new Uint8Array(12);
   const view = new DataView(data.buffer);
   view.setUint32(0, 2, true); // Transfer = 2
@@ -469,7 +469,7 @@ function buildInitializeMintInstruction(params: {
   mint: Address;
   decimals: number;
   mintAuthority: Address;
-}): IInstruction {
+}): Instruction {
   const encoder = getAddressEncoder();
   // InitializeMint2: discriminator(1) + decimals(1) + mintAuthority(32) + freezeAuthority option(1+32)
   const data = new Uint8Array(1 + 1 + 32 + 1 + 32);
@@ -499,7 +499,7 @@ function buildCreateATAInstruction(params: {
   owner: Address;
   mint: Address;
   ata: Address;
-}): IInstruction {
+}): Instruction {
   return {
     programAddress: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
     accounts: [
@@ -527,7 +527,7 @@ function buildMintToInstruction(params: {
   destination: Address;
   authority: Address;
   amount: bigint;
-}): IInstruction {
+}): Instruction {
   const data = new Uint8Array(9);
   const view = new DataView(data.buffer);
   data[0] = SPL_IX_MINT_TO;
@@ -556,7 +556,7 @@ function buildMintToInstruction(params: {
 function buildRevokeMintAuthorityInstruction(params: {
   mint: Address;
   currentAuthority: Address;
-}): IInstruction {
+}): Instruction {
   // discriminator(1) + authorityType(1) + Option prefix(1) = 3 bytes (None variant)
   const data = new Uint8Array(3);
   data[0] = SPL_IX_SET_AUTHORITY;
@@ -640,7 +640,7 @@ export async function constructMintTransaction(
   // Extract mint address from the generated keypair using @solana/kit's address encoder
   // The keypair's public key bytes can be exported and encoded as a base58 address
   const exportedPubkey = await crypto.subtle.exportKey('raw', mintKeypair.publicKey);
-  const mintAddressStr = getBase58Codec().encode(new Uint8Array(exportedPubkey)) as unknown as Address;
+  const mintAddressStr = getBase58Codec().decode(new Uint8Array(exportedPubkey)) as unknown as Address;
   assertIsAddress(mintAddressStr);
 
   // Step 3: Derive the Associated Token Account address
@@ -827,7 +827,7 @@ export async function verifyMintConfirmation(
 
   // Verify transaction status
   const sigResult = await rpc
-    .getSignatureStatuses([txSignature as `${string}`])
+    .getSignatureStatuses([txSignature as unknown as Signature])
     .send();
 
   const status = sigResult.value[0];

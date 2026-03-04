@@ -18,9 +18,20 @@ export interface CharacterDNA {
   readonly voiceTone: string;
   readonly guardrails: readonly string[];
   readonly topicAffinity: readonly string[];
+  /**
+   * @deprecated Runtime memory now uses `id` as the Mastra resourceId.
+   * `mem0Namespace` is retained for backward compatibility with the database
+   * column (characters.mem0_namespace) and may be removed in a future release.
+   */
   readonly mem0Namespace: string;
   readonly visualStyleParams: Record<string, unknown>;
   readonly systemPrompt: string;
+  /**
+   * Mastra Working Memory XML template.
+   * null = use platform default (DEFAULT_WORKING_MEMORY_TEMPLATE).
+   * Populated from characters.working_memory_template if the column exists.
+   */
+  readonly workingMemoryTemplate: string | null;
 }
 
 /**
@@ -120,6 +131,11 @@ export const loadCharacterDNA = async (
     topic_affinity: character.topic_affinity,
   });
 
+  // working_memory_template column may not exist yet in the database schema.
+  // Fall back to null (platform default) if the column is absent or null.
+  const workingMemoryTemplate =
+    (character as unknown as Record<string, unknown>)['working_memory_template'] as string | null ?? null;
+
   const dna: CharacterDNA = {
     id: character.id,
     name: character.name,
@@ -131,6 +147,7 @@ export const loadCharacterDNA = async (
     mem0Namespace: character.mem0_namespace,
     visualStyleParams: character.visual_style_params,
     systemPrompt,
+    workingMemoryTemplate,
   };
 
   // Return frozen object (immutable)

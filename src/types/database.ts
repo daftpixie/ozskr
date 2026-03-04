@@ -184,6 +184,18 @@ export interface Character {
   registry_agent_id: string | null;
   /** R2 URL for ERC-8004 agent registration file. Null until published. */
   registry_url: string | null;
+  /** Whether this agent NFT can be transferred to another wallet. */
+  is_transferable: boolean | null;
+  /** Platform reputation score 0.00–9.99, updated by platform activity. */
+  reputation_score: string | null;
+  /** Array of declared capability strings. */
+  capabilities: string[] | null;
+  /** Number of times this agent NFT has been transferred. */
+  transfer_count: number | null;
+  /** ISO timestamp of the last NFT transfer. */
+  last_transferred_at: string | null;
+  /** XML template for Mastra Working Memory — null uses platform default. */
+  working_memory_template: string | null;
 }
 
 export interface AgentRun {

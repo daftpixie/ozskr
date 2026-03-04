@@ -109,8 +109,8 @@ describe('Pipeline Stage 2: Load Character Context', () => {
 
     expect(context.dna).toBeDefined();
     expect(context.dna.name).toBe('TestBot');
-    expect(context.memories).toBeDefined();
-    expect(Array.isArray(context.memories)).toBe(true);
+    expect(context.relevantMemories).toBeDefined();
+    expect(Array.isArray(context.relevantMemories)).toBe(true);
     expect(context.sessionContext.generationType).toBe('text');
     expect(context.sessionContext.timestamp).toBeDefined();
   });
@@ -144,7 +144,7 @@ describe('Pipeline Stage 2: Load Character Context', () => {
 
     const context = await loadCharacterContext(validInput, onProgress);
 
-    expect(context.memories).toEqual([]);
+    expect(context.relevantMemories).toEqual([]);
     expect(progressCalls.some((p) => p.message.includes('non-critical'))).toBe(true);
   });
 

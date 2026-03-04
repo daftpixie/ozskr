@@ -159,7 +159,7 @@ export function generateRegistrationFile(params: {
 async function hmacSha256(key: ArrayBuffer | Uint8Array, data: string): Promise<ArrayBuffer> {
   const cryptoKey = await crypto.subtle.importKey(
     'raw',
-    key instanceof ArrayBuffer ? key : key.buffer,
+    key instanceof ArrayBuffer ? key : key.buffer as ArrayBuffer,
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign']
