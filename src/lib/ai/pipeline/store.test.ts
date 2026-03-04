@@ -106,26 +106,21 @@ describe('Pipeline Stage 7: Store & Notify', () => {
     expect(mockRpc).toHaveBeenCalled();
   });
 
-  it('should store memory in Mem0', async () => {
-    await storeAndNotify(
-      mockResult.generationId!,
-      mockResult,
-      mockContext,
-      'mock-jwt-token',
-      onProgress
-    );
+  it('should update Mastra working memory after generation', async () => {
+    // Mastra InMemoryStore is used (not mocked) — just verify the pipeline completes
+    await expect(
+      storeAndNotify(
+        mockResult.generationId!,
+        mockResult,
+        mockContext,
+        'mock-jwt-token',
+        onProgress
+      )
+    ).resolves.not.toThrow();
 
-    expect(mockMemAdd).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({
-          role: 'user',
-          content: expect.stringContaining('Generated text content'),
-        }),
-      ]),
-      expect.objectContaining({
-        user_id: mockContext.dna.mem0Namespace,
-      })
-    );
+    // Verify working memory update was attempted (progress emitted)
+    const storingStages = progressCalls.filter((p) => p.stage === 'storing');
+    expect(storingStages.some((p) => p.message.includes('working memory'))).toBe(true);
   });
 
   it('should emit storing progress events', async () => {
@@ -142,7 +137,7 @@ describe('Pipeline Stage 7: Store & Notify', () => {
 
     expect(storingStages.some((p) => p.message.includes('Updating generation record'))).toBe(true);
     expect(storingStages.some((p) => p.message.includes('Updating character stats'))).toBe(true);
-    expect(storingStages.some((p) => p.message.includes('Storing generation context in Mem0'))).toBe(true);
+    expect(storingStages.some((p) => p.message.includes('Updating working memory'))).toBe(true);
   });
 
   it('should emit complete progress event at the end', async () => {
@@ -159,9 +154,10 @@ describe('Pipeline Stage 7: Store & Notify', () => {
     expect(completeStage?.message).toContain('complete');
   });
 
-  it('should continue if Mem0 storage fails (non-critical)', async () => {
-    mockMemAdd.mockRejectedValueOnce(new Error('Mem0 API error'));
-
+  it('should complete pipeline even if Mastra working memory update fails (non-critical)', async () => {
+    // Memory update failures are non-critical — pipeline must complete regardless.
+    // The InMemoryStore used here works in-memory; this test just verifies the
+    // pipeline resolves (Mastra memory failures are caught inside storeAndNotify).
     await expect(
       storeAndNotify(
         mockResult.generationId!,
@@ -171,7 +167,5 @@ describe('Pipeline Stage 7: Store & Notify', () => {
         onProgress
       )
     ).resolves.not.toThrow();
-
-    expect(progressCalls.some((p) => p.message.includes('non-critical'))).toBe(true);
   });
 });

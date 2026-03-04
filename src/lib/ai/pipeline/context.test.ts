@@ -139,13 +139,12 @@ describe('Pipeline Stage 2: Load Character Context', () => {
     );
   });
 
-  it('should return empty array when memory recall fails (non-critical)', async () => {
-    mockMemSearch.mockRejectedValueOnce(new Error('Mem0 API timeout'));
-
+  it('should return empty relevantMemories (Mastra semantic recall stub)', async () => {
+    // recallRelevant is a non-blocking stub that always returns [] until pgvector is wired
     const context = await loadCharacterContext(validInput, onProgress);
 
     expect(context.relevantMemories).toEqual([]);
-    expect(progressCalls.some((p) => p.message.includes('non-critical'))).toBe(true);
+    // No 'non-critical' warning — the stub returns [] without error
   });
 
   it('should emit loading_context progress events', async () => {
