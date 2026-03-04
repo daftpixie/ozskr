@@ -20,9 +20,17 @@ ALTER TABLE public.characters
 
 -- Unique constraint: each mint address can only be associated with one agent
 -- This prevents a mint address from being claimed by multiple characters.
-ALTER TABLE public.characters
-  ADD CONSTRAINT IF NOT EXISTS characters_nft_mint_address_unique
-    UNIQUE (nft_mint_address);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'characters_nft_mint_address_unique'
+  ) THEN
+    ALTER TABLE public.characters
+      ADD CONSTRAINT characters_nft_mint_address_unique
+        UNIQUE (nft_mint_address);
+  END IF;
+END$$;
 
 -- Index for registry lookups by CAIP-2 agent ID
 CREATE INDEX IF NOT EXISTS idx_characters_registry_agent_id
