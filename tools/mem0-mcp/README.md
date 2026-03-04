@@ -162,9 +162,8 @@ Memories stored without an `agent` are shared across all domains (visible to all
 | Namespace | `user_id` | Purpose |
 |-----------|-----------|---------|
 | Dev workflow | `ozskr-dev` | All memories from this server (hardcoded) |
-| Prod user memory | `ozskr-prod-{userId}` | End-user agent memory in `src/lib/ai/memory.ts` |
 
-**These namespaces must never overlap.** This server only ever writes to `ozskr-dev`.
+**This server only ever writes to `ozskr-dev`.** Runtime agent memory (in-session working memory for each AI agent character) uses **Mastra** (`@mastra/memory`), not Mem0. See `src/lib/ai/memory.ts` — `createAgentMemory(characterId)` uses `InMemoryStore` scoped by character UUID, not Mem0 namespaces.
 
 ## How Mem0 Processes Writes
 

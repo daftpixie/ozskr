@@ -11,7 +11,7 @@
 [![Solana](https://img.shields.io/badge/Solana-@solana/kit-9945FF?logo=solana)](https://solana.com)
 [![Built with Claude Code](https://img.shields.io/badge/Built_with-Claude_Code-D4A574?logo=anthropic)](https://claude.com/claude-code)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x_strict-3178C6?logo=typescript)](https://typescriptlang.org)
-[![Tests](https://img.shields.io/badge/Tests-670_passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/Tests-810_passing-brightgreen)]()
 
 </div>
 
@@ -25,7 +25,9 @@ The platform is open source and built entirely with Claude Code's multi-agent or
 
 ## Features
 
-**AI Agent Creation** — Design characters with custom personas, voice styles, and visual identities. Each agent gets persistent memory via Mem0 with namespace isolation per character.
+**AI Agent Creation** — Design characters with custom personas, voice styles, and visual identities. Each agent gets persistent working memory via Mastra, scoped to its character UUID.
+
+**Agent NFT Identity** — Optional ERC-8004 compatible on-chain identity. Mint a 1-of-1 SPL token NFT to give an agent a permanent Solana address, CAIP-2 agent ID, and tradable identity. Enables agent marketplace (Phase 9).
 
 **7-Stage Content Pipeline** — Parse → Context recall → Enhance → Generate (Claude) → Quality check → Moderation → Store. All content passes automated moderation and FTC/NY disclosure compliance before publishing.
 
@@ -66,7 +68,7 @@ graph TB
     UI --> API
 
     subgraph "Services"
-        Claude[Claude API + Mem0]
+        Claude[Claude API + Mastra Memory]
         Jupiter[Jupiter Ultra]
         Social[SocialPublisher]
         Supabase[(Supabase + RLS)]
@@ -118,7 +120,7 @@ This repository is a pnpm monorepo. The open-source packages live in `packages/`
 |-------|-----------|
 | Framework | Next.js 16.1.6, React 19, TypeScript 5.x strict |
 | Blockchain | @solana/kit 6.0.1, Jupiter Ultra, Helius RPC |
-| AI | Claude API (@ai-sdk/anthropic 3.x), Mastra 1.4.0, Mem0 2.x |
+| AI | Claude API (@ai-sdk/anthropic 3.x), Mastra 1.4.0 + @mastra/memory 1.5.2 |
 | Images | fal.ai (Flux, SDXL) |
 | Database | Supabase 2.x (PostgreSQL 16 + pgvector + RLS + Realtime) |
 | API | Hono 4.x, Zod 4.x validation |
@@ -129,7 +131,7 @@ This repository is a pnpm monorepo. The open-source packages live in `packages/`
 | Observability | Langfuse 3.x (AI tracing) |
 | Rate Limiting | Upstash Redis |
 | Payments | x402 protocol via @ozskr/x402-solana-mcp |
-| Testing | Vitest 4.x (659 tests), Playwright (E2E) |
+| Testing | Vitest 4.x (810 tests), Playwright (E2E) |
 | UI | Tailwind CSS 4, shadcn/ui, Radix primitives |
 
 ## Quick Start
@@ -160,7 +162,7 @@ pnpm dev          # Start dev server (port 3000, Turbopack)
 pnpm build        # Production build
 pnpm typecheck    # TypeScript strict check — run after every change
 pnpm lint         # ESLint
-pnpm test         # Run all 659 tests
+pnpm test         # Run all 810 tests
 pnpm test:e2e     # Playwright end-to-end tests
 pnpm test:coverage # Coverage report
 ```
@@ -188,7 +190,7 @@ src/
 │   └── wallet/             # Solana wallet connection (adapter)
 ├── lib/
 │   ├── solana/             # RPC clients, transactions, tokens, Jupiter, $HOPE
-│   ├── ai/                 # Claude integration, Mastra, Mem0, pipeline (7 stages)
+│   ├── ai/                 # Claude integration, Mastra memory, pipeline (7 stages)
 │   ├── api/                # Hono app, routes (20+), middleware, Supabase client
 │   ├── agent-wallet/       # SPL delegation helpers (wraps agent-wallet-sdk)
 │   ├── auth/               # SIWS auth utilities
@@ -221,7 +223,7 @@ tools/
 - Slippage guards on all swap operations (max 100 bps)
 - 7-stage content moderation pipeline on all AI outputs
 - Row Level Security on every Supabase table (20 migrations, all with RLS)
-- Mem0 namespace isolation per character (`ozskr-prod-{userId}`)
+- Mastra runtime memory isolated per agent by character UUID (server-enforced)
 - Zod validation on all API and AI tool boundaries
 - OAuth tokens encrypted at rest via pgcrypto (AES-256)
 - Security headers: CSP, HSTS, X-Frame-Options, X-Content-Type-Options
@@ -241,7 +243,7 @@ This project was built exclusively with [Claude Code](https://claude.com/claude-
 - **`test-writer`** ensures coverage across all domains
 - **`glinda-cmo`** and **`toto-funding`** handle go-to-market and funding strategy
 
-670 tests. 64 test files. Zero `any` types. Every line AI-generated, human-reviewed.
+810 tests. 64 test files. Zero `any` types. Every line AI-generated, human-reviewed.
 
 ## Contributing
 
