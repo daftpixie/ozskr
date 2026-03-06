@@ -1,11 +1,16 @@
 /**
  * Publisher Factory
  * Selects the appropriate SocialPublisher adapter based on feature flags
+ *
+ * Architecture:
+ *   - AyrshareAdapter   — Ayrshare backend (Instagram, LinkedIn, TikTok)
+ *   - TwitterAdapter    — Direct Twitter/X API v2 with OAuth 2.0 PKCE (per-user)
+ *   - XDirectAdapter    — Direct X API v2 with OAuth 1.0a app credentials (single @ozskr account)
  */
 
 import { getFeatureFlags } from '@/lib/feature-flags';
 import { AyrshareAdapter } from './ayrshare-adapter';
-import { TwitterAdapter } from './twitter-adapter';
+import { XDirectAdapter } from './x-direct-adapter';
 import { SocialProvider, type SocialPublisher } from './types';
 
 /** Cached publisher instance per provider (adapters are stateless singletons) */
@@ -25,7 +30,7 @@ const getPublisherForProvider = (provider: SocialProvider): SocialPublisher => {
       publisher = new AyrshareAdapter();
       break;
     case SocialProvider.DIRECT:
-      publisher = new TwitterAdapter();
+      publisher = new XDirectAdapter();
       break;
     default: {
       const _exhaustive: never = provider;
@@ -64,4 +69,35 @@ export const isPublishingEnabled = (): boolean => {
  */
 export const resetPublisherCache = (): void => {
   publisherCache.clear();
+};
+
+// =============================================================================
+// X DIRECT (OAUTH 1.0A APP CREDENTIALS)
+// =============================================================================
+
+/** Cached XDirectAdapter singleton */
+let xDirectPublisher: XDirectAdapter | null = null;
+
+/**
+ * Get the XDirectAdapter for posting as @ozskr via OAuth 1.0a app credentials.
+ *
+ * This is a separate path from the standard SocialPublisher flow:
+ *   - No per-user OAuth token required
+ *   - Reads X_API_KEY / X_API_SECRET / X_ACCESS_TOKEN / X_ACCESS_TOKEN_SECRET from env
+ *   - Intended for single-account direct posting on the free/basic X API tier
+ *
+ * Throws XClientError at call time if credentials are missing.
+ */
+export const getXDirectPublisher = (): XDirectAdapter => {
+  if (!xDirectPublisher) {
+    xDirectPublisher = new XDirectAdapter();
+  }
+  return xDirectPublisher;
+};
+
+/**
+ * Reset the X direct publisher singleton (for testing)
+ */
+export const resetXDirectPublisher = (): void => {
+  xDirectPublisher = null;
 };

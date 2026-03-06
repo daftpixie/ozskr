@@ -76,14 +76,18 @@ export const authMiddleware = createMiddleware(async (c: Context, next) => {
     if (serviceRoleKey) {
       try {
         const supabase = createSupabaseServerClient(serviceRoleKey);
-        const { data: session } = await supabase
+        const { data: session, error: sessionCheckError } = await supabase
           .from('sessions')
           .select('id, expires_at')
           .eq('wallet_address', walletAddress)
           .eq('jwt_token', token)
           .maybeSingle();
 
-        if (session === null) {
+        if (sessionCheckError) {
+          // DB error — fall through to JWT-only auth rather than blocking
+          // the request. This prevents a transient DB issue from locking
+          // out all authenticated users.
+        } else if (session === null) {
           return c.json(
             {
               error: 'Session has been revoked',
@@ -91,9 +95,7 @@ export const authMiddleware = createMiddleware(async (c: Context, next) => {
             },
             401
           );
-        }
-
-        if (session && new Date(session.expires_at) < new Date()) {
+        } else if (new Date(session.expires_at) < new Date()) {
           return c.json(
             {
               error: 'Session has expired',

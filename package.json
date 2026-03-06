@@ -24,6 +24,7 @@
     "publish:all": "pnpm run publish:sdk && pnpm run publish:mcp && pnpm run publish:facilitator"
   },
   "dependencies": {
+    "8004-solana": "^0.7.9",
     "@ai-sdk/anthropic": "^3.0.44",
     "@fal-ai/serverless-client": "^0.15.0",
     "@hono/zod-validator": "^0.7.6",
@@ -51,6 +52,10 @@
     "@trigger.dev/sdk": "^4.4.1",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.36.2",
+    "@x402/core": "^2.3.1",
+    "@x402/fetch": "^2.6.0",
+    "@x402/hono": "^2.6.0",
+    "@x402/svm": "^2.3.0",
     "ai": "^6.0.86",
     "bs58": "^6.0.0",
     "class-variance-authority": "^0.7.1",

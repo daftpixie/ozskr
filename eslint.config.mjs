@@ -27,6 +27,10 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Open-source packages have their own lint config
     "packages/**",
+    // Trigger.dev build artifacts
+    ".trigger/**",
+    // Claude Code agent worktrees
+    ".claude/worktrees/**",
   ]),
 ]);
 

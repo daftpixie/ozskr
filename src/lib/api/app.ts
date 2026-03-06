@@ -17,6 +17,7 @@ import { trading } from './routes/trading';
 import { analytics } from './routes/analytics';
 import { schedules } from './routes/schedules';
 import { social } from './routes/social';
+import { socialDirect } from './routes/social-direct';
 import { twitterOAuth } from './routes/twitter-oauth';
 import { gamification } from './routes/gamification';
 import { waitlist } from './routes/waitlist';
@@ -28,6 +29,7 @@ import { adminReport } from './routes/admin-report';
 import { adminCharacters } from './routes/admin-characters';
 import { delegation } from './routes/delegation';
 import { tapestry } from './routes/tapestry';
+import { services } from './routes/services';
 
 // App context variables type
 type AppVariables = {
@@ -88,7 +90,7 @@ app.use(
     origin: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
     credentials: true,
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'Authorization'],
+    allowHeaders: ['Content-Type', 'Authorization', 'X-Payment'],
   })
 );
 
@@ -103,6 +105,7 @@ app.route('/content', content);
 app.route('/trading', trading);
 app.route('/analytics', analytics);
 app.route('/social', social);
+app.route('/social/direct', socialDirect);
 app.route('/social/twitter', twitterOAuth);
 app.route('/gamification', gamification);
 app.route('/waitlist', waitlist);
@@ -114,6 +117,7 @@ app.route('/admin-issues', adminIssues);
 app.route('/admin-report', adminReport);
 app.route('/delegation', delegation);
 app.route('/tapestry', tapestry);
+app.route('/services', services);
 
 // Global error handler with AppError support
 app.onError((err, c) => {

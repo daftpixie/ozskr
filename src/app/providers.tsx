@@ -5,18 +5,20 @@
  * Wraps the application with all required context providers
  */
 
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import {
   ConnectionProvider,
   WalletProvider,
   WalletContext,
   useWallet,
 } from '@solana/wallet-adapter-react';
+import type { WalletError } from '@solana/wallet-adapter-base';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
 import { SolflareWalletAdapter } from '@solana/wallet-adapter-solflare';
 import { BackpackWalletAdapter } from '@solana/wallet-adapter-backpack';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { resolveHeliusRpcUrl } from '@/lib/solana/rpc';
 
 // Import wallet adapter CSS
 import '@solana/wallet-adapter-react-ui/styles.css';
@@ -56,11 +58,14 @@ const queryClient = new QueryClient({
 });
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  // Get RPC endpoint from environment (fallback based on network)
+  // Resolve RPC endpoint using NEXT_PUBLIC_SOLANA_NETWORK as the source of
+  // truth. resolveHeliusRpcUrl() corrects the Helius subdomain to match the
+  // active network so a devnet API key URL is never accidentally used on
+  // mainnet-beta (and vice-versa). Falls back to the public cluster endpoint
+  // when no Helius URL is configured.
   const endpoint = useMemo(() => {
-    if (process.env.NEXT_PUBLIC_HELIUS_RPC_URL) {
-      return process.env.NEXT_PUBLIC_HELIUS_RPC_URL;
-    }
+    const heliusUrl = resolveHeliusRpcUrl();
+    if (heliusUrl) return heliusUrl;
     return process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'mainnet-beta'
       ? 'https://api.mainnet-beta.solana.com'
       : 'https://api.devnet.solana.com';
@@ -78,10 +83,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
     []
   );
 
+  // Suppress non-fatal MetaMask connection errors — MetaMask registers itself
+  // via Wallet Standard auto-discovery but cannot connect in a Solana context.
+  const onWalletError = useCallback((error: WalletError) => {
+    if (error.name === 'WalletConnectionError' && error.message?.includes('MetaMask')) return;
+    console.error('[WalletProvider]', error);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ConnectionProvider endpoint={endpoint}>
-        <WalletProvider wallets={wallets} autoConnect>
+        <WalletProvider wallets={wallets} autoConnect onError={onWalletError}>
           <WalletDeduplicator>
             <WalletModalProvider>{children}</WalletModalProvider>
           </WalletDeduplicator>

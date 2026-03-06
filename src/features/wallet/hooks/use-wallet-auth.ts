@@ -5,7 +5,7 @@
  * Handles full SIWS (Sign-In With Solana) flow with wallet adapter integration
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import bs58 from 'bs58';
 import { assertIsAddress, address as createAddress } from '@solana/kit';
@@ -148,6 +148,10 @@ export function useWalletAuth() {
   /**
    * Validate existing session on mount.
    * Checks localStorage for token and validates with API.
+   *
+   * Only clears auth on definitive auth failures (401/403). Transient errors
+   * (5xx, network failures) leave the stored token intact so the user is not
+   * logged out due to a momentary server or connectivity issue.
    */
   useEffect(() => {
     const validateSession = async () => {
@@ -169,8 +173,11 @@ export function useWalletAuth() {
         });
 
         if (!response.ok) {
-          // Token invalid or expired - clear it
-          clearAuth();
+          // Only clear auth on definitive authentication failures (401/403).
+          // A 5xx or network error is transient — do not log the user out.
+          if (response.status === 401 || response.status === 403) {
+            clearAuth();
+          }
           return;
         }
 
@@ -182,8 +189,8 @@ export function useWalletAuth() {
 
         setAuth(session.token, session.user, whitelisted, admin);
       } catch {
-        // Session validation failed - clear auth
-        clearAuth();
+        // Network-level failure (fetch threw) — do not clear auth.
+        // The user will be re-validated on the next mount or interaction.
       } finally {
         setIsLoading(false);
       }
@@ -196,9 +203,26 @@ export function useWalletAuth() {
 
   /**
    * Handle wallet disconnect: auto sign out.
+   *
+   * We track whether the wallet has ever connected in this session. On the
+   * initial render, the wallet adapter reports `connected = false` while it
+   * is still hydrating from the browser extension. Firing clearAuth() at
+   * that point would log out a user who is actually still authenticated.
+   *
+   * The flag `hasConnectedRef` is set to true the first time `connected`
+   * becomes true. The disconnect handler only fires after that point, which
+   * means it cannot be triggered by the pre-hydration false state.
    */
+  const hasConnectedRef = useRef(false);
+
   useEffect(() => {
-    if (!connected && isAuthenticated) {
+    if (connected) {
+      hasConnectedRef.current = true;
+    }
+  }, [connected]);
+
+  useEffect(() => {
+    if (!connected && isAuthenticated && hasConnectedRef.current) {
       clearAuth();
     }
   }, [connected, isAuthenticated, clearAuth]);
