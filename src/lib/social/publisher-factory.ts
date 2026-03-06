@@ -10,7 +10,6 @@
 
 import { getFeatureFlags } from '@/lib/feature-flags';
 import { AyrshareAdapter } from './ayrshare-adapter';
-import { TwitterAdapter } from './twitter-adapter';
 import { XDirectAdapter } from './x-direct-adapter';
 import { SocialProvider, type SocialPublisher } from './types';
 
@@ -31,7 +30,7 @@ const getPublisherForProvider = (provider: SocialProvider): SocialPublisher => {
       publisher = new AyrshareAdapter();
       break;
     case SocialProvider.DIRECT:
-      publisher = new TwitterAdapter();
+      publisher = new XDirectAdapter();
       break;
     default: {
       const _exhaustive: never = provider;

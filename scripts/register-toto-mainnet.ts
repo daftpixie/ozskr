@@ -180,7 +180,10 @@ function loadKeypairFromBase58(base58Key: string): Keypair {
     );
   }
 
-  return Keypair.fromSecretKey(secretBytes);
+  const keypair = Keypair.fromSecretKey(secretBytes);
+  // Zero the raw key material from memory now that it is held inside the Keypair object.
+  secretBytes.fill(0);
+  return keypair;
 }
 
 // ---------------------------------------------------------------------------
@@ -506,10 +509,6 @@ async function main(): Promise<void> {
     console.log('IMPORTANT: This will create a permanent on-chain record.');
     console.log('');
 
-    // Simulate first using a raw RPC call before delegating to SDK
-    // The SDK does not expose a simulation path — we perform a lightweight
-    // check by fetching the account info for the authority to confirm it
-    // has SOL to cover fees.
     const connection = new Connection(env.rpcUrl, 'confirmed');
     const balance = await connection.getBalance(authority.publicKey);
     const balanceLamports = BigInt(balance);
@@ -523,6 +522,42 @@ async function main(): Promise<void> {
       );
       process.exit(1);
     }
+
+    // SECURITY: Simulate the transaction before sending per CLAUDE.md requirement.
+    // We use skipSend=true to build the serialized tx, decode and simulate it,
+    // then fall through to the live send only if simulation succeeds.
+    console.log('Simulating transaction before sending...');
+    let prepForSim: Awaited<ReturnType<typeof sdk.registerAgent>>;
+    try {
+      prepForSim = await sdk.registerAgent(metadataUri, { skipSend: true });
+    } catch (err) {
+      console.error(`ERROR: Failed to prepare transaction for simulation: ${err instanceof Error ? err.message : String(err)}`);
+      process.exit(1);
+    }
+
+    if (!isPreparedTransaction(prepForSim)) {
+      console.error('ERROR: Could not prepare transaction for simulation — aborting.');
+      process.exit(1);
+    }
+
+    // Decode the base64 serialized transaction and simulate via RPC
+    const { Transaction } = await import('@solana/web3.js');
+    const txBytes = Buffer.from(prepForSim.transaction, 'base64');
+    const simulateTx = Transaction.from(txBytes);
+    const simResult = await connection.simulateTransaction(simulateTx);
+
+    if (simResult.value.err) {
+      console.error('ERROR: Transaction simulation failed — aborting live send.');
+      console.error('Simulation error:', JSON.stringify(simResult.value.err, null, 2));
+      if (simResult.value.logs) {
+        console.error('Program logs:');
+        simResult.value.logs.forEach((log) => console.error(' ', log));
+      }
+      process.exit(1);
+    }
+
+    console.log('Simulation succeeded. Proceeding with live send.');
+    console.log('');
 
     let txResult: Awaited<ReturnType<typeof sdk.registerAgent>>;
     try {

@@ -22,6 +22,7 @@ import {
 } from './types';
 import { createXClient, XClientError } from './x-client';
 import { injectTwitterAiDisclosure } from './ai-disclosure';
+import { validatePublicImageUrl } from './image-url-validator';
 
 /**
  * Direct X API cost is $0 per post (app credentials, no Ayrshare intermediary)
@@ -58,6 +59,9 @@ export class XDirectAdapter implements SocialPublisher {
       if (post.mediaUrls && post.mediaUrls.length > 0) {
         mediaIds = [];
         for (const mediaUrl of post.mediaUrls) {
+          // SECURITY: Validate mediaUrl is a public HTTPS domain (SSRF guard)
+          validatePublicImageUrl(mediaUrl);
+
           const mediaResponse = await fetch(mediaUrl);
           if (!mediaResponse.ok) {
             throw new XClientError(

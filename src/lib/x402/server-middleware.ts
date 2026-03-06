@@ -136,14 +136,19 @@ export function buildX402Middleware(
   const treasuryAddress = process.env.PLATFORM_TREASURY_ADDRESS;
 
   if (!treasuryAddress) {
-    // In production this is a fatal misconfiguration. Log at error level and
-    // return passthrough so the service degrades gracefully rather than crashing.
-    // The security-auditor review gate will catch this before production deploy.
-    logger.error('PLATFORM_TREASURY_ADDRESS not set — x402 gate disabled for service', {
+    // PLATFORM_TREASURY_ADDRESS is required when billing is enabled.
+    // Fail closed (503) rather than open — a misconfigured deploy must not
+    // grant free access to paid AI endpoints.
+    logger.error('PLATFORM_TREASURY_ADDRESS not set — refusing to serve paid endpoint', {
       serviceId: price.serviceId,
       path,
     });
-    return passthroughMiddleware;
+    return createMiddleware(async (c) => {
+      return c.json(
+        { error: 'Service temporarily unavailable', code: 'MISCONFIGURED' },
+        503
+      );
+    });
   }
 
   const facilitatorUrl =
@@ -191,12 +196,17 @@ export function buildX402Middleware(
 
     return middleware;
   } catch (err) {
-    // If the x402 infrastructure fails to initialize (e.g., bad facilitator URL
-    // at startup), log and fall back to passthrough so the Hono app still starts.
-    logger.error('Failed to initialize x402 payment middleware — falling back to passthrough', {
+    // If x402 infrastructure fails to initialize, fail closed (503) not open.
+    // A broken payment gate must never grant free access.
+    logger.error('Failed to initialize x402 payment middleware — returning 503', {
       serviceId: price.serviceId,
       error: err instanceof Error ? err.message : String(err),
     });
-    return passthroughMiddleware;
+    return createMiddleware(async (c) => {
+      return c.json(
+        { error: 'Service temporarily unavailable', code: 'PAYMENT_GATE_ERROR' },
+        503
+      );
+    });
   }
 }

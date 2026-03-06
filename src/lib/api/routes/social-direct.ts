@@ -16,6 +16,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { authMiddleware } from '../middleware/auth';
+import { createRateLimiter } from '../middleware/rate-limit';
 import { createAuthenticatedClient } from '../supabase';
 import {
   GenerationType,
@@ -24,6 +25,8 @@ import {
   SocialPostStatus,
 } from '@/types/database';
 import { injectTwitterAiDisclosure } from '@/lib/social/ai-disclosure';
+import { validatePublicImageUrl, ImageUrlValidationError } from '@/lib/social/image-url-validator';
+import { moderateContent, ModerationError } from '@/lib/ai/pipeline/moderation';
 import { logger } from '@/lib/utils/logger';
 import { createXClient, XClientError } from '@/lib/social/x-client';
 
@@ -39,6 +42,9 @@ const socialDirect = new Hono<SocialDirectEnv>();
 
 // All routes require authentication
 socialDirect.use('/*', authMiddleware);
+
+/** 10 direct posts per hour per wallet — X free-tier protection */
+const directPostLimiter = createRateLimiter(10, 3600, 'ozskr:social:direct');
 
 // =============================================================================
 // REQUEST SCHEMA
@@ -90,6 +96,7 @@ function getAuthContext(c: { get: (key: string) => unknown }) {
  */
 socialDirect.post(
   '/post-x',
+  directPostLimiter,
   zValidator('json', PostXRequestSchema),
   async (c) => {
     const auth = getAuthContext(c);
@@ -121,9 +128,42 @@ socialDirect.post(
     }
 
     // -------------------------------------------------------------------------
-    // 2. Create a content_generations record (required FK for social_posts)
-    //    Mark it as approved — the caller controls the text; moderation for
-    //    direct posts is the caller's responsibility at the application layer.
+    // 2. Run content moderation pipeline (MANDATORY — CLAUDE.md compliance)
+    //    All three stages: endorsement guardrails → OpenAI text mod → result
+    // -------------------------------------------------------------------------
+    let moderationStatus: ModerationStatus;
+    let moderationDetails: Record<string, unknown> = {};
+
+    try {
+      const modResult = await moderateContent(
+        { text: input.text },
+        () => {} // no-op progress callback in API context
+      );
+      moderationStatus = modResult.status;
+      moderationDetails = modResult.details;
+    } catch (err) {
+      const message = err instanceof ModerationError ? err.message : 'Moderation pipeline error';
+      logger.error('Content moderation failed for direct post', {
+        characterId: input.characterId,
+        error: message,
+      });
+      return c.json({ error: 'Content moderation unavailable', code: 'MODERATION_ERROR' }, 503);
+    }
+
+    if (moderationStatus !== ModerationStatus.APPROVED) {
+      logger.warn('Direct post blocked by moderation', {
+        characterId: input.characterId,
+        moderationStatus,
+        moderationDetails,
+      });
+      return c.json(
+        { error: 'Content did not pass moderation', code: 'MODERATION_REJECTED', status: moderationStatus },
+        422
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // 3. Create a content_generations record (required FK for social_posts)
     // -------------------------------------------------------------------------
     const { data: generation, error: genError } = await supabase
       .from('content_generations')
@@ -150,8 +190,7 @@ socialDirect.post(
     }
 
     // -------------------------------------------------------------------------
-    // 3. Look up (or create) the twitter social_account for this character's wallet
-    //    We use the first connected twitter account found.
+    // 4. Look up the twitter social_account for this character's wallet
     // -------------------------------------------------------------------------
     const { data: twitterAccount } = await supabase
       .from('social_accounts')
@@ -168,7 +207,7 @@ socialDirect.post(
     const socialAccountId = twitterAccount?.id ?? null;
 
     // -------------------------------------------------------------------------
-    // 4. Post the tweet via OAuth 1.0a XClient
+    // 5. Post the tweet via OAuth 1.0a XClient
     // -------------------------------------------------------------------------
     let tweetId: string;
     let tweetUrl: string;
@@ -182,6 +221,20 @@ socialDirect.post(
       // Download and upload image if provided
       let mediaIds: string[] | undefined;
       if (input.imageUrl) {
+        // SECURITY: Validate imageUrl is a public HTTPS domain before fetching
+        // to prevent SSRF against internal infrastructure.
+        try {
+          validatePublicImageUrl(input.imageUrl);
+        } catch (err) {
+          return c.json(
+            {
+              error: err instanceof ImageUrlValidationError ? err.message : 'Invalid imageUrl',
+              code: 'INVALID_IMAGE_URL',
+            },
+            400
+          );
+        }
+
         const imageResponse = await fetch(input.imageUrl);
         if (!imageResponse.ok) {
           return c.json(
@@ -228,7 +281,7 @@ socialDirect.post(
     }
 
     // -------------------------------------------------------------------------
-    // 5. Store the social_posts record for auditability and retry support
+    // 6. Store the social_posts record for auditability and retry support
     // -------------------------------------------------------------------------
     if (socialAccountId) {
       const { data: socialPost, error: postError } = await supabase
