@@ -42,8 +42,13 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Devnet USDC-Dev SPL token mint (Circle test faucet)
+// USDC SPL token mints
+const MAINNET_USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const DEVNET_USDC_MINT = '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU';
+const USDC_MINT =
+  process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'mainnet-beta'
+    ? MAINNET_USDC_MINT
+    : DEVNET_USDC_MINT;
 const USDC_DECIMALS = 6;
 
 
@@ -102,7 +107,7 @@ export function DelegationCard({ characterId, characterName }: DelegationCardPro
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
   const [amountInput, setAmountInput] = useState('10');
-  const [mintInput, setMintInput] = useState(DEVNET_USDC_MINT);
+  const [mintInput] = useState(USDC_MINT);
 
   if (isLoading) {
     return (
@@ -299,12 +304,12 @@ export function DelegationCard({ characterId, characterName }: DelegationCardPro
                       <Input
                         id="token-mint"
                         value={mintInput}
-                        onChange={(e) => setMintInput(e.target.value)}
+                        readOnly
                         placeholder="Token mint address"
-                        className="font-mono text-xs"
+                        className="font-mono text-xs cursor-default opacity-75"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Default: Devnet USDC-Dev
+                        USDC ({process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'mainnet-beta' ? 'Mainnet' : 'Devnet'})
                       </p>
                     </div>
 

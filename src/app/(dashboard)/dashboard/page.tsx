@@ -126,7 +126,9 @@ export default function DashboardPage() {
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              {balance !== null ? 'SOL on devnet' : 'Connect wallet to view'}
+              {balance !== null
+                ? `SOL on ${process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'mainnet-beta' ? 'mainnet' : 'devnet'}`
+                : 'Connect wallet to view'}
             </p>
           </CardContent>
         </Card>

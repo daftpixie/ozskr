@@ -28,6 +28,8 @@ import { createAuthenticatedClient } from '../supabase';
 import { getServicePrice } from '@/lib/x402/service-pricing';
 import { buildX402Middleware } from '@/lib/x402/server-middleware';
 import { logger } from '@/lib/utils/logger';
+import { getQuote } from '@/lib/pricing/pricing-calculator';
+import type { ContentCategory } from '@/lib/pricing/model-registry';
 
 // ---------------------------------------------------------------------------
 // Hono env type
@@ -167,7 +169,66 @@ const textGeneratePrice = getServicePrice('text-generate');
 
 const services = new Hono<ServicesEnv>();
 
-// All service routes require JWT authentication
+// ---------------------------------------------------------------------------
+// GET /services/pricing
+// Public — no auth required.  Returns a live PriceQuote for the requested
+// content category and model configuration.
+// Cache-Control: max-age=300 (5 minutes) — fal.ai prices are cached upstream
+// for the same TTL.
+// ---------------------------------------------------------------------------
+
+const PricingQuerySchema = z.object({
+  category: z.enum(['text', 'image', 'image-text', 'video', 'video-text']),
+  imageModel: z.string().optional(),
+  videoModel: z.string().optional(),
+  textModel: z.string().optional(),
+  videoDuration: z.string().optional(),
+  videoResolution: z.enum(['720p', '1080p', '4K']).optional(),
+  videoAudio: z.enum(['true', 'false']).optional(),
+});
+
+services.get('/pricing', zValidator('query', PricingQuerySchema), async (c) => {
+  const query = c.req.valid('query');
+
+  const durationSec = query.videoDuration
+    ? parseInt(query.videoDuration, 10)
+    : undefined;
+
+  if (durationSec !== undefined && (isNaN(durationSec) || durationSec <= 0)) {
+    return c.json(
+      { error: 'videoDuration must be a positive integer', code: 'VALIDATION_ERROR' },
+      400
+    );
+  }
+
+  try {
+    const quote = await getQuote({
+      category: query.category as ContentCategory,
+      imageModel: query.imageModel,
+      videoModel: query.videoModel,
+      textModel: query.textModel,
+      videoDurationSec: durationSec,
+      videoResolution: query.videoResolution,
+      videoAudio: query.videoAudio === 'false' ? false : undefined,
+    });
+
+    // Serialize BigInt as string — JSON.stringify cannot handle BigInt natively
+    c.header('Cache-Control', 'public, max-age=300');
+    return c.json({
+      ...quote,
+      platformCostLamports: quote.platformCostLamports.toString(),
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    logger.error('GET /services/pricing failed', { error: message });
+    return c.json(
+      { error: 'Failed to compute price quote', code: 'INTERNAL_ERROR' },
+      500
+    );
+  }
+});
+
+// All remaining service routes require JWT authentication
 services.use('/*', authMiddleware);
 
 // ---------------------------------------------------------------------------

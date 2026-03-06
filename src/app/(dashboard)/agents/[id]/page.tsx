@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useCharacter, useUpdateCharacter } from '@/hooks/use-characters';
 import { GenerateModal } from '@/features/agents/components/generate-modal';
+import { ContentGenerateModal } from '@/features/content/components/content-generate-modal';
 import { ScheduleModal } from '@/features/agents/components/schedule-modal';
 import { DelegationCard } from '@/features/agents/components/delegation-card';
 import { ContentLibrary } from '@/features/agents/components/content-library';
@@ -57,6 +58,7 @@ export default function AgentDetailPage({ params }: AgentDetailPageProps) {
   const { data: characterRaw, isLoading, error } = useCharacter(id);
   const { mutate: updateCharacter } = useUpdateCharacter(id);
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
+  const [contentGenerateModalOpen, setContentGenerateModalOpen] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
 
   // Fetch schedules for this character
@@ -201,14 +203,25 @@ export default function AgentDetailPage({ params }: AgentDetailPageProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <Button
-            onClick={() => setGenerateModalOpen(true)}
-            disabled={!isActive}
-            className="bg-gradient-to-r from-solana-purple to-solana-green hover:opacity-90"
-          >
-            <Sparkles className="mr-2 h-4 w-4" />
-            Create Something New
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={() => setGenerateModalOpen(true)}
+              disabled={!isActive}
+              className="bg-gradient-to-r from-solana-purple to-solana-green hover:opacity-90"
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              Create Something New
+            </Button>
+            <Button
+              onClick={() => setContentGenerateModalOpen(true)}
+              disabled={!isActive}
+              variant="outline"
+              className="border-[#9945FF]/40 hover:border-[#9945FF] hover:bg-[#9945FF]/10"
+            >
+              <Sparkles className="mr-2 h-4 w-4 text-[#9945FF]" />
+              Generate Content
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -462,10 +475,18 @@ export default function AgentDetailPage({ params }: AgentDetailPageProps) {
         </CardContent>
       </Card>
 
-      {/* Generation Modal */}
+      {/* Generation Modal (existing image-generate flow) */}
       <GenerateModal
         open={generateModalOpen}
         onOpenChange={setGenerateModalOpen}
+        characterId={character.id}
+        characterName={character.name}
+      />
+
+      {/* Content Generation Modal (multi-category content creation) */}
+      <ContentGenerateModal
+        open={contentGenerateModalOpen}
+        onOpenChange={setContentGenerateModalOpen}
         characterId={character.id}
         characterName={character.name}
       />

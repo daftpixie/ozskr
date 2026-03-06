@@ -77,13 +77,20 @@ const passthroughMiddleware: MiddlewareHandler = createMiddleware(async (_c, nex
 // The server holds a connection to the facilitator, so it should be reused.
 let _resourceServer: x402ResourceServer | null = null;
 let _resourceServerNetwork: Network | null = null;
+let _initializePromise: Promise<void> | null = null;
 
 /**
- * Get or construct the shared x402ResourceServer.
+ * Get or construct the shared x402ResourceServer and ensure it is initialized.
  * Re-creates if the configured network changes (e.g., during tests).
+ *
+ * initialize() fetches the supported payment kinds from the facilitator.
+ * We call it once and cache the promise so concurrent cold-start requests
+ * don't race to initialize the same server.
  */
-function getResourceServer(network: Network, facilitatorUrl: string): x402ResourceServer {
+async function getResourceServer(network: Network, facilitatorUrl: string): Promise<x402ResourceServer> {
   if (_resourceServer && _resourceServerNetwork === network) {
+    // Wait for pending initialization if it hasn't resolved yet
+    if (_initializePromise) await _initializePromise;
     return _resourceServer;
   }
 
@@ -93,6 +100,14 @@ function getResourceServer(network: Network, facilitatorUrl: string): x402Resour
     new ExactSvmScheme()
   );
   _resourceServerNetwork = network;
+
+  // initialize() fetches supported schemes from the facilitator — required
+  // before the server can build payment requirements.
+  _initializePromise = _resourceServer.initialize().then(() => {
+    _initializePromise = null;
+  });
+
+  await _initializePromise;
 
   return _resourceServer;
 }
@@ -159,54 +174,54 @@ export function buildX402Middleware(
   // Route key must match the format expected by @x402/hono: "METHOD /path"
   const routeKey = `${httpMethod.toUpperCase()} ${path}`;
 
-  try {
-    const server = getResourceServer(network, facilitatorUrl);
+  // Lazily initialize the resource server on first request (avoids blocking
+  // cold-start) and cache a ready-to-use paymentMiddleware instance.
+  let _mw: MiddlewareHandler | null = null;
 
-    const middleware = paymentMiddleware(
-      {
-        [routeKey]: {
-          accepts: {
-            scheme: 'exact',
-            // x402 price strings use "$" prefix (e.g. "$0.10")
-            price: `$${price.priceUsdc.toFixed(2)}`,
-            network,
-            payTo: treasuryAddress,
-            // Allow up to 5 minutes for the payment transaction to be finalized
-            maxTimeoutSeconds: 300,
+  logger.info('x402 payment gate configured', {
+    serviceId: price.serviceId,
+    routeKey,
+    network,
+    priceUsdc: price.priceUsdc,
+    facilitatorUrl,
+  });
+
+  return createMiddleware(async (c, next) => {
+    if (!_mw) {
+      try {
+        const server = await getResourceServer(network, facilitatorUrl);
+        _mw = paymentMiddleware(
+          {
+            [routeKey]: {
+              accepts: {
+                scheme: 'exact',
+                // x402 price strings use "$" prefix (e.g. "$0.10")
+                price: `$${price.priceUsdc.toFixed(2)}`,
+                network,
+                payTo: treasuryAddress,
+                // Allow up to 5 minutes for the payment transaction to be finalized
+                maxTimeoutSeconds: 300,
+              },
+              description: price.description,
+            },
           },
-          description: price.description,
-        },
-      },
-      server,
-      // paywallConfig — undefined: no browser paywall UI in API context
-      undefined,
-      // paywall — undefined: use default x402 paywall provider
-      undefined,
-      // syncFacilitatorOnStart = false: avoid slow cold-start on Vercel
-      false
-    );
-
-    logger.info('x402 payment gate configured', {
-      serviceId: price.serviceId,
-      routeKey,
-      network,
-      priceUsdc: price.priceUsdc,
-      facilitatorUrl,
-    });
-
-    return middleware;
-  } catch (err) {
-    // If x402 infrastructure fails to initialize, fail closed (503) not open.
-    // A broken payment gate must never grant free access.
-    logger.error('Failed to initialize x402 payment middleware — returning 503', {
-      serviceId: price.serviceId,
-      error: err instanceof Error ? err.message : String(err),
-    });
-    return createMiddleware(async (c) => {
-      return c.json(
-        { error: 'Service temporarily unavailable', code: 'PAYMENT_GATE_ERROR' },
-        503
-      );
-    });
-  }
+          server,
+          undefined,
+          undefined,
+          // syncFacilitatorOnStart = false: we called initialize() manually above
+          false
+        );
+      } catch (err) {
+        logger.error('Failed to initialize x402 payment middleware — returning 503', {
+          serviceId: price.serviceId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        return c.json(
+          { error: 'Service temporarily unavailable', code: 'PAYMENT_GATE_ERROR' },
+          503
+        );
+      }
+    }
+    return _mw(c, next);
+  });
 }
