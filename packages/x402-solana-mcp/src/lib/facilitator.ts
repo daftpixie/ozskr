@@ -1,6 +1,11 @@
 // ---------------------------------------------------------------------------
-// Facilitator Integration — CDP Primary + PayAI Fallback
+// Facilitator Integration — Kora Bridge Primary + PayAI Fallback
 // ---------------------------------------------------------------------------
+//
+// NOTE: The primary facilitator is now ozskr's own Kora facilitator bridge
+// (backed by Solana Foundation's gasless infrastructure). The CDP URL below
+// is retained as a legacy fallback constant only — production deployments
+// should set X402_FACILITATOR_URL to the Kora bridge endpoint.
 
 /** Settlement result from a facilitator. */
 export interface SettlementResult {
@@ -20,8 +25,10 @@ interface FacilitatorEndpoint {
   settlePath: string;
 }
 
-/** Default CDP facilitator URL — can be overridden via config. */
-const DEFAULT_CDP_URL = 'https://x402.org/facilitator';
+/** Legacy fallback facilitator URL — only used when no primary URL is configured.
+ *  Production deployments should set X402_FACILITATOR_URL to the Kora bridge
+ *  (e.g., https://ozskr.ai/api/x402) rather than relying on this fallback. */
+const DEFAULT_KORA_FACILITATOR_URL = 'https://facilitator.x402.org'; // legacy fallback only
 
 /** Default PayAI facilitator URL — can be overridden via config. */
 const DEFAULT_PAYAI_URL = 'https://facilitator.payai.network';
@@ -38,7 +45,8 @@ const MAX_RETRIES = 2;
  *
  * Facilitator URLs are configurable via the `primaryUrl` and `fallbackUrl`
  * parameters (sourced from X402_FACILITATOR_URL and X402_FACILITATOR_FALLBACK_URL
- * environment variables). Defaults to CDP primary + PayAI fallback.
+ * environment variables). Defaults to legacy x402.org fallback + PayAI fallback.
+ * Production: set X402_FACILITATOR_URL to the Kora bridge (e.g., https://ozskr.ai/api/x402).
  *
  * @param paymentPayload - The signed payment payload (x402 format)
  * @param paymentRequirements - The accepted payment requirements
@@ -53,8 +61,8 @@ export async function submitToFacilitator(
   fallbackUrl?: string,
 ): Promise<SettlementResult> {
   const primary: FacilitatorEndpoint = {
-    name: primaryUrl ? 'custom' : 'cdp',
-    url: primaryUrl ?? DEFAULT_CDP_URL,
+    name: primaryUrl ? 'custom' : 'kora',
+    url: primaryUrl ?? DEFAULT_KORA_FACILITATOR_URL,
     settlePath: '/settle',
   };
 

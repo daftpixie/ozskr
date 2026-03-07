@@ -30,6 +30,7 @@ import { adminCharacters } from './routes/admin-characters';
 import { delegation } from './routes/delegation';
 import { tapestry } from './routes/tapestry';
 import { services } from './routes/services';
+import { koraFacilitatorRoutes } from '@/lib/x402/kora-facilitator-bridge';
 
 // App context variables type
 type AppVariables = {
@@ -117,6 +118,9 @@ app.route('/admin-issues', adminIssues);
 app.route('/admin-report', adminReport);
 app.route('/delegation', delegation);
 app.route('/tapestry', tapestry);
+// Kora facilitator bridge — implements x402 facilitator protocol over Kora gasless infra
+// Must be mounted BEFORE /services so HTTPFacilitatorClient can reach /api/x402/*
+app.route('/x402', koraFacilitatorRoutes);
 app.route('/services', services);
 
 // Global error handler with AppError support
