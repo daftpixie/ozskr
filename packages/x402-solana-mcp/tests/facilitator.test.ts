@@ -19,7 +19,7 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 
 describe('submitToFacilitator', () => {
-  it('should succeed on first attempt with CDP', async () => {
+  it('should succeed on first attempt with Kora', async () => {
     globalThis.fetch = vi.fn(async () => ({
       ok: true,
       status: 200,
@@ -38,7 +38,7 @@ describe('submitToFacilitator', () => {
 
     expect(result.success).toBe(true);
     expect(result.transactionSignature).toBe('sig123abc');
-    expect(result.facilitator).toBe('cdp');
+    expect(result.facilitator).toBe('kora');
   });
 
   it('should fallback to PayAI when CDP fails', async () => {
