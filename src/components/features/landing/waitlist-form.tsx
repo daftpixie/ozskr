@@ -2,11 +2,13 @@
 
 /**
  * Waitlist Form
- * Email signup with optional wallet address auto-inclusion
- * Shows remaining spots out of 500
+ * Email signup with optional wallet address auto-inclusion.
+ * Shows remaining spots out of 500 with real-time Supabase Realtime updates —
+ * the counter decrements live as other users join.
  */
 
 import { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +26,12 @@ interface WaitlistFormProps {
   source?: string;
 }
 
+async function fetchWaitlistCount(): Promise<WaitlistCount> {
+  const res = await fetch('/api/waitlist/count');
+  if (!res.ok) throw new Error('count fetch failed');
+  return res.json() as Promise<WaitlistCount>;
+}
+
 export function WaitlistForm({ source }: WaitlistFormProps) {
   const { publicKey } = useWallet();
   const [email, setEmail] = useState('');
@@ -31,10 +39,38 @@ export function WaitlistForm({ source }: WaitlistFormProps) {
   const [waitlistData, setWaitlistData] = useState<WaitlistCount | null>(null);
 
   useEffect(() => {
-    fetch('/api/waitlist/count')
-      .then((r) => r.json())
-      .then((data: WaitlistCount) => setWaitlistData(data))
-      .catch(() => {/* ignore */});
+    // Initial fetch
+    fetchWaitlistCount()
+      .then(setWaitlistData)
+      .catch(() => {/* silently degrade */});
+
+    // Supabase Realtime: subscribe to new waitlist INSERTs and refresh count.
+    // Uses the public anon key — no auth required.
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseAnonKey) return;
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    const channel = supabase
+      .channel('waitlist-inserts')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'waitlist' },
+        () => {
+          // Refresh count from the API (single source of truth)
+          fetchWaitlistCount()
+            .then(setWaitlistData)
+            .catch(() => {/* silently degrade */});
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,6 +96,7 @@ export function WaitlistForm({ source }: WaitlistFormProps) {
 
       if (res.status === 201) {
         setState('success');
+        // Optimistic local update — Realtime will confirm with the true count
         setWaitlistData((prev) =>
           prev ? { ...prev, count: prev.count + 1, remaining: prev.remaining - 1 } : prev
         );
