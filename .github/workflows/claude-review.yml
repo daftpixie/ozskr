@@ -36,6 +36,7 @@ jobs:
 
   code-quality:
     runs-on: ubuntu-latest
+    continue-on-error: true  # remove after this workflow is merged to main
     steps:
       - uses: actions/checkout@v6
       - uses: anthropics/claude-code-action@v1
