@@ -122,8 +122,8 @@ async function getResourceServer(network: Network, facilitatorUrl: string): Prom
  * When ENABLE_X402_BILLING=false this returns a no-op passthrough middleware.
  * Otherwise it builds a live x402 payment gate using:
  *   - ExactSvmScheme (Solana USDC exact-amount payment scheme)
- *   - HTTPFacilitatorClient pointing at X402_FACILITATOR_URL (ozskr's own
- *     facilitator) or the public x402.org facilitator as network-level fallback
+ *   - HTTPFacilitatorClient pointing at X402_FACILITATOR_URL, which must be
+ *     set to ozskr's own Kora facilitator bridge (e.g. https://ozskr.ai/api/x402)
  *   - PLATFORM_TREASURY_ADDRESS as the USDC payTo recipient
  *
  * The x402 middleware handles:
@@ -166,8 +166,20 @@ export function buildX402Middleware(
     });
   }
 
-  const facilitatorUrl =
-    process.env.X402_FACILITATOR_URL ?? 'https://facilitator.x402.org';
+  // X402_FACILITATOR_URL must point to our Kora bridge (e.g. https://ozskr.ai/api/x402)
+  // Self-hosted: mounts at /api/x402 via koraFacilitatorRoutes in app.ts
+  const facilitatorUrl = process.env.X402_FACILITATOR_URL;
+
+  if (!facilitatorUrl) {
+    logger.error('X402_FACILITATOR_URL not set — x402 payment gate cannot initialize', {
+      serviceId: price.serviceId,
+      path,
+      hint: 'Set X402_FACILITATOR_URL to the Kora bridge URL (e.g. https://ozskr.ai/api/x402)',
+    });
+    return createMiddleware(async (c) => {
+      return c.json({ error: 'Service temporarily unavailable', code: 'MISCONFIGURED' }, 503);
+    });
+  }
 
   const network = resolveNetwork();
 

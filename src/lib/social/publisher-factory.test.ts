@@ -26,7 +26,7 @@ vi.mock('@/lib/utils/logger', () => ({
 
 import { getPublisher, isPublishingEnabled, resetPublisherCache } from './publisher-factory';
 import { AyrshareAdapter } from './ayrshare-adapter';
-import { TwitterAdapter } from './twitter-adapter';
+import { XDirectAdapter } from './x-direct-adapter';
 
 describe('publisher-factory', () => {
   beforeEach(() => {
@@ -47,7 +47,7 @@ describe('publisher-factory', () => {
       expect(publisher.provider).toBe(SocialProvider.AYRSHARE);
     });
 
-    it('should return TwitterAdapter for DIRECT provider', () => {
+    it('should return XDirectAdapter for DIRECT provider', () => {
       mockGetFeatureFlags.mockReturnValue({
         socialPublishEnabled: true,
         socialPublishProvider: SocialProvider.DIRECT,
@@ -55,7 +55,7 @@ describe('publisher-factory', () => {
 
       const publisher = getPublisher();
 
-      expect(publisher).toBeInstanceOf(TwitterAdapter);
+      expect(publisher).toBeInstanceOf(XDirectAdapter);
       expect(publisher.provider).toBe(SocialProvider.DIRECT);
     });
 

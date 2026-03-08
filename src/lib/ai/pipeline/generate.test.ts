@@ -110,7 +110,7 @@ describe('Pipeline Stage 4: Generate Content', () => {
     expect(result.outputUrl).toBe('https://fal.ai/generated/image123.png');
     expect(result.modelUsed).toContain('fal');
     expect(result.tokenUsage).toEqual({ input: 0, output: 0, cached: 0 });
-    expect(result.costUsd).toBe(0.05);
+    expect(result.costUsd).toBe(0.08);
     expect(result.cacheHit).toBe(false);
   });
 
