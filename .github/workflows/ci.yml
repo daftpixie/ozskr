@@ -50,6 +50,8 @@ jobs:
         with:
           node-version: 20
       - run: pnpm install --frozen-lockfile
+      - name: Build workspace packages
+        run: pnpm --filter './packages/*' build
       - run: pnpm test
 
   build:

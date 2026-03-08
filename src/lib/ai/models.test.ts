@@ -14,10 +14,10 @@ describe('Model Registry', () => {
   it('should return correct config for known purpose', () => {
     const config = getModelConfig('text-generation');
 
-    expect(config.modelId).toBe('claude-sonnet-4-20250514');
+    expect(config.modelId).toBe('claude-sonnet-4-6');
     expect(config.provider).toBe('anthropic');
     expect(config.purpose).toContain('Character text');
-    expect(config.maxTokens).toBe(4096);
+    expect(config.maxTokens).toBe(1024);
     expect(config.temperature).toBe(0.8);
   });
 
