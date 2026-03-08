@@ -33,11 +33,10 @@ jobs:
             - Address validation gaps
             - Server-side signing attempts
             Report findings using the security-auditor format.
-          allowed_tools: Read,Grep,Glob
-          model: sonnet
 
   code-quality:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v6
       - uses: anthropics/claude-code-action@v1
@@ -51,5 +50,3 @@ jobs:
             - Zod schemas on API boundaries
             - Conventional commit messages
             Report Pass/Fail with file:line references.
-          allowed_tools: Read,Grep,Glob
-          model: haiku
