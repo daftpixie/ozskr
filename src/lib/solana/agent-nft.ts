@@ -27,7 +27,7 @@ import {
   getAddressEncoder,
   getProgramDerivedAddress,
   generateKeyPair,
-  getBase58Codec,
+  getAddressFromPublicKey,
 } from '@solana/kit';
 import type { Address, Instruction, Signature } from '@solana/kit';
 import { getSolanaRpc, getFallbackRpc } from '@/lib/solana/rpc';
@@ -42,10 +42,18 @@ import { logger } from '@/lib/utils/logger';
 /** Flat NFT mint price: 0.05 SOL */
 export const AGENT_MINT_PRICE_LAMPORTS = 50_000_000n;
 
-/** Platform treasury receives the minting fee */
-const PLATFORM_TREASURY_ADDRESS =
-  process.env.NEXT_PUBLIC_PLATFORM_TREASURY ??
-  'FEExxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+/**
+ * Platform treasury receives the minting fee.
+ * Validated lazily so Next.js build-time can import this module without
+ * a configured env var; throws at call time if unset.
+ */
+function getPlatformTreasuryAddress(): string {
+  const addr = process.env.NEXT_PUBLIC_PLATFORM_TREASURY;
+  if (!addr) {
+    throw new Error('NEXT_PUBLIC_PLATFORM_TREASURY environment variable is not set');
+  }
+  return addr;
+}
 
 // Program IDs — stable on all Solana clusters
 export const TOKEN_METADATA_PROGRAM_ID = address(
@@ -213,7 +221,7 @@ export async function uploadNFTMetadata(params: {
       ],
       creators: [
         {
-          address: PLATFORM_TREASURY_ADDRESS,
+          address: getPlatformTreasuryAddress(),
           share: 100,
         },
       ],
@@ -611,9 +619,10 @@ export async function constructMintTransaction(
 ): Promise<MintAgentNFTResult> {
   assertIsAddress(params.ownerWallet);
 
-  const rpcEndpoint =
-    process.env.NEXT_PUBLIC_HELIUS_RPC_URL ??
-    process.env.NEXT_PUBLIC_APP_URL;
+  // Validate treasury address early to avoid partial state (R2 upload before failure)
+  const rawTreasuryAddr = getPlatformTreasuryAddress(); // Throws if unset
+
+  const rpcEndpoint = process.env.NEXT_PUBLIC_HELIUS_RPC_URL;
   if (!rpcEndpoint) {
     throw new Error('Missing NEXT_PUBLIC_HELIUS_RPC_URL environment variable');
   }
@@ -631,16 +640,10 @@ export async function constructMintTransaction(
   // The mint keypair signs the CreateAccount instruction (the mint account
   // must co-sign to prove ownership of the new account address).
   const mintKeypair = await generateKeyPair();
-  const mintAddress = mintKeypair.publicKey as unknown as Address;
-  // Cast: CryptoKeyPair.publicKey is a CryptoKey; @solana/kit represents
-  // the address as a string brand. We derive it via getBase58Codec.
-  const addressCodec = getBase58Codec();
-  void addressCodec; // Used conceptually; actual address comes from keypair
 
-  // Extract mint address from the generated keypair using @solana/kit's address encoder
-  // The keypair's public key bytes can be exported and encoded as a base58 address
-  const exportedPubkey = await crypto.subtle.exportKey('raw', mintKeypair.publicKey);
-  const mintAddressStr = getBase58Codec().decode(new Uint8Array(exportedPubkey)) as unknown as Address;
+  // Derive the base58 Address from the CryptoKey using @solana/kit's
+  // getAddressFromPublicKey — the correct way to go from CryptoKey → Address.
+  const mintAddressStr = await getAddressFromPublicKey(mintKeypair.publicKey);
   assertIsAddress(mintAddressStr);
 
   // Step 3: Derive the Associated Token Account address
@@ -649,14 +652,14 @@ export async function constructMintTransaction(
     mintAddressStr,
   );
 
-  // Step 4: Validate treasury address
+  // Step 4: Validate treasury address (rawTreasuryAddr fetched early to avoid partial state)
   let treasuryAddress: Address;
   try {
-    treasuryAddress = address(PLATFORM_TREASURY_ADDRESS);
+    treasuryAddress = address(rawTreasuryAddr);
     assertIsAddress(treasuryAddress);
   } catch {
     throw new Error(
-      `Invalid NEXT_PUBLIC_PLATFORM_TREASURY address: ${PLATFORM_TREASURY_ADDRESS}`
+      `Invalid NEXT_PUBLIC_PLATFORM_TREASURY address: ${rawTreasuryAddr}`
     );
   }
 
@@ -732,7 +735,7 @@ export async function constructMintTransaction(
 
   // Step 9: Serialize the transaction message to base64 for simulation and client signing
   // We use the @solana/kit wire transaction encoding
-  const { getBase64EncodedWireTransaction, compileTransaction } = await import('@solana/kit');
+  const { compileTransaction } = await import('@solana/kit');
 
   // Compile the message to a transaction (without signing yet)
   const compiledTx = compileTransaction(txMessage);
@@ -757,19 +760,25 @@ export async function constructMintTransaction(
     });
     // Simulation failures for unsigned transactions commonly produce
     // "missing signer" errors — this is expected for a partially-built tx.
-    // Only reject on non-signer errors.
-    const isMissingSignerOnly =
-      simulationResult.error?.includes('missing required signature') ||
-      simulationResult.error?.includes('Transaction failed') === false;
+    // Reject on any other error (insufficient funds, invalid program, etc.).
+    // Also reject if program error logs are present alongside a signer error
+    // to avoid silently swallowing composite failures.
+    const hasMissingSignerError =
+      simulationResult.error?.includes('missing required signature') === true;
+    const hasProgramErrorLogs = (simulationResult.logs ?? []).some(
+      (log) =>
+        log.includes('Program log: Error') ||
+        log.includes('failed:') ||
+        log.includes('AnchorError')
+    );
+    const isMissingSignerOnly = hasMissingSignerError && !hasProgramErrorLogs;
 
     if (!isMissingSignerOnly) {
-      logger.warn('NFT simulation produced non-signer error — proceeding', {
-        error: simulationResult.error,
-      });
+      throw new Error(
+        `NFT mint transaction simulation failed: ${simulationResult.error ?? 'unknown error'}`
+      );
     }
   }
-
-  void getBase64EncodedWireTransaction; // referenced for future signed-tx usage
 
   const platformFeeSOL = (
     Number(AGENT_MINT_PRICE_LAMPORTS) / 1e9
