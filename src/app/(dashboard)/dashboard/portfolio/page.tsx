@@ -189,7 +189,7 @@ export default function PortfolioPage() {
                     className={cn(
                       'flex items-center justify-between rounded-lg border p-4 transition-colors',
                       isHope
-                        ? 'border-[#F59E0B]/50 bg-[#F59E0B]/5 hover:bg-[#F59E0B]/10'
+                        ? 'border-[#10B981]/50 bg-[#10B981]/5 hover:bg-[#10B981]/10'
                         : 'border-border/50 bg-card hover:bg-accent/50'
                     )}
                   >
@@ -210,12 +210,12 @@ export default function PortfolioPage() {
                         <p
                           className={cn(
                             'font-medium',
-                            isHope ? 'text-[#F59E0B]' : 'text-white'
+                            isHope ? 'text-[#10B981]' : 'text-white'
                           )}
                         >
                           {item.token.symbol}
                           {isHope && (
-                            <span className="ml-2 text-xs text-[#F59E0B]/60">
+                            <span className="ml-2 text-xs text-[#10B981]/60">
                               Platform Token
                             </span>
                           )}
@@ -232,7 +232,7 @@ export default function PortfolioPage() {
                         <p
                           className={cn(
                             'font-mono text-sm font-medium',
-                            isHope ? 'text-[#F59E0B]' : 'text-white'
+                            isHope ? 'text-[#10B981]' : 'text-white'
                           )}
                         >
                           {item.formattedBalance}
@@ -260,7 +260,7 @@ export default function PortfolioPage() {
                           size="sm"
                           className={cn(
                             isHope &&
-                              'border-[#F59E0B]/30 text-[#F59E0B] hover:border-[#F59E0B] hover:bg-[#F59E0B]/10'
+                              'border-[#10B981]/30 text-[#10B981] hover:border-[#10B981] hover:bg-[#10B981]/10'
                           )}
                         >
                           {isHope ? 'Get More' : 'Trade'}

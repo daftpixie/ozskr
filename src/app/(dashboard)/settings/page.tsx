@@ -150,7 +150,7 @@ function OnChainIdentitySection() {
                 disabled={isMinting}
                 className={cn(
                   'h-10 rounded-lg font-medium text-[#0A0A0B]',
-                  'bg-[#F59E0B] hover:bg-[#FBBF24] disabled:opacity-50',
+                  'bg-[#10B981] hover:bg-[#059669] disabled:opacity-50',
                 )}
               >
                 {isMinting ? 'Registering...' : 'Register Agent'}

@@ -128,7 +128,7 @@ function OnboardingView() {
         <div className="mt-8 space-y-4 text-left">
           {steps.map((step) => (
             <div key={step.label} className="flex gap-4">
-              <div className="w-20 shrink-0 text-xs font-semibold text-[#F59E0B]">
+              <div className="w-20 shrink-0 text-xs font-semibold text-[#10B981]">
                 {step.label}
               </div>
               <div>
@@ -169,7 +169,7 @@ function AgentStatusCard({ character }: AgentStatusCardProps) {
 
   const statusColors: Record<string, string> = {
     active: 'bg-[#14F195]/10 text-[#14F195] border-[#14F195]/20',
-    paused: 'bg-[#F59E0B]/10 text-[#F59E0B] border-[#F59E0B]/20',
+    paused: 'bg-[#10B981]/10 text-[#10B981] border-[#10B981]/20',
     draft: 'bg-[#71717A]/10 text-[#71717A] border-[#71717A]/20',
     archived: 'bg-[#F87171]/10 text-[#F87171] border-[#F87171]/20',
   };
@@ -195,7 +195,7 @@ function AgentStatusCard({ character }: AgentStatusCardProps) {
         <p className="mt-0.5 text-xs text-[#71717A]">
           ATOM Score:{' '}
           {character.reputationScore ? (
-            <span className="text-[#F59E0B]">{character.reputationScore}</span>
+            <span className="text-[#10B981]">{character.reputationScore}</span>
           ) : (
             <span className="text-[#3F3F46]">Not rated</span>
           )}
@@ -257,8 +257,8 @@ function AgentStatusCard({ character }: AgentStatusCardProps) {
                 disabled={isMinting}
                 className={cn(
                   'mt-2 w-full flex items-center justify-center gap-2 rounded-md',
-                  'bg-[#F59E0B] px-3 py-2 text-sm font-medium text-[#0A0A0B]',
-                  'hover:bg-[#FBBF24] disabled:opacity-50 transition-colors',
+                  'bg-[#10B981] px-3 py-2 text-sm font-medium text-[#0A0A0B]',
+                  'hover:bg-[#059669] disabled:opacity-50 transition-colors',
                 )}
               >
                 {isMinting ? 'Registering...' : 'Register in Agent Registry'}
@@ -278,10 +278,10 @@ function AgentStatusCard({ character }: AgentStatusCardProps) {
 function StatusBadge({ status }: { status: ModerationStatus }) {
   const map: Record<string, { label: string; className: string }> = {
     approved: { label: 'Approved', className: 'bg-[#14F195]/10 text-[#14F195] border-[#14F195]/20' },
-    pending: { label: 'Pending', className: 'bg-[#F59E0B]/10 text-[#F59E0B] border-[#F59E0B]/20' },
+    pending: { label: 'Pending', className: 'bg-[#10B981]/10 text-[#10B981] border-[#10B981]/20' },
     processing: { label: 'Processing', className: 'bg-[#9945FF]/10 text-[#9945FF] border-[#9945FF]/20' },
     rejected: { label: 'Rejected', className: 'bg-[#F87171]/10 text-[#F87171] border-[#F87171]/20' },
-    flagged: { label: 'Flagged', className: 'bg-[#F59E0B]/10 text-[#F59E0B] border-[#F59E0B]/20' },
+    flagged: { label: 'Flagged', className: 'bg-[#10B981]/10 text-[#10B981] border-[#10B981]/20' },
   };
   const config = map[status] ?? { label: status, className: 'bg-[#27272A] text-[#71717A]' };
   return (
@@ -379,14 +379,14 @@ function TransactionHistoryCard({ characterId }: { characterId: string }) {
       {/* Card Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Receipt className="h-4 w-4 text-[#F59E0B]" />
+          <Receipt className="h-4 w-4 text-[#10B981]" />
           <h2 className="text-sm font-semibold text-white">Transaction History</h2>
         </div>
         <a
           href={`https://solscan.io/account/${characterId}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1 text-xs text-[#F59E0B] transition-colors hover:text-[#FBBF24]"
+          className="flex items-center gap-1 text-xs text-[#10B981] transition-colors hover:text-[#059669]"
         >
           View All
           <ExternalLink className="h-3 w-3" />

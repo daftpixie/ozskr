@@ -91,7 +91,7 @@ function ModelCard({
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-semibold text-foreground">{model.name}</span>
             {model.tier === 'pro' && (
-              <Badge className="border-[#F59E0B]/40 bg-[#F59E0B]/10 text-[#F59E0B]">
+              <Badge className="border-[#10B981]/40 bg-[#10B981]/10 text-[#10B981]">
                 Pro
               </Badge>
             )}
@@ -103,7 +103,7 @@ function ModelCard({
           {isLoadingQuote ? (
             <div className="h-3 w-14 animate-pulse rounded bg-muted" />
           ) : costLabel ? (
-            <span className="text-xs font-medium text-[#F59E0B]">{costLabel}</span>
+            <span className="text-xs font-medium text-[#10B981]">{costLabel}</span>
           ) : null}
           {isSelected && <Check className="h-4 w-4 text-[#9945FF]" />}
         </div>

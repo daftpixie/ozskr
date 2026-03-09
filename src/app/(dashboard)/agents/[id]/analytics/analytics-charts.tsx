@@ -24,7 +24,7 @@ import {
 const COLORS = {
   primary: '#9945FF',
   secondary: '#14F195',
-  accent: '#F59E0B',
+  accent: '#10B981',
   grid: '#27272A',
 };
 

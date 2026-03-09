@@ -5,7 +5,7 @@
  * Handles full SIWS (Sign-In With Solana) flow with wallet adapter integration
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import bs58 from 'bs58';
 import { assertIsAddress, address as createAddress } from '@solana/kit';
@@ -201,31 +201,11 @@ export function useWalletAuth() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /**
-   * Handle wallet disconnect: auto sign out.
-   *
-   * We track whether the wallet has ever connected in this session. On the
-   * initial render, the wallet adapter reports `connected = false` while it
-   * is still hydrating from the browser extension. Firing clearAuth() at
-   * that point would log out a user who is actually still authenticated.
-   *
-   * The flag `hasConnectedRef` is set to true the first time `connected`
-   * becomes true. The disconnect handler only fires after that point, which
-   * means it cannot be triggered by the pre-hydration false state.
-   */
-  const hasConnectedRef = useRef(false);
-
-  useEffect(() => {
-    if (connected) {
-      hasConnectedRef.current = true;
-    }
-  }, [connected]);
-
-  useEffect(() => {
-    if (!connected && isAuthenticated && hasConnectedRef.current) {
-      clearAuth();
-    }
-  }, [connected, isAuthenticated, clearAuth]);
+  // NOTE: We intentionally do NOT auto-sign-out on wallet adapter disconnect.
+  // The wallet adapter briefly reports connected=false during Fast Refresh and
+  // extension re-hydration, which previously caused spurious sign-outs.
+  // Auth is governed by the JWT session (validated on mount via /api/auth/session)
+  // and cleared only by explicit sign-out or a server-side 401.
 
   return {
     isAuthenticated,

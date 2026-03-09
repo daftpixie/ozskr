@@ -21,9 +21,9 @@ export function DashboardTopBar() {
       {/* Wordmark */}
       <div className="flex items-center">
         <span className="font-bold tracking-tight text-white text-lg leading-none">
-          <span style={{ color: '#F59E0B' }}>🧱</span>
+          <span style={{ color: '#10B981' }}>🧱</span>
           {' ozskr'}
-          <span style={{ color: '#F59E0B' }}>.ai</span>
+          <span style={{ color: '#10B981' }}>.ai</span>
         </span>
       </div>
 

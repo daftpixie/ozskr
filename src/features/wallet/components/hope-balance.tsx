@@ -84,8 +84,8 @@ export function HopeBalance() {
                 variant="outline"
                 size="sm"
                 className={cn(
-                  'border-[#F59E0B]/30 text-[#F59E0B]',
-                  'hover:border-[#F59E0B] hover:bg-[#F59E0B]/10',
+                  'border-[#10B981]/30 text-[#10B981]',
+                  'hover:border-[#10B981] hover:bg-[#10B981]/10',
                   'transition-all duration-200'
                 )}
               >
@@ -110,7 +110,7 @@ export function HopeBalance() {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#0A0A0B] border border-[#F59E0B]/20">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#0A0A0B] border border-[#10B981]/20">
             {/* $HOPE icon (gradient circle) */}
             <div className="h-5 w-5 rounded-full bg-gradient-to-br from-[#9945FF] to-[#14F195]" />
 
@@ -129,7 +129,7 @@ export function HopeBalance() {
             <Link href="/dashboard/trade?output=HOPE">
               <button
                 className={cn(
-                  'text-xs text-[#F59E0B] hover:text-[#F59E0B]/80',
+                  'text-xs text-[#10B981] hover:text-[#10B981]/80',
                   'transition-colors duration-150'
                 )}
                 aria-label="Get more $HOPE"

@@ -64,7 +64,7 @@ function QualityBadge({ score }: { score: number }) {
   return (
     <Badge
       variant="secondary"
-      className="text-xs tabular-nums text-[#F59E0B]"
+      className="text-xs tabular-nums text-[#10B981]"
     >
       {score.toFixed(2)} ✦
     </Badge>

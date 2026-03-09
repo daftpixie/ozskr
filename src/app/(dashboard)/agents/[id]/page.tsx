@@ -343,7 +343,7 @@ export default function AgentDetailPage({ params }: AgentDetailPageProps) {
       case ScheduleContentType.IMAGE:
         return 'bg-solana-green/20 border-solana-green text-solana-green';
       case ScheduleContentType.VIDEO:
-        return 'bg-[#F59E0B]/20 border-[#F59E0B] text-[#F59E0B]';
+        return 'bg-[#10B981]/20 border-[#10B981] text-[#10B981]';
       default:
         return 'bg-muted border-border text-muted-foreground';
     }

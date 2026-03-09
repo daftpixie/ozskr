@@ -106,7 +106,7 @@ export function PublishModal({
       case SocialPostStatus.FAILED:
         return 'text-destructive';
       case SocialPostStatus.QUEUED:
-        return 'text-[#F59E0B]';
+        return 'text-[#10B981]';
       default:
         return 'text-muted-foreground';
     }
@@ -119,7 +119,7 @@ export function PublishModal({
       case SocialPostStatus.FAILED:
         return <AlertCircle className="h-5 w-5 text-destructive" />;
       case SocialPostStatus.QUEUED:
-        return <Loader2 className="h-5 w-5 animate-spin text-[#F59E0B]" />;
+        return <Loader2 className="h-5 w-5 animate-spin text-[#10B981]" />;
       default:
         return null;
     }

@@ -50,7 +50,7 @@
   /* ozskr.ai brand colors */
   --color-solana-purple: #9945FF;
   --color-solana-green: #14F195;
-  --color-brick-gold: #F59E0B;
+  --color-brick-gold: #10B981;
   --color-void-black: #0A0A0B;
 
   /* Emerald City palette */
@@ -255,7 +255,7 @@
     display: inline-block;
     width: 2.5em;
     height: 1em;
-    background: #F59E0B;
+    background: #10B981;
     border-radius: 4px;
   }
   .logo-brick-gradient {

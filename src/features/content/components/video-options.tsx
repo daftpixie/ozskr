@@ -123,7 +123,7 @@ export function VideoOptions({
       {/* Estimated cost preview */}
       <p className="text-xs text-muted-foreground">
         Estimated base:{' '}
-        <span className="font-mono text-[#F59E0B]">
+        <span className="font-mono text-[#10B981]">
           {duration}s × ~${APPROX_PRICE_PER_SEC.toFixed(2)}/s = ~${estimatedBase}
         </span>{' '}
         (live pricing shown below)

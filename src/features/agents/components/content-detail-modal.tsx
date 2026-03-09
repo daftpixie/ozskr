@@ -149,7 +149,7 @@ export function ContentDetailModal({
                   label="Quality Score"
                   value={
                     generation.qualityScore !== null ? (
-                      <span className="text-[#F59E0B]">
+                      <span className="text-[#10B981]">
                         {generation.qualityScore.toFixed(2)} ✦
                       </span>
                     ) : (

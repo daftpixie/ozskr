@@ -84,7 +84,7 @@ export function PriceSummary({
               <div className="my-1 border-t border-[#27272A]" />
               <div className="flex items-center justify-between">
                 <span className="font-semibold">Total</span>
-                <span className="font-mono text-[#F59E0B] font-bold">
+                <span className="font-mono text-[#10B981] font-bold">
                   ${usd(totalCost)} USDC
                 </span>
               </div>

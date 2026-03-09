@@ -94,10 +94,10 @@ function PaymentConfirmOverlay({
   const shortAddress = `${payTo.slice(0, 6)}...${payTo.slice(-4)}`;
 
   return (
-    <Card className="border-[#F59E0B]/30 bg-[#F59E0B]/5 p-6">
+    <Card className="border-[#10B981]/30 bg-[#10B981]/5 p-6">
       <div className="space-y-4">
         <div className="flex items-start gap-3">
-          <Coins className="mt-0.5 h-5 w-5 shrink-0 text-[#F59E0B]" />
+          <Coins className="mt-0.5 h-5 w-5 shrink-0 text-[#10B981]" />
           <div className="flex-1 space-y-1">
             <p className="font-medium text-foreground">Confirm USDC Payment</p>
             <p className="text-sm text-muted-foreground">
@@ -110,7 +110,7 @@ function PaymentConfirmOverlay({
         <div className="space-y-2 rounded-lg border border-border bg-[#18181B] p-4 text-sm">
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Amount</span>
-            <span className="font-medium text-[#F59E0B]">{amountUsdc} USDC</span>
+            <span className="font-medium text-[#10B981]">{amountUsdc} USDC</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Recipient</span>
@@ -124,7 +124,7 @@ function PaymentConfirmOverlay({
           </Button>
           <Button
             size="sm"
-            className="flex-1 bg-[#F59E0B] text-black hover:bg-[#F59E0B]/90"
+            className="flex-1 bg-[#10B981] text-black hover:bg-[#10B981]/90"
             onClick={onConfirm}
           >
             <Check className="mr-2 h-4 w-4" />
@@ -410,7 +410,7 @@ export function ContentGenerateModal({
               className={cn(
                 'w-full font-semibold',
                 isLiveCategory && canGenerate
-                  ? 'bg-[#F59E0B] text-black hover:bg-[#F59E0B]/90'
+                  ? 'bg-[#10B981] text-black hover:bg-[#10B981]/90'
                   : 'cursor-not-allowed opacity-50'
               )}
             >
@@ -450,9 +450,9 @@ export function ContentGenerateModal({
             Generating spinner
             ================================================================== */}
         {isGenerating && (
-          <Card className="border-[#F59E0B]/20 bg-[#F59E0B]/5 p-6">
+          <Card className="border-[#10B981]/20 bg-[#10B981]/5 p-6">
             <div className="flex flex-col items-center gap-3 py-4" aria-live="polite">
-              <Loader2 className="h-8 w-8 animate-spin text-[#F59E0B]" />
+              <Loader2 className="h-8 w-8 animate-spin text-[#10B981]" />
               <p className="text-sm font-medium">Generating content...</p>
               <p className="text-xs text-muted-foreground">
                 Submitting payment and running model
@@ -487,9 +487,9 @@ export function ContentGenerateModal({
             ================================================================== */}
         {hasResult && (
           <div className="space-y-4">
-            <div className="flex items-center gap-2 rounded-lg border border-[#F59E0B]/20 bg-[#F59E0B]/5 px-4 py-3">
-              <Check className="h-4 w-4 shrink-0 text-[#F59E0B]" />
-              <p className="text-sm font-medium text-[#F59E0B]">
+            <div className="flex items-center gap-2 rounded-lg border border-[#10B981]/20 bg-[#10B981]/5 px-4 py-3">
+              <Check className="h-4 w-4 shrink-0 text-[#10B981]" />
+              <p className="text-sm font-medium text-[#10B981]">
                 Content generated and paid via USDC
               </p>
             </div>

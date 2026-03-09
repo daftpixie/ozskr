@@ -82,7 +82,7 @@ export default function CalendarPage() {
       case ScheduleContentType.IMAGE:
         return 'bg-solana-green/20 border-solana-green';
       case ScheduleContentType.VIDEO:
-        return 'bg-[#F59E0B]/20 border-[#F59E0B]';
+        return 'bg-[#10B981]/20 border-[#10B981]';
       default:
         return 'bg-muted border-border';
     }
@@ -209,7 +209,7 @@ export default function CalendarPage() {
                                       'h-1.5 w-1.5 rounded-full',
                                       schedule.contentType === ScheduleContentType.TEXT && 'bg-solana-purple',
                                       schedule.contentType === ScheduleContentType.IMAGE && 'bg-solana-green',
-                                      schedule.contentType === ScheduleContentType.VIDEO && 'bg-[#F59E0B]'
+                                      schedule.contentType === ScheduleContentType.VIDEO && 'bg-[#10B981]'
                                     )}
                                   />
                                 ))}
@@ -329,7 +329,7 @@ export default function CalendarPage() {
                 <span className="text-xs text-muted-foreground">Image</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-[#F59E0B]" />
+                <div className="h-3 w-3 rounded-full bg-[#10B981]" />
                 <span className="text-xs text-muted-foreground">Video</span>
               </div>
             </CardContent>
