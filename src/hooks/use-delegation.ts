@@ -215,6 +215,15 @@ export function useApproveDelegation() {
         throw new Error('Agent has no public key. Create the agent first.');
       }
 
+      // Validate tokenMint is the expected USDC mint — prevents spoofed-mint attacks
+      const expectedUsdcMint =
+        process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'mainnet-beta'
+          ? 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+          : '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU';
+      if (tokenMint !== expectedUsdcMint) {
+        throw new Error(`Invalid token mint: expected USDC (${expectedUsdcMint})`);
+      }
+
       const delegatePubkey = new PublicKey(agentPubkey);
       const mintPubkey = new PublicKey(tokenMint);
 
@@ -227,6 +236,14 @@ export function useApproveDelegation() {
         amount,
         decimals,
       );
+
+      // Simulate before presenting wallet popup — mandatory per security policy
+      const simResult = await connection.simulateTransaction(transaction);
+      if (simResult.value.err) {
+        throw new Error(
+          `Delegation transaction simulation failed: ${JSON.stringify(simResult.value.err)}`
+        );
+      }
 
       // Send via wallet adapter (Phantom popup)
       const signature = await sendTransaction(transaction, connection);
@@ -316,6 +333,14 @@ export function useRevokeDelegation() {
         publicKey,
         mintPubkey,
       );
+
+      // Simulate before presenting wallet popup — mandatory per security policy
+      const simResult = await connection.simulateTransaction(transaction);
+      if (simResult.value.err) {
+        throw new Error(
+          `Revoke transaction simulation failed: ${JSON.stringify(simResult.value.err)}`
+        );
+      }
 
       // Send via wallet adapter (Phantom popup)
       const signature = await sendTransaction(transaction, connection);
