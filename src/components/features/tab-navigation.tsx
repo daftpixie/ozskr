@@ -10,6 +10,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useWalletAuth } from '@/features/wallet/hooks/use-wallet-auth';
 
 interface NavTab {
   label: string;
@@ -28,6 +29,7 @@ const TABS: NavTab[] = [
 
 export function TabNavigation() {
   const pathname = usePathname();
+  const { isAdmin } = useWalletAuth();
 
   function isActive(href: string): boolean {
     if (href === '/dashboard') {
@@ -68,6 +70,27 @@ export function TabNavigation() {
             </Link>
           );
         })}
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className={cn(
+              'relative px-4 py-3 text-sm font-medium transition-colors duration-150 whitespace-nowrap ml-2',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#9945FF] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0B]',
+              pathname.startsWith('/admin')
+                ? 'text-[#F59E0B]'
+                : 'text-[#F59E0B]/50 hover:text-[#F59E0B]/80'
+            )}
+            aria-current={pathname.startsWith('/admin') ? 'page' : undefined}
+          >
+            Admin
+            {pathname.startsWith('/admin') && (
+              <span
+                className="absolute bottom-0 left-0 right-0 h-0.5"
+                style={{ background: '#F59E0B' }}
+              />
+            )}
+          </Link>
+        )}
       </div>
     </nav>
   );
