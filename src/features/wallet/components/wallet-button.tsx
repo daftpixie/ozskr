@@ -15,7 +15,7 @@ import { HopeBalance } from './hope-balance';
 export function WalletButton() {
   const { connected, connecting, publicKey } = useWallet();
   const { setVisible } = useWalletModal();
-  const { isAuthenticated, isLoading, user, signIn, signOut } =
+  const { isAuthenticated, isLoading, user, signIn, signOut, error } =
     useWalletAuth();
   const [showMenu, setShowMenu] = useState(false);
 
@@ -62,7 +62,35 @@ export function WalletButton() {
   }
 
   /**
-   * State 3: Connected but not authenticated - Show "Sign In" button
+   * State 3: Error — sign-in failed (signature rejected, network, etc.)
+   */
+  if (connected && !isAuthenticated && error) {
+    return (
+      <button
+        onClick={signIn}
+        disabled={isLoading}
+        title={error}
+        className={cn(
+          'relative px-6 py-2.5 rounded-lg font-medium',
+          'bg-[#0A0A0B] border border-red-500/50',
+          'text-red-400 transition-all duration-200',
+          'hover:border-red-500 hover:text-red-300',
+          'disabled:opacity-50 disabled:cursor-not-allowed',
+          'focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-[#0A0A0B]',
+          'flex items-center gap-2'
+        )}
+      >
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+        </svg>
+        <span>Auth Error — Retry</span>
+      </button>
+    );
+  }
+
+  /**
+   * State 4: Connected but not authenticated - Show "Sign In" button
    */
   if (connected && !isAuthenticated) {
     return (
@@ -88,7 +116,7 @@ export function WalletButton() {
   }
 
   /**
-   * State 4: Authenticated - Show wallet address with dropdown menu
+   * State 5: Authenticated - Show wallet address with dropdown menu
    */
   const truncateAddress = (address: string) => {
     return `${address.slice(0, 4)}...${address.slice(-4)}`;
