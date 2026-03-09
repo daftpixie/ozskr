@@ -143,6 +143,12 @@
   /* Gradient vars */
   --gradient-solana: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
   --gradient-solana-hover: linear-gradient(135deg, #A855F7 0%, #34D399 100%);
+
+  /* Yellow Brick command bar shadows */
+  --yb-shadow-default: inset 0 0 0 1px #92400E;
+  --yb-shadow-focused: inset 0 0 0 1px #92400E, 0 0 30px rgba(245, 158, 11, 0.3);
+  --yb-shadow-hover: 0 0 20px rgba(245, 158, 11, 0.15);
+  --yb-shadow-error: inset 0 0 0 1px #92400E, 0 0 12px rgba(248, 113, 113, 0.2);
 }
 
 .dark {

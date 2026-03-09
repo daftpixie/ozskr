@@ -13,6 +13,7 @@ export type YellowBrickContext =
   | 'content'
   | 'analytics'
   | 'social'
+  | 'trading'
   | 'settings';
 
 export interface YellowBrickState {

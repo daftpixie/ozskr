@@ -10,6 +10,7 @@ import { ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSwapHistory } from '@/hooks/use-trading';
 import { SwapStatus } from '@/types/database';
 import { cn } from '@/lib/utils';
+import { getExplorerUrl } from '@/lib/solana/network-config';
 import { useState } from 'react';
 
 interface SwapHistoryProps {
@@ -62,9 +63,6 @@ export function SwapHistory({ embedded = false, className }: SwapHistoryProps) {
     });
   };
 
-  const getExplorerUrl = (signature: string) => {
-    return `https://solscan.io/tx/${signature}?cluster=devnet`;
-  };
 
   const Content = (
     <div className="space-y-4">

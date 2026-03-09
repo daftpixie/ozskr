@@ -76,9 +76,8 @@ function WaveformBars() {
       {([0, 1, 2] as const).map((i) => (
         <span
           key={i}
-          className="block w-[3px] rounded-sm bg-[#F59E0B]"
+          className="block h-3 w-[3px] rounded-sm bg-brick-gold"
           style={{
-            height: 12,
             animation: `ybWave 0.8s ease-in-out ${i * 0.15}s infinite alternate`,
           }}
         />
@@ -176,10 +175,10 @@ export function VoiceInput({ onTranscript }: VoiceInputProps) {
       aria-pressed={isVoiceActive}
       className={cn(
         'flex items-center justify-center rounded-sm p-1 transition-colors',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B] focus-visible:ring-offset-1 focus-visible:ring-offset-[#18181B]',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brick-gold focus-visible:ring-offset-1 focus-visible:ring-offset-deep-gray',
         isVoiceActive
-          ? 'text-[#F59E0B]'
-          : 'text-[#71717A] hover:text-[#A1A1AA]',
+          ? 'text-brick-gold'
+          : 'text-soft-gray hover:text-light-gray',
       )}
       style={
         isVoiceActive

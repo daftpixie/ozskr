@@ -48,6 +48,10 @@ export const createSupabaseServerClient = (serviceRoleKey: string) => {
       persistSession: false,
       autoRefreshToken: false,
     },
+    global: {
+      fetch: (url, options) =>
+        fetch(url, { ...options, signal: AbortSignal.timeout(10000) }),
+    },
   });
 };
 

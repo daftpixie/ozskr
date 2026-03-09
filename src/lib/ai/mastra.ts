@@ -5,6 +5,7 @@
 
 import { Mastra } from '@mastra/core';
 import { anthropic } from '@ai-sdk/anthropic';
+import { personaAgent } from './agent/persona-agent';
 
 /**
  * Model configuration for Mastra agents
@@ -17,7 +18,7 @@ const FALLBACK_MODEL = anthropic('claude-haiku-4-5-20251001');
  * This is the core agent orchestration framework
  */
 export const mastra = new Mastra({
-  agents: {},
+  agents: { personaAgent },
 });
 
 /**
@@ -35,5 +36,5 @@ export const getFallbackModel = () => FALLBACK_MODEL;
  * This will be used once agents are defined in Sprint 2.2
  */
 export const getAgent = (agentId: string) => {
-  return mastra.getAgent(agentId);
+  return mastra.getAgent(agentId as 'personaAgent');
 };

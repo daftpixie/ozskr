@@ -21,6 +21,7 @@ const TABS: NavTab[] = [
   { label: 'Calendar', href: '/calendar' },
   { label: 'Content', href: '/content' },
   { label: 'Social', href: '/social' },
+  { label: 'Trading', href: '/trading' },
   { label: 'Analytics', href: '/analytics' },
   { label: 'Settings', href: '/settings' },
 ];
