@@ -134,6 +134,7 @@ export interface User {
   wallet_address: string;
   display_name: string | null;
   avatar_url: string | null;
+  timezone: string;
   created_at: string;
   updated_at: string;
 }
@@ -427,6 +428,41 @@ export interface AgentTransaction {
 }
 
 // =============================================================================
+// CONTENT CALENDAR TYPES
+// =============================================================================
+
+export type CalendarEntryStatus = 'draft' | 'scheduled' | 'published' | 'failed';
+
+export interface ContentCalendarEntry {
+  id: string;
+  character_id: string;
+  wallet_address: string;
+  scheduled_at: string;
+  platform: 'twitter' | 'instagram' | 'linkedin' | 'tiktok';
+  content_brief: string;
+  content_text: string | null;
+  content_type: 'text' | 'image' | 'video';
+  status: CalendarEntryStatus;
+  trigger_schedule_id: string | null;
+  error_message: string | null;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContentCalendarEntryInsert {
+  character_id: string;
+  wallet_address: string;
+  scheduled_at: string;
+  platform: 'twitter' | 'instagram' | 'linkedin' | 'tiktok';
+  content_brief: string;
+  content_text?: string | null;
+  content_type?: 'text' | 'image' | 'video';
+  status?: CalendarEntryStatus;
+  trigger_schedule_id?: string | null;
+}
+
+// =============================================================================
 // INSERT TYPES (Optional fields for creation)
 // =============================================================================
 
@@ -596,7 +632,7 @@ export type TwitterTokenInsert = Pick<
 // UPDATE TYPES (All fields optional)
 // =============================================================================
 
-export type UserUpdate = Partial<Pick<User, 'display_name' | 'avatar_url'>>;
+export type UserUpdate = Partial<Pick<User, 'display_name' | 'avatar_url' | 'timezone'>>;
 
 export type CharacterUpdate = Partial<
   Pick<
@@ -838,6 +874,11 @@ export interface Database {
         Row: TwitterToken;
         Insert: TwitterTokenInsert;
         Update: TwitterTokenUpdate;
+      };
+      content_calendar: {
+        Row: ContentCalendarEntry;
+        Insert: ContentCalendarEntryInsert;
+        Update: Partial<Pick<ContentCalendarEntry, 'content_text' | 'status' | 'trigger_schedule_id' | 'error_message' | 'published_at'>>;
       };
     };
     Views: Record<string, never>;
