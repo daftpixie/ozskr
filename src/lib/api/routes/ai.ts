@@ -618,6 +618,11 @@ ai.put(
       // Build update object (only allowed fields)
       const updateData: Record<string, unknown> = {};
       if (input.name !== undefined) updateData.name = input.name;
+      if (input.persona !== undefined) updateData.persona = input.persona;
+      if (input.voiceTone !== undefined) updateData.voice_tone = input.voiceTone;
+      if (input.visualStyle !== undefined) updateData.visual_style = input.visualStyle;
+      if (input.topicAffinity !== undefined) updateData.topic_affinity = input.topicAffinity;
+      if (input.guardrails !== undefined) updateData.guardrails = input.guardrails;
       if (input.visualStyleParams !== undefined)
         updateData.visual_style_params = input.visualStyleParams;
       if (input.socialAccounts !== undefined)

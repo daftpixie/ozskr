@@ -166,6 +166,11 @@ export type CharacterCreate = z.infer<typeof CharacterCreateSchema>;
 
 export const CharacterUpdateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
+  persona: z.string().min(10).max(2000).optional(),
+  voiceTone: z.string().min(10).max(1000).optional(),
+  visualStyle: z.string().min(10).max(1000).optional(),
+  topicAffinity: z.array(z.string()).optional(),
+  guardrails: z.array(z.string()).optional(),
   visualStyleParams: VisualStyleParamsSchema.optional(),
   socialAccounts: SocialAccountsSchema.optional(),
   status: CharacterStatusSchema.optional(),
