@@ -1,15 +1,13 @@
-'use client';
-
 /**
  * Dashboard Layout
- * Authenticated layout with sidebar navigation and top bar
+ * Full-width tab navigation layout with YellowBrick command bar.
+ * Replaces sidebar-based layout with horizontal tab navigation.
  */
 
-import { useState } from 'react';
 import { AuthGuard } from '@/components/features/auth-guard';
-import { Sidebar } from '@/components/features/sidebar';
-import { TopBar } from '@/components/features/top-bar';
-import { CommandBar } from '@/components/features/command-bar';
+import { DashboardTopBar } from '@/components/features/dashboard-top-bar';
+import { TabNavigation } from '@/components/features/tab-navigation';
+import { YellowBrick } from '@/components/features/yellow-brick';
 import { AchievementToastProvider } from '@/features/gamification/components/achievement-toast';
 import { FeedbackWidget } from '@/features/feedback/feedback-widget';
 
@@ -18,30 +16,27 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [commandBarOpen, setCommandBarOpen] = useState(false);
-
   return (
     <AuthGuard>
       <AchievementToastProvider>
-        <div className="flex h-screen overflow-hidden bg-void-black">
-          {/* Sidebar */}
-          <Sidebar />
+        <div className="min-h-screen bg-[#0A0A0B] flex flex-col">
+          <DashboardTopBar />
 
-          {/* Main Content Area */}
-          <div className="flex flex-1 flex-col overflow-hidden">
-            {/* Top Bar */}
-            <TopBar onCommandBarOpen={() => setCommandBarOpen(true)} />
+          <div className="flex-1 flex flex-col">
+            {/* YellowBrick — centered, max-w-[672px], full-width on mobile */}
+            <div className="flex justify-center px-4 pt-6 pb-4">
+              <YellowBrick />
+            </div>
 
-            {/* Page Content */}
-            <main className="flex-1 overflow-y-auto">
-              <div className="container mx-auto p-6">{children}</div>
+            {/* Horizontal tab navigation */}
+            <TabNavigation />
+
+            {/* Page content */}
+            <main className="flex-1 container mx-auto px-4 py-6 max-w-7xl">
+              {children}
             </main>
           </div>
 
-          {/* Command Bar */}
-          <CommandBar open={commandBarOpen} onOpenChange={setCommandBarOpen} />
-
-          {/* Feedback Widget */}
           <FeedbackWidget />
         </div>
       </AchievementToastProvider>
