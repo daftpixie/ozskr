@@ -200,7 +200,7 @@ describe('twitter/oauth', () => {
       expect(user.name).toBe('Test User');
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.twitter.com/2/users/me',
+        'https://api.twitter.com/2/users/me?user.fields=description',
         expect.objectContaining({
           headers: { Authorization: 'Bearer access-token-123' },
         })

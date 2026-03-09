@@ -18,6 +18,8 @@ import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import { authMiddleware } from '../middleware/auth';
 import { createAuthenticatedClient } from '../supabase';
 import { logger } from '@/lib/utils/logger';
+import { generateAuthUrl, exchangeCode, fetchTwitterUser, checkBioCompliance } from '@/lib/social/twitter/oauth';
+import { storeTokens, getAccessToken } from '@/lib/social/twitter/token-store';
 
 // ---------------------------------------------------------------------------
 // Hono env type
@@ -394,5 +396,216 @@ socialOAuthRoutes.get(
     }
   }
 );
+
+// ---------------------------------------------------------------------------
+// GET /api/social/oauth/twitter/initiate?character_id=<uuid>
+// Generates PKCE code verifier + state, stores in pkce_state, redirects to
+// Twitter's authorization endpoint.
+// ---------------------------------------------------------------------------
+
+socialOAuthRoutes.get('/twitter/initiate', async (c) => {
+  const auth = getAuthContext(c);
+  if (!auth) {
+    return c.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, 401);
+  }
+
+  const clientId = process.env.TWITTER_CLIENT_ID;
+  if (!clientId) {
+    logger.error('TWITTER_CLIENT_ID is not configured');
+    return c.json({ error: 'Twitter integration is not configured', code: 'NOT_CONFIGURED' }, 503);
+  }
+
+  const characterId = c.req.query('character_id') ?? null;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+  const redirectUri = `${appUrl}/api/social/oauth/twitter/callback`;
+
+  try {
+    const { authorizeUrl, state, codeVerifier } = await generateAuthUrl(clientId, redirectUri);
+
+    const supabase = createAuthenticatedClient(auth.jwtToken);
+    const { error: insertError } = await supabase.from('pkce_state').insert({
+      state,
+      code_verifier: codeVerifier,
+      character_id: characterId,
+      wallet_address: auth.walletAddress,
+    });
+
+    if (insertError) {
+      logger.error('Failed to store PKCE state', { error: insertError.message });
+      return c.json({ error: 'Failed to initiate OAuth flow', code: 'DATABASE_ERROR' }, 500);
+    }
+
+    logger.info('Twitter PKCE initiate', { walletAddress: auth.walletAddress, characterId });
+    return c.redirect(authorizeUrl);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    logger.error('Unexpected error in GET /social/oauth/twitter/initiate', { error: message });
+    return c.json({ error: 'Internal server error', code: 'INTERNAL_ERROR' }, 500);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/social/oauth/twitter/callback?code=<code>&state=<state>
+// PKCE code exchange callback. Looks up state from pkce_state, exchanges code,
+// upserts social_accounts, stores encrypted tokens, then redirects.
+// ---------------------------------------------------------------------------
+
+socialOAuthRoutes.get('/twitter/callback', async (c) => {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+  const redirectBase = `${appUrl}/dashboard/social`;
+
+  const code = c.req.query('code');
+  const state = c.req.query('state');
+  const providerError = c.req.query('error');
+
+  if (providerError) {
+    logger.warn('Twitter OAuth provider error in callback', { error: providerError });
+    return c.redirect(`${redirectBase}?error=${encodeURIComponent(providerError)}`);
+  }
+
+  if (!code || !state) {
+    return c.redirect(`${redirectBase}?error=${encodeURIComponent('Missing code or state in callback')}`);
+  }
+
+  const clientId = process.env.TWITTER_CLIENT_ID;
+  if (!clientId) {
+    return c.redirect(`${redirectBase}?error=${encodeURIComponent('Twitter integration is not configured')}`);
+  }
+
+  // Note: the callback does not go through authMiddleware because Twitter redirects
+  // the browser here without the app's Authorization header. We use the wallet_address
+  // stored in pkce_state (set at initiate time) to identify the user.
+  // We use the service role client to read pkce_state.
+  const { createSupabaseServerClient } = await import('@/lib/api/supabase');
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey) {
+    return c.redirect(`${redirectBase}?error=${encodeURIComponent('Server misconfiguration')}`);
+  }
+  const supabase = createSupabaseServerClient(serviceRoleKey);
+
+  try {
+    // Look up PKCE state row
+    const { data: pkceRow, error: pkceError } = await supabase
+      .from('pkce_state')
+      .select('*')
+      .eq('state', state)
+      .single();
+
+    if (pkceError || !pkceRow) {
+      logger.warn('PKCE state not found or already consumed', { state });
+      return c.redirect(`${redirectBase}?error=${encodeURIComponent('Invalid or expired OAuth state')}`);
+    }
+
+    // Check TTL
+    if (new Date(pkceRow.expires_at as string) < new Date()) {
+      await supabase.from('pkce_state').delete().eq('state', state);
+      logger.warn('PKCE state expired', { state });
+      return c.redirect(`${redirectBase}?error=${encodeURIComponent('OAuth session expired. Please try again.')}`);
+    }
+
+    const walletAddress = pkceRow.wallet_address as string;
+    const redirectUri = `${appUrl}/api/social/oauth/twitter/callback`;
+
+    // Exchange the authorization code for tokens
+    const tokens = await exchangeCode(code, pkceRow.code_verifier as string, clientId, redirectUri);
+
+    // Fetch Twitter user profile
+    const twitterUser = await fetchTwitterUser(tokens.access_token);
+
+    // Upsert social_accounts row
+    const { data: socialAccount, error: upsertError } = await supabase
+      .from('social_accounts')
+      .upsert(
+        {
+          wallet_address: walletAddress,
+          platform: 'twitter',
+          platform_account_id: twitterUser.id,
+          platform_username: twitterUser.username,
+          is_connected: true,
+          connected_at: new Date().toISOString(),
+          ayrshare_profile_key: '',
+        },
+        { onConflict: 'wallet_address,platform', ignoreDuplicates: false }
+      )
+      .select('id')
+      .single();
+
+    if (upsertError || !socialAccount) {
+      logger.error('Failed to upsert social_accounts for Twitter', {
+        walletAddress,
+        error: upsertError?.message,
+      });
+      return c.redirect(`${redirectBase}?error=${encodeURIComponent('Failed to save account connection')}`);
+    }
+
+    // Store encrypted tokens
+    await storeTokens(socialAccount.id as string, tokens, twitterUser.id);
+
+    // Consume the PKCE state row
+    await supabase.from('pkce_state').delete().eq('state', state);
+
+    logger.info('Twitter PKCE OAuth complete', { walletAddress, twitterUsername: twitterUser.username });
+    return c.redirect(`${redirectBase}?connected=twitter`);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    logger.error('Unexpected error in GET /social/oauth/twitter/callback', { error: message });
+    return c.redirect(`${redirectBase}?error=${encodeURIComponent('An unexpected error occurred. Please try again.')}`);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/social/oauth/twitter/bio-check
+// Checks whether the connected Twitter account's bio contains "Automated"
+// per X policy (Feb 2026) for agent-managed accounts.
+// ---------------------------------------------------------------------------
+
+socialOAuthRoutes.get('/twitter/bio-check', async (c) => {
+  const auth = getAuthContext(c);
+  if (!auth) {
+    return c.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, 401);
+  }
+
+  try {
+    const supabase = createAuthenticatedClient(auth.jwtToken);
+
+    const { data: account, error: accountError } = await supabase
+      .from('social_accounts')
+      .select('id')
+      .eq('wallet_address', auth.walletAddress)
+      .eq('platform', 'twitter')
+      .eq('is_connected', true)
+      .maybeSingle();
+
+    if (accountError) {
+      logger.error('Failed to query social_accounts for bio-check', { error: accountError.message });
+      return c.json({ error: 'Database error', code: 'DATABASE_ERROR' }, 500);
+    }
+
+    if (!account) {
+      return c.json({
+        compliant: false,
+        bio: null,
+        message: 'No connected Twitter account',
+      }, 200);
+    }
+
+    const accessToken = await getAccessToken(account.id as string);
+    const twitterUser = await fetchTwitterUser(accessToken);
+    const compliant = await checkBioCompliance(accessToken);
+    const bio = twitterUser.description ?? null;
+
+    return c.json({
+      compliant,
+      bio,
+      message: compliant
+        ? 'Bio is compliant with X agent policy'
+        : 'Bio must contain "Automated by ozskr.ai" per X platform policy (Feb 2026)',
+    }, 200);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    logger.error('Unexpected error in GET /social/oauth/twitter/bio-check', { error: message });
+    return c.json({ error: 'Internal server error', code: 'INTERNAL_ERROR' }, 500);
+  }
+});
 
 export { socialOAuthRoutes };

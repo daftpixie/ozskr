@@ -47,6 +47,7 @@ const TwitterUserSchema = z.object({
     id: z.string(),
     name: z.string(),
     username: z.string(),
+    description: z.string().optional(),
   }),
 });
 
@@ -242,7 +243,7 @@ export const refreshAccessToken = async (
  */
 export const fetchTwitterUser = async (accessToken: string): Promise<TwitterUser> => {
   try {
-    const response = await fetch('https://api.twitter.com/2/users/me', {
+    const response = await fetch('https://api.twitter.com/2/users/me?user.fields=description', {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
@@ -260,4 +261,14 @@ export const fetchTwitterUser = async (accessToken: string): Promise<TwitterUser
     const message = error instanceof Error ? error.message : 'Unknown error';
     throw new TwitterOAuthError(`Failed to fetch user profile: ${message}`);
   }
+};
+
+/**
+ * Check if the connected Twitter account's bio contains "Automated" (case-insensitive).
+ * X policy (Feb 2026): agent-managed accounts MUST include "Automated by ozskr.ai" in bio.
+ */
+export const checkBioCompliance = async (accessToken: string): Promise<boolean> => {
+  const user = await fetchTwitterUser(accessToken);
+  const bio = user.description ?? '';
+  return bio.toLowerCase().includes('automated');
 };

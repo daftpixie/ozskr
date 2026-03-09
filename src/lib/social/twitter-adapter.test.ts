@@ -26,6 +26,14 @@ vi.mock('./twitter/client', () => ({
   uploadMedia: mockUploadMedia,
   deleteTweet: mockDeleteTweet,
   getTweetMetrics: mockGetTweetMetrics,
+  TwitterApiError: class TwitterApiError extends Error {
+    status?: number;
+    constructor(message: string, status?: number) {
+      super(message);
+      this.name = 'TwitterApiError';
+      this.status = status;
+    }
+  },
 }));
 
 vi.mock('@/lib/utils/logger', () => ({

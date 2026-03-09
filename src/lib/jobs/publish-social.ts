@@ -5,6 +5,7 @@
 
 import { createSupabaseServerClient } from '@/lib/api/supabase';
 import { getPublisher, isPublishingEnabled } from '@/lib/social/publisher-factory';
+import { storeMem0Memory } from '@/lib/ai/agent/memory-layers';
 import { logger } from '@/lib/utils/logger';
 import { ModerationStatus, PointsType, PointsSourceType } from '@/types/database';
 import type {
@@ -125,6 +126,13 @@ const publishToAccount = async (
       .from('social_accounts')
       .update({ last_posted_at: now })
       .eq('id', account.id);
+
+    // Store posting event in Mem0 (fire-and-forget)
+    void storeMem0Memory(
+      `character-${content.character_id}`,
+      `Successfully posted to ${account.platform} at ${now}`,
+      { platform: account.platform, contentGenerationId: content.id, status: 'posted' }
+    ).catch(() => {});
 
     // Award points for publishing (async, don't fail the main operation)
     void (async () => {

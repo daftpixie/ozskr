@@ -22,7 +22,7 @@ import {
   type PostAnalytics,
 } from './types';
 import { getAccessToken } from './twitter/token-store';
-import { postTweet, uploadMedia, deleteTweet, getTweetMetrics } from './twitter/client';
+import { postTweet, uploadMedia, deleteTweet, getTweetMetrics, TwitterApiError } from './twitter/client';
 import { injectTwitterAiDisclosure } from './ai-disclosure';
 
 /**
@@ -82,6 +82,26 @@ export class TwitterAdapter implements SocialPublisher {
         costUsd: TWITTER_DIRECT_COST_USD,
       };
     } catch (error) {
+      if (error instanceof TwitterApiError) {
+        if (error.statusCode === 401) {
+          // Token expired mid-request — the token-store auto-refreshes on next getAccessToken()
+          // but that already happened. This means refresh also failed. Log and surface.
+          logger.error('Twitter 401: token invalid after refresh attempt', { profileKey: post.profileKey });
+          throw new PublisherError(
+            'Twitter authorization failed (401). Please reconnect your X account.',
+            SocialProvider.DIRECT,
+            error
+          );
+        }
+        if (error.statusCode === 403) {
+          logger.error('Twitter 403: account suspended or restricted', { profileKey: post.profileKey });
+          throw new PublisherError(
+            'Twitter posting blocked (403): account may be suspended or restricted. Agent posting paused.',
+            SocialProvider.DIRECT,
+            error
+          );
+        }
+      }
       const message = error instanceof Error ? error.message : 'Unknown error';
       logger.error('Twitter direct publish failed', { error: message });
       throw new PublisherError(message, SocialProvider.DIRECT, error);
