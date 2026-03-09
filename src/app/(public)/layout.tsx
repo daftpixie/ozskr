@@ -5,7 +5,6 @@
  */
 
 import { PublicHeader } from '@/components/features/public-header';
-import { PublicFooter } from '@/components/features/public-footer';
 
 export default function PublicLayout({
   children,
@@ -16,7 +15,6 @@ export default function PublicLayout({
     <div className="min-h-screen bg-void-black text-white">
       <PublicHeader />
       <main>{children}</main>
-      <PublicFooter />
     </div>
   );
 }

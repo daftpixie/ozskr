@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import { PublicFooter } from "@/components/features/public-footer";
 
 const satoshi = localFont({
   src: [
@@ -70,7 +71,10 @@ export default function RootLayout({
       <body
         className={`${satoshi.variable} ${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <PublicFooter />
+        </Providers>
       </body>
     </html>
   );

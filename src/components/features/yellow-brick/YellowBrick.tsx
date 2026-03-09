@@ -13,6 +13,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type ChangeEvent,
   type DragEvent,
   type KeyboardEvent,
@@ -43,6 +44,7 @@ const CONTEXT_PLACEHOLDERS: Record<string, string> = {
   content: 'Generate content, describe what you need...',
   analytics: 'Ask about performance, get insights...',
   social: 'Manage your social presence...',
+  trading: 'Swap tokens, check prices, ask about trading...',
   settings: 'Configure your agent...',
 };
 
@@ -89,6 +91,7 @@ function YellowBrickInput({
   interimTranscript,
 }: YellowBrickInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [processingMsgIdx, setProcessingMsgIdx] = useState(0);
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -96,6 +99,14 @@ function YellowBrickInput({
     el.style.height = 'auto';
     el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
   }, [value]);
+
+  useEffect(() => {
+    if (!isProcessing) return;
+    const interval = setInterval(() => {
+      setProcessingMsgIdx((i) => (i + 1) % PROCESSING_MESSAGES.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [isProcessing]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -110,7 +121,7 @@ function YellowBrickInput({
 
   return (
     <div className="flex min-h-[48px] items-center gap-3 px-4">
-      <Sparkles className="h-4 w-4 shrink-0 text-[#F59E0B]" aria-hidden="true" />
+      <Sparkles className="h-4 w-4 shrink-0 text-[#92400E]" aria-hidden="true" />
 
       <div className="relative flex-1">
         <textarea
@@ -124,9 +135,9 @@ function YellowBrickInput({
           aria-label="Command input"
           aria-multiline="true"
           className={cn(
-            'w-full resize-none bg-transparent text-sm leading-6 outline-none',
-            'placeholder:font-normal placeholder:text-[#A1A1AA]',
-            'font-medium text-white',
+            'w-full resize-none bg-transparent text-sm leading-normal py-0 outline-none',
+            'placeholder:font-normal placeholder:text-[#92400E]',
+            'font-medium text-[#0A0A0B] caret-[#0A0A0B]',
             'disabled:cursor-not-allowed disabled:opacity-50',
             'overflow-hidden',
           )}
@@ -134,7 +145,7 @@ function YellowBrickInput({
         />
         {interimTranscript && (
           <span
-            className="pointer-events-none absolute inset-0 flex items-center text-sm italic text-[#71717A]"
+            className="pointer-events-none absolute inset-0 flex items-center text-sm italic text-[#92400E]"
             aria-hidden="true"
           >
             {interimTranscript}
@@ -142,11 +153,11 @@ function YellowBrickInput({
         )}
         {isProcessing && (
           <span
-            className="pointer-events-none absolute inset-0 flex items-center text-sm text-[#A1A1AA]"
+            className="pointer-events-none absolute inset-0 flex items-center text-sm text-[#92400E]"
             aria-live="polite"
             aria-atomic="true"
           >
-            {PROCESSING_MESSAGES[Math.floor(Date.now() / 2000) % PROCESSING_MESSAGES.length]}
+            {PROCESSING_MESSAGES[processingMsgIdx]}
           </span>
         )}
       </div>
@@ -167,8 +178,8 @@ function KeyboardShortcutBadge() {
     <kbd
       aria-label={isMac ? 'Command K' : 'Control K'}
       className={cn(
-        'hidden items-center gap-[2px] rounded-sm border border-[#3F3F46]',
-        'bg-[#27272A] px-1.5 py-0.5 font-mono text-[10px] text-[#71717A]',
+        'hidden items-center gap-[2px] rounded-sm',
+        'bg-[rgba(146,64,14,0.15)] px-1.5 py-0.5 font-mono text-[10px] text-[#92400E]',
         'select-none sm:inline-flex',
       )}
     >
@@ -233,7 +244,7 @@ function YellowBrickFileChips({
   if (files.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-2 px-4 pb-3 pt-0" aria-label="Attached files">
+    <div className="flex flex-wrap gap-2 bg-[#18181B] px-4 pb-3 pt-2" aria-label="Attached files">
       {files.map((file, i) => (
         <span
           key={`${file.name}-${i}`}
@@ -368,7 +379,7 @@ function YellowBrickResponsePanel({
 
   return (
     <div
-      className="overflow-hidden border-t border-[#27272A] animate-in slide-in-from-top-2 duration-200"
+      className="overflow-hidden bg-[#18181B] border-t border-[#27272A] animate-in slide-in-from-top-2 duration-200"
       role="region"
       aria-label="Agent response"
     >
@@ -389,7 +400,7 @@ function DropZoneOverlay() {
     <div
       className={cn(
         'pointer-events-none absolute inset-0 z-10 flex items-center justify-center',
-        'rounded-[4px] border-2 border-dashed border-[#F59E0B] bg-[#F59E0B]/5',
+        'rounded-[4px] border-2 border-dashed border-[#92400E] bg-[rgba(146,64,14,0.15)]',
       )}
       aria-hidden="true"
     >
@@ -398,21 +409,15 @@ function DropZoneOverlay() {
   );
 }
 
-function getBorderStyle(
+function getShadowStyle(
   isFocused: boolean,
   isProcessing: boolean,
   isError: boolean,
-): React.CSSProperties {
-  if (isError) {
-    return { border: '1px solid #F87171', boxShadow: '0 0 12px rgba(248, 113, 113, 0.2)' };
-  }
-  if (isProcessing) {
-    return { border: '1px solid #F59E0B' };
-  }
-  if (isFocused) {
-    return { border: '1px solid #F59E0B', boxShadow: '0 0 30px rgba(245, 158, 11, 0.2)' };
-  }
-  return { border: '1px solid rgba(245, 158, 11, 0.4)' };
+): CSSProperties {
+  if (isProcessing) return { boxShadow: 'var(--yb-shadow-default)' };
+  if (isError) return { boxShadow: 'var(--yb-shadow-error)' };
+  if (isFocused) return { boxShadow: 'var(--yb-shadow-focused)' };
+  return { boxShadow: 'var(--yb-shadow-default)' };
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -630,7 +635,7 @@ export function YellowBrick() {
     [attachFile],
   );
 
-  const borderStyle = getBorderStyle(isFocused, isProcessing, isError);
+  const shadowStyle = getShadowStyle(isFocused, isProcessing, isError);
   const hasResponse =
     messages.some((m) => m.role === 'assistant') || isStreaming || streamError !== null;
 
@@ -644,10 +649,10 @@ export function YellowBrick() {
       <div
         ref={containerRef}
         className={cn(
-          'relative w-full overflow-hidden bg-[#18181B] transition-all duration-150',
-          isProcessing && 'yb-processing',
+          'relative w-full overflow-hidden transition-all duration-150 cursor-text',
+          isProcessing ? 'yb-processing' : isFocused ? 'bg-brick-warm' : 'bg-brick-gold',
         )}
-        style={{ borderRadius: 4, ...borderStyle }}
+        style={{ borderRadius: 4, ...shadowStyle }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -701,18 +706,13 @@ export function YellowBrick() {
           50%       { transform: scale(1.15); }
         }
         .yb-processing {
-          background: linear-gradient(90deg, #D97706, #F59E0B, #FBBF24, #F59E0B, #D97706);
-          background-size: 200% 100%;
-          animation: ybBorderShimmer 2s linear infinite;
-          padding: 1px;
+          background: linear-gradient(90deg, var(--color-brick-deep), var(--color-brick-gold), var(--color-brick-warm), var(--color-brick-gold), var(--color-brick-deep));
+          background-size: 300% 100%;
+          animation: ybSurfaceShimmer 2s linear infinite;
         }
-        .yb-processing > * {
-          background: #18181B;
-          border-radius: 3px;
-        }
-        @keyframes ybBorderShimmer {
-          0%   { background-position: 200% center; }
-          100% { background-position: -200% center; }
+        @keyframes ybSurfaceShimmer {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 100% 50%; }
         }
       `}</style>
     </div>
