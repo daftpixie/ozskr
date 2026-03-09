@@ -78,8 +78,8 @@ const STATUS_CONFIG = {
   scheduled: {
     label: 'Scheduled',
     className:
-      'bg-[var(--color-brick-gold)]/20 text-[var(--color-brick-gold)] border border-[var(--color-brick-gold)]/40',
-    borderClass: 'border-l-2 border-[var(--color-brick-gold)]',
+      'bg-[var(--color-emerald-light)]/20 text-[var(--color-emerald-light)] border border-[var(--color-emerald-light)]/40',
+    borderClass: 'border-l-2 border-[var(--color-emerald-light)]',
   },
   published: {
     label: 'Published',
@@ -325,7 +325,7 @@ function LiveStatusIndicator({ scheduleId }: { scheduleId: string }) {
   const dotColor =
     live.stage === 'posting'
       ? 'bg-[var(--color-solana-green)]'
-      : 'bg-[var(--color-brick-gold)]';
+      : 'bg-[var(--color-emerald-light)]';
 
   return (
     <span
@@ -374,7 +374,7 @@ function PostChipInner({ post, timezone }: { post: ScheduledPost; timezone: stri
                 ? 'text-[var(--color-solana-green)]'
                 : post.status === 'failed'
                   ? 'text-[var(--color-error)]'
-                  : 'text-[var(--color-brick-gold)]'
+                  : 'text-[var(--color-emerald-light)]'
             )}
           />
           <p className="text-[10px] font-medium text-white">
@@ -448,7 +448,7 @@ function DayColumn({ dayName, day, dayPosts, today, timezone, isOver, onAddClick
       className={cn(
         'flex min-h-[200px] flex-col rounded-lg border bg-[var(--color-deep-gray)] p-3 transition-colors',
         today
-          ? 'border-[var(--color-brick-gold)]/60'
+          ? 'border-[var(--color-emerald-light)]/60'
           : 'border-[var(--color-mid-gray)]',
         isOver && 'border-[var(--color-solana-green)]/60 bg-[var(--color-solana-green)]/5'
       )}
@@ -460,7 +460,7 @@ function DayColumn({ dayName, day, dayPosts, today, timezone, isOver, onAddClick
           className={cn(
             'flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold',
             today
-              ? 'bg-[var(--color-brick-gold)] text-black'
+              ? 'bg-[var(--color-emerald-light)] text-black'
               : 'text-[var(--color-light-gray)]'
           )}
         >
@@ -485,7 +485,7 @@ function DayColumn({ dayName, day, dayPosts, today, timezone, isOver, onAddClick
       <button
         type="button"
         onClick={onAddClick}
-        className="mt-2 flex w-full items-center justify-center gap-1 rounded border border-dashed border-[var(--color-border-subtle)] py-1 text-[10px] text-[#52525B] transition-colors hover:border-[var(--color-brick-gold)]/40 hover:text-[var(--color-brick-gold)]/70"
+        className="mt-2 flex w-full items-center justify-center gap-1 rounded border border-dashed border-[var(--color-border-subtle)] py-1 text-[10px] text-[#52525B] transition-colors hover:border-[var(--color-emerald-light)]/40 hover:text-[var(--color-emerald-light)]/70"
         aria-label={`Schedule post for ${formatDate(day)}`}
       >
         <Plus className="h-3 w-3" />
@@ -609,7 +609,7 @@ function SchedulePostModal({
             required
             minLength={1}
             rows={4}
-            className="w-full resize-none rounded-md border border-[var(--color-mid-gray)] bg-[var(--color-void-black)] px-3 py-2 text-sm text-white placeholder-[#52525B] focus:border-[var(--color-brick-gold)] focus:outline-none"
+            className="w-full resize-none rounded-md border border-[var(--color-mid-gray)] bg-[var(--color-void-black)] px-3 py-2 text-sm text-white placeholder-[#52525B] focus:border-[var(--color-emerald-light)] focus:outline-none"
             placeholder="Enter post content or prompt for your agent..."
           />
         </div>
@@ -626,7 +626,7 @@ function SchedulePostModal({
             id="post-platform"
             value={platform}
             onChange={(e) => setPlatform(e.target.value as Platform)}
-            className="w-full rounded-md border border-[var(--color-mid-gray)] bg-[var(--color-void-black)] px-3 py-2 text-sm text-white focus:border-[var(--color-brick-gold)] focus:outline-none"
+            className="w-full rounded-md border border-[var(--color-mid-gray)] bg-[var(--color-void-black)] px-3 py-2 text-sm text-white focus:border-[var(--color-emerald-light)] focus:outline-none"
           >
             <option value="twitter">Twitter / X</option>
             <option value="instagram">Instagram</option>
@@ -649,7 +649,7 @@ function SchedulePostModal({
               value={date}
               onChange={(e) => setDate(e.target.value)}
               required
-              className="w-full rounded-md border border-[var(--color-mid-gray)] bg-[var(--color-void-black)] px-3 py-2 text-sm text-white focus:border-[var(--color-brick-gold)] focus:outline-none"
+              className="w-full rounded-md border border-[var(--color-mid-gray)] bg-[var(--color-void-black)] px-3 py-2 text-sm text-white focus:border-[var(--color-emerald-light)] focus:outline-none"
             />
           </div>
           <div className="flex-1 space-y-1.5">
@@ -665,7 +665,7 @@ function SchedulePostModal({
               value={time}
               onChange={(e) => setTime(e.target.value)}
               required
-              className="w-full rounded-md border border-[var(--color-mid-gray)] bg-[var(--color-void-black)] px-3 py-2 text-sm text-white focus:border-[var(--color-brick-gold)] focus:outline-none"
+              className="w-full rounded-md border border-[var(--color-mid-gray)] bg-[var(--color-void-black)] px-3 py-2 text-sm text-white focus:border-[var(--color-emerald-light)] focus:outline-none"
             />
           </div>
         </div>
@@ -699,7 +699,7 @@ function SchedulePostModal({
           <button
             type="submit"
             disabled={mutation.isPending || !content.trim()}
-            className="rounded-md bg-[var(--color-brick-gold)] px-4 py-2 text-sm font-semibold text-black transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-md bg-[var(--color-emerald-light)] px-4 py-2 text-sm font-semibold text-black transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {mutation.isPending ? 'Scheduling…' : 'Schedule'}
           </button>
@@ -853,7 +853,7 @@ export function ContentCalendar() {
             setSelectedDay(undefined);
             setModalOpen(true);
           }}
-          className="flex items-center gap-2 rounded-md bg-[var(--color-brick-gold)] px-4 py-2 text-sm font-semibold text-black transition-opacity hover:opacity-90"
+          className="flex items-center gap-2 rounded-md bg-[var(--color-emerald-light)] px-4 py-2 text-sm font-semibold text-black transition-opacity hover:opacity-90"
         >
           <Plus className="h-4 w-4" />
           Schedule Post
@@ -950,7 +950,7 @@ export function ContentCalendar() {
             key={p}
             className="flex items-center gap-1.5 text-xs text-[var(--color-soft-gray)]"
           >
-            <PlatformIcon platform={p} className="text-[var(--color-brick-gold)]" />
+            <PlatformIcon platform={p} className="text-[var(--color-emerald-light)]" />
             <span>{PLATFORM_LABELS[p]}</span>
           </div>
         ))}

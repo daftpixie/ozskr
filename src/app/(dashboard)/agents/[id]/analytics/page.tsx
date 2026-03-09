@@ -199,7 +199,7 @@ export default function AgentAnalyticsPage({ params }: AgentAnalyticsPageProps) 
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-brick-gold">
+            <div className="text-3xl font-bold text-emerald-light">
               {summary?.totalEngagement
                 ? Object.values(summary.totalEngagement).reduce<number>(
                     (sum, val) => sum + (typeof val === 'number' ? val : 0),
@@ -257,7 +257,7 @@ export default function AgentAnalyticsPage({ params }: AgentAnalyticsPageProps) 
         <Card className="border-border/50 bg-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Calendar className="h-5 w-5 text-brick-gold" />
+              <Calendar className="h-5 w-5 text-emerald-light" />
               Content Type Breakdown
             </CardTitle>
           </CardHeader>

@@ -129,8 +129,8 @@ export function WaitlistForm({ source }: WaitlistFormProps) {
   if (state === 'duplicate') {
     return (
       <div className="flex flex-col items-center gap-3 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brick-gold/20">
-          <Check className="h-6 w-6 text-brick-gold" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-light/20">
+          <Check className="h-6 w-6 text-emerald-light" />
         </div>
         <p className="text-lg font-medium text-white">You&apos;re already on the road!</p>
         <p className="text-sm text-muted-foreground">

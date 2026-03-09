@@ -69,7 +69,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-void-black">
         <div className="flex flex-col items-center gap-6 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brick-gold/10">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-light/10">
             <span className="text-3xl">&#128274;</span>
           </div>
           <h2 className="text-2xl font-bold text-white">

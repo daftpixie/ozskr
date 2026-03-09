@@ -51,7 +51,7 @@ export function StatsBar() {
           {/* Current Streak */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Streak:</span>
-            <span className="text-lg font-bold font-display text-brick-gold">
+            <span className="text-lg font-bold font-display text-emerald-light">
               🔥 {stats.currentStreakDays}
             </span>
             <span className="text-sm text-muted-foreground">

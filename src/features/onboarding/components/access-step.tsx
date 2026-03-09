@@ -137,8 +137,8 @@ export function AccessStep({ onNext, onBack }: AccessStepProps) {
       <div className="animate-fade-in-up">
         <Card className="mx-auto max-w-2xl border-mid-gray bg-deep-gray">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brick-gold/10">
-              <Clock className="h-8 w-8 text-brick-gold" />
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-light/10">
+              <Clock className="h-8 w-8 text-emerald-light" />
             </div>
             <CardTitle className="font-display text-2xl text-white">
               You&apos;re on the list!
@@ -162,8 +162,8 @@ export function AccessStep({ onNext, onBack }: AccessStepProps) {
     <div className="animate-fade-in-up">
       <Card className="mx-auto max-w-2xl border-mid-gray bg-deep-gray">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brick-gold/10">
-            <AlertCircle className="h-8 w-8 text-brick-gold" />
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-light/10">
+            <AlertCircle className="h-8 w-8 text-emerald-light" />
           </div>
           <CardTitle className="font-display text-2xl text-white">
             Join the waitlist first

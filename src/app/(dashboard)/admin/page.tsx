@@ -349,7 +349,7 @@ export default function AdminPage() {
           </Card>
           <Card className="border-white/5 bg-white/[0.02]">
             <CardContent className="flex items-center gap-3 p-4">
-              <Share2 className="h-5 w-5 text-brick-gold" />
+              <Share2 className="h-5 w-5 text-emerald-light" />
               <div>
                 <p className="font-display text-xl font-bold text-white">{summary.totalPublishes}</p>
                 <p className="text-xs text-muted-foreground">Publishes</p>
@@ -580,7 +580,7 @@ export default function AdminPage() {
                           ? 'border-solana-green/30 text-solana-green'
                           : entry.access_tier === 'BETA'
                             ? 'border-solana-purple/30 text-solana-purple'
-                            : 'border-brick-gold/30 text-brick-gold'
+                            : 'border-emerald-light/30 text-emerald-light'
                       }
                     >
                       {entry.access_tier}

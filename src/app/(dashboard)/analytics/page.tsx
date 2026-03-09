@@ -127,10 +127,10 @@ export default function AnalyticsPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Published
             </CardTitle>
-            <CheckCircle className="h-4 w-4 text-brick-gold" />
+            <CheckCircle className="h-4 w-4 text-emerald-light" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-brick-gold">
+            <div className="text-3xl font-bold text-emerald-light">
               {overview?.totalPosts || 0}
             </div>
             <p className="mt-1 text-xs text-muted-foreground">Posts live</p>
@@ -173,7 +173,7 @@ export default function AnalyticsPage() {
             <CardTitle className="text-sm font-medium">Total Engagement</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-brick-gold">
+            <div className="text-2xl font-bold text-emerald-light">
               {overview?.totalEngagement
                 ? Object.values(overview.totalEngagement).reduce(
                     (sum, val) => sum + (typeof val === 'number' ? val : 0),
@@ -257,14 +257,14 @@ export default function AnalyticsPage() {
       <Card className="border-border/50 bg-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-brick-gold" />
+            <BarChart3 className="h-5 w-5 text-emerald-light" />
             Best Posting Times
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-12">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-brick-gold/10">
-              <BarChart3 className="h-10 w-10 text-brick-gold" />
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-light/10">
+              <BarChart3 className="h-10 w-10 text-emerald-light" />
             </div>
             <h3 className="mt-6 text-lg font-medium text-white">
               Posting Time Analysis

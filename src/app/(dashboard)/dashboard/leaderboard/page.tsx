@@ -126,7 +126,7 @@ export default function LeaderboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display flex items-center gap-2 text-3xl font-bold text-white">
-            <Crown className="h-8 w-8 text-brick-gold" />
+            <Crown className="h-8 w-8 text-emerald-light" />
             Leaderboard
           </h1>
           <p className="mt-2 text-muted-foreground">

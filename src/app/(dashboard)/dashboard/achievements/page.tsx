@@ -48,7 +48,7 @@ function AchievementCard({
       className={cn(
         'border-border bg-card transition-all',
         unlocked ? 'opacity-100' : 'opacity-50',
-        isRecent && 'shadow-[0_0_20px_rgba(245,158,11,0.4)] border-brick-gold/50'
+        isRecent && 'shadow-[0_0_20px_rgba(16,185,129,0.4)] border-emerald-light/50'
       )}
     >
       <CardContent className="p-6">
@@ -105,7 +105,7 @@ function AchievementCard({
               >
                 {categoryLabels[achievement.category]}
               </Badge>
-              <span className="text-sm font-semibold text-brick-gold">
+              <span className="text-sm font-semibold text-emerald-light">
                 +{achievement.pointsReward} points
               </span>
             </div>

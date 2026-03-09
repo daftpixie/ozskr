@@ -48,8 +48,8 @@ const FEATURES = [
     icon: Share2,
     title: 'Publish Everywhere',
     description: 'Push content to Twitter/X, Discord, and more with one click.',
-    color: 'text-brick-gold',
-    bg: 'bg-brick-gold/10',
+    color: 'text-emerald-light',
+    bg: 'bg-emerald-light/10',
   },
   {
     icon: ArrowLeftRight,
@@ -69,8 +69,8 @@ const FEATURES = [
     icon: Code,
     title: 'Own Your Story',
     description: 'Open source, transparent, yours. We\'re not hiding the AI behind a curtain.',
-    color: 'text-brick-gold',
-    bg: 'bg-brick-gold/10',
+    color: 'text-emerald-light',
+    bg: 'bg-emerald-light/10',
   },
 ] as const;
 
@@ -117,10 +117,10 @@ function HomeContent() {
     <div className="relative">
       {/* Access restricted banner */}
       {accessRestricted && (
-        <div className="fixed left-0 right-0 top-16 z-40 border-b border-brick-gold/20 bg-brick-gold/10 backdrop-blur-sm">
+        <div className="fixed left-0 right-0 top-16 z-40 border-b border-emerald-light/20 bg-emerald-light/10 backdrop-blur-sm">
           <div className="mx-auto flex max-w-7xl items-center gap-3 px-6 py-3">
-            <AlertTriangle className="h-4 w-4 shrink-0 text-brick-gold" />
-            <p className="text-sm text-brick-gold">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-emerald-light" />
+            <p className="text-sm text-emerald-light">
               Access is currently limited to approved testers. Join the waitlist below and we&apos;ll notify you when spots open.
             </p>
           </div>
@@ -130,7 +130,7 @@ function HomeContent() {
       {/* Hero */}
       <section className="relative flex min-h-screen flex-col items-center justify-center px-6 pt-16 text-center pattern-bricks">
         <div className="mx-auto max-w-4xl space-y-8">
-          <h1 className="font-display bg-gradient-to-r from-solana-purple via-solana-green to-brick-gold bg-clip-text text-5xl font-bold tracking-tight text-transparent sm:text-7xl animate-fade-in-up">
+          <h1 className="font-display bg-gradient-to-r from-solana-purple via-solana-green to-emerald-light bg-clip-text text-5xl font-bold tracking-tight text-transparent sm:text-7xl animate-fade-in-up">
             ozskr.ai
           </h1>
           <p className="mx-auto max-w-2xl text-xl font-medium text-white sm:text-2xl animate-fade-in-up stagger-1">
@@ -226,9 +226,9 @@ function HomeContent() {
 
       {/* Whitepaper Download */}
       <section className="mx-auto max-w-4xl px-6 py-16">
-        <div className="rounded-lg border border-brick-gold/20 bg-brick-gold/5 p-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brick-gold/10">
-            <FileDown className="h-6 w-6 text-brick-gold" />
+        <div className="rounded-lg border border-emerald-light/20 bg-emerald-light/5 p-8 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-light/10">
+            <FileDown className="h-6 w-6 text-emerald-light" />
           </div>
           <h2 className="font-display mb-2 text-2xl font-bold">Whitepaper</h2>
           <p className="mb-6 text-sm text-muted-foreground">
@@ -237,7 +237,7 @@ function HomeContent() {
           <a
             href="/ozskr-whitepaper-v1.pdf"
             download
-            className="inline-flex items-center gap-2 rounded-lg border border-brick-gold/30 bg-brick-gold/10 px-6 py-2.5 text-sm font-medium text-brick-gold transition-all hover:bg-brick-gold/20 hover:border-brick-gold/50"
+            className="inline-flex items-center gap-2 rounded-lg border border-emerald-light/30 bg-emerald-light/10 px-6 py-2.5 text-sm font-medium text-emerald-light transition-all hover:bg-emerald-light/20 hover:border-emerald-light/50"
           >
             <FileDown className="h-4 w-4" />
             Download PDF
@@ -256,7 +256,7 @@ function HomeContent() {
 
         <div className="relative flex flex-col items-center gap-12 md:flex-row md:justify-between md:gap-0">
           {/* Dashed connector line */}
-          <div className="absolute left-[calc(16.67%+24px)] right-[calc(16.67%+24px)] top-6 hidden border-t-2 border-dashed border-brick-gold/30 md:block" />
+          <div className="absolute left-[calc(16.67%+24px)] right-[calc(16.67%+24px)] top-6 hidden border-t-2 border-dashed border-emerald-light/30 md:block" />
 
           {STEPS.map((step, i) => (
             <div key={step.label} className="relative z-10 flex flex-col items-center gap-3 text-center md:w-1/3">

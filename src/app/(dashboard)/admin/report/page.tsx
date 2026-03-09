@@ -165,7 +165,7 @@ export default function AdminReportPage() {
           <Card className="border-white/5 bg-white/[0.02]">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm">
-                <Bug className="h-4 w-4 text-brick-gold" />
+                <Bug className="h-4 w-4 text-emerald-light" />
                 Issues
               </CardTitle>
             </CardHeader>

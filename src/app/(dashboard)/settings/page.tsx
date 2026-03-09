@@ -233,8 +233,8 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-2 rounded-lg border border-border bg-background p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brick-gold/10">
-                <Shield className="h-5 w-5 text-brick-gold" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-light/10">
+                <Shield className="h-5 w-5 text-emerald-light" />
               </div>
               <h4 className="font-medium text-white">Security</h4>
               <p className="text-sm text-muted-foreground">

@@ -75,20 +75,20 @@ export function AchievementToastProvider({ children }: { children: React.ReactNo
           <button
             onClick={handleClick}
             className={cn(
-              'flex items-center gap-4 rounded-lg border-2 border-brick-gold bg-card p-4',
-              'shadow-[0_0_15px_rgba(245,158,11,0.3)] hover:shadow-[0_0_20px_rgba(245,158,11,0.4)]',
+              'flex items-center gap-4 rounded-lg border-2 border-emerald-light bg-card p-4',
+              'shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:shadow-[0_0_20px_rgba(16,185,129,0.4)]',
               'transition-all duration-200 hover:scale-105',
-              'cursor-pointer focus:outline-none focus:ring-2 focus:ring-brick-gold focus:ring-offset-2'
+              'cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-light focus:ring-offset-2'
             )}
           >
             {/* Icon */}
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brick-gold/20 text-3xl">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-light/20 text-3xl">
               {toast.data.icon}
             </div>
 
             {/* Content */}
             <div className="flex flex-col items-start">
-              <p className="text-xs font-semibold uppercase tracking-wider text-brick-gold">
+              <p className="text-xs font-semibold uppercase tracking-wider text-emerald-light">
                 Achievement Unlocked!
               </p>
               <p className="mt-1 text-sm font-bold text-white">

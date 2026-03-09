@@ -34,9 +34,9 @@ const tierStyles: Record<UserTier, { bg: string; text: string; border: string }>
     border: 'border-solana-green/30',
   },
   [UserTier.MOGUL]: {
-    bg: 'bg-brick-gold/20',
-    text: 'text-brick-gold',
-    border: 'border-brick-gold/30',
+    bg: 'bg-emerald-light/20',
+    text: 'text-emerald-light',
+    border: 'border-emerald-light/30',
   },
   [UserTier.LEGEND]: {
     bg: 'bg-gradient-to-r from-solana-purple/20 to-solana-green/20',

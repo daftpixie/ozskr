@@ -123,8 +123,8 @@ export function Sidebar() {
                 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                 'hover:bg-accent hover:text-accent-foreground',
                 pathname === '/admin'
-                  ? 'border-l-2 border-brick-gold bg-brick-gold/10 text-brick-gold'
-                  : 'text-brick-gold/70'
+                  ? 'border-l-2 border-emerald-light bg-emerald-light/10 text-emerald-light'
+                  : 'text-emerald-light/70'
               )}
             >
               <ShieldCheck className="h-5 w-5" />
